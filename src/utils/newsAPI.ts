@@ -38,7 +38,26 @@ export class NewsAPI {
   // Parse JSON data for image URL
   private static parseJsonData(jsonDataString: string): string | undefined {
     try {
-      // Extract the capsule image path from the JSON string
+      // First try to parse the JSON string properly
+      let jsonData;
+      try {
+        jsonData = JSON.parse(jsonDataString);
+      } catch (e) {
+        // If parsing fails, use regex as fallback
+        console.log("Falling back to regex for JSON parsing");
+      }
+
+      // If we successfully parsed the JSON
+      if (jsonData) {
+        // Try to get the image from the parsed JSON structure
+        if (jsonData.localized_capsule_image && jsonData.localized_capsule_image.length > 0) {
+          return `https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/clanevent/${jsonData.localized_capsule_image[0]}`;
+        } else if (jsonData.localized_title_image && jsonData.localized_title_image.length > 0) {
+          return `https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/clanevent/${jsonData.localized_title_image[0]}`;
+        }
+      }
+
+      // Fallback to regex matching if JSON parsing didn't work or images weren't found
       const imagePathMatch = jsonDataString.match(/"localized_capsule_image":\s*\[\s*"([^"]+)"/);
       const titleImageMatch = jsonDataString.match(/"localized_title_image":\s*\[\s*"([^"]+)"/);
       
@@ -49,6 +68,13 @@ export class NewsAPI {
         return `https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/clanevent/${titleImageMatch[1]}`;
       }
       
+      // Try matching header image as last resort
+      const headerImageMatch = jsonDataString.match(/"header_image":\s*"([^"]+)"/);
+      if (headerImageMatch && headerImageMatch[1]) {
+        return headerImageMatch[1]; // This might already be a full URL
+      }
+
+      console.log("No image found in JSON data");
       return undefined;
     } catch (error) {
       console.error("Error parsing JSON data:", error);
@@ -79,12 +105,34 @@ export class NewsAPI {
     return content.trim();
   }
 
+  // Look for image URLs embedded in the body content
+  private static extractImageFromBody(body: string): string | undefined {
+    // Look for img tags in the body
+    const imgMatch = body.match(/<img\s+[^>]*src=["']([^"']+)["'][^>]*>/i);
+    if (imgMatch && imgMatch[1]) {
+      return imgMatch[1];
+    }
+    
+    // Try to find images in custom formats like [img]{URL}
+    const customImgMatch = body.match(/\[img\]\{([^}]+)\}/i);
+    if (customImgMatch && customImgMatch[1]) {
+      return customImgMatch[1];
+    }
+    
+    return undefined;
+  }
+
   // Helper to convert Steam event to our UpdateData format for news
   private static convertEventToNews(event: SteamEvent): UpdateData {
     const body = event.announcement_body?.body || '';
     
-    // Get image URL from jsondata field
-    const imageUrl = this.parseJsonData(event.jsondata);
+    // Try multiple sources for images
+    let imageUrl = this.parseJsonData(event.jsondata);
+    
+    // If no image found in jsondata, try extracting from body
+    if (!imageUrl && body) {
+      imageUrl = this.extractImageFromBody(body);
+    }
     
     // Process HTML content to extract formatted text
     let description = '';
@@ -92,6 +140,13 @@ export class NewsAPI {
     if (body) {
       description = this.processHtmlContent(body);
     }
+    
+    // Log the extracted data for debugging
+    console.log("Extracted news item:", {
+      title: event.event_name,
+      hasImage: !!imageUrl,
+      imageUrl: imageUrl?.substring(0, 100) + (imageUrl && imageUrl.length > 100 ? '...' : '')
+    });
     
     return {
       title: event.event_name,
@@ -117,6 +172,18 @@ export class NewsAPI {
       if (!data.success || !Array.isArray(data.events)) {
         console.error("Invalid response format:", data);
         return this.cachedNews;
+      }
+      
+      // Debug the structure of the first event
+      if (data.events.length > 0) {
+        const sampleEvent = data.events[0];
+        console.log("Sample event structure:", {
+          title: sampleEvent.event_name,
+          hasJsonData: !!sampleEvent.jsondata,
+          jsonDataLength: sampleEvent.jsondata?.length,
+          hasBody: !!sampleEvent.announcement_body?.body,
+          bodyLength: sampleEvent.announcement_body?.body?.length
+        });
       }
       
       // Filter out update events and convert to our format

@@ -32,6 +32,7 @@ const getPreviewDescription = (description: string) => {
 
 const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
   
   const formattedDate = update.date ? format(new Date(update.date), 'MMMM d, yyyy').toUpperCase() : '';
@@ -44,6 +45,11 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
   const handleCardClick = () => {
     navigate(`/update/${getUpdateSlug()}`);
   };
+
+  const handleImageError = () => {
+    console.error(`Failed to load image: ${update.imageUrl}`);
+    setImageError(true);
+  };
   
   return (
     <Card 
@@ -55,7 +61,7 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
       )}
       onClick={handleCardClick}
     >
-      {update.imageUrl && (
+      {update.imageUrl && !imageError && (
         <div className="relative w-full h-40 bg-muted/30 overflow-hidden">
           <div 
             className={cn(
@@ -71,6 +77,7 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
             onLoad={() => setImageLoaded(true)}
+            onError={handleImageError}
           />
           {isNew && (
             <div className="absolute top-3 right-3">

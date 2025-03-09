@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from "@/components/Header";
 import { format } from 'date-fns';
 import { UpdateData } from "@/components/UpdateCard";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
@@ -21,11 +21,14 @@ const UpdateDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewsItem, setIsNewsItem] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log("Fetching data for update ID:", id);
+        
         // First try to find the update in CS2 updates
         const { updates } = await SteamAPI.getUpdates();
         
@@ -35,33 +38,33 @@ const UpdateDetail = () => {
         
         // If not found in updates, check the news
         if (!foundItem) {
+          console.log("Item not found in updates, checking news...");
           const newsItems = await NewsAPI.getNews();
+          
           foundItem = newsItems.find(n => 
             encodeURIComponent(n.title.toLowerCase().replace(/\s+/g, '-')) === id
           );
           
           if (foundItem) {
+            console.log("Found item in news:", foundItem.title);
             setIsNewsItem(true);
           }
+        } else {
+          console.log("Found item in updates:", foundItem.title);
         }
         
         if (foundItem) {
+          console.log("Item details:", {
+            title: foundItem.title,
+            hasImage: !!foundItem.imageUrl,
+            imageUrl: foundItem.imageUrl?.substring(0, 100)
+          });
           setUpdate(foundItem);
           setError(null);
         } else {
-          // If still not found, use a sample for demo
-          if (id) {
-            const decodedTitle = decodeURIComponent(id).replace(/-/g, ' ');
-            setUpdate({
-              title: decodedTitle,
-              description: `This is a sample content for "${decodedTitle}"`,
-              date: new Date().toISOString(),
-              url: `https://example.com/${id}`,
-              imageUrl: 'https://picsum.photos/800/400?random=1'
-            });
-          } else {
-            setError('Content not found');
-          }
+          // If still not found, show an error
+          console.error("Content not found for ID:", id);
+          setError('Content not found');
         }
       } catch (err) {
         console.error('Error fetching content:', err);
@@ -86,8 +89,9 @@ const UpdateDetail = () => {
     return isNewsItem ? '/news' : '/';
   };
 
-  const getContentType = () => {
-    return isNewsItem ? 'news article' : 'update';
+  const handleImageError = () => {
+    console.error(`Failed to load image: ${update?.imageUrl}`);
+    setImageError(true);
   };
 
   return (
@@ -117,13 +121,24 @@ const UpdateDetail = () => {
             
             <h1 className="text-3xl font-bold px-6 pb-4">{update.title}</h1>
             
-            {update.imageUrl && (
+            {update.imageUrl && !imageError ? (
               <div className="w-full relative h-[400px] overflow-hidden mb-6">
+                <div className="absolute inset-0 bg-muted/50 animate-pulse-subtle flex items-center justify-center">
+                  <span className="text-muted-foreground">Loading image...</span>
+                </div>
                 <img 
                   src={update.imageUrl} 
                   alt={update.title} 
                   className="w-full h-full object-cover"
+                  onError={handleImageError}
                 />
+              </div>
+            ) : imageError && (
+              <div className="w-full h-[200px] flex items-center justify-center bg-muted mb-6">
+                <div className="flex flex-col items-center text-muted-foreground">
+                  <ImageOff size={48} className="mb-2" />
+                  <p>Image could not be loaded</p>
+                </div>
               </div>
             )}
             

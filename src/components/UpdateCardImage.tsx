@@ -10,6 +10,8 @@ interface UpdateCardImageProps {
   isNew?: boolean;
 }
 
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
+
 const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: UpdateCardImageProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -34,14 +36,16 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
       
       // Then try imageUrl from the API if content images aren't available
       if (imageUrl) {
-        console.log("Using API image:", imageUrl.split('?')[0]);
-        setBestImage(imageUrl.split('?')[0]); // Strip query parameters
+        console.log("Using API image:", imageUrl);
+        setBestImage(imageUrl); 
         setHasImage(true);
         return;
       }
       
-      setBestImage(null);
-      setHasImage(false);
+      // If no image available, use default
+      console.log("Using default CS2 image");
+      setBestImage(DEFAULT_NEWS_IMAGE);
+      setHasImage(true);
     };
     
     findBestImage();
@@ -56,9 +60,17 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
     if (contentImages.length > 1 && bestImage !== contentImages[1]) {
       console.log("Trying alternative image:", contentImages[1]);
       setBestImage(contentImages[1]);
+      setImageError(false);
+    } else if (imageUrl && !contentImages.includes(imageUrl) && bestImage !== imageUrl) {
+      // Try the original imageUrl if we haven't tried it yet
+      console.log("Falling back to original image URL:", imageUrl);
+      setBestImage(imageUrl);
+      setImageError(false);
     } else {
-      // If we can't find an alternative image, hide the image container
-      setHasImage(false);
+      // Use default image as last resort
+      console.log("Using default CS2 image after error");
+      setBestImage(DEFAULT_NEWS_IMAGE);
+      setImageError(false);
     }
   };
 
@@ -66,11 +78,7 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
     setImageLoaded(true);
   };
 
-  // If there's no image to display or if there was an error and no alternative, don't show anything
-  if (!hasImage || !bestImage || imageError) {
-    return null;
-  }
-
+  // Always show an image - either the content image, API image, or default
   return (
     <div className="relative w-full sm:w-1/3 h-48 sm:h-auto bg-muted/30 overflow-hidden">
       <div 
@@ -80,7 +88,7 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
         )}
       />
       <img
-        src={bestImage}
+        src={bestImage || DEFAULT_NEWS_IMAGE}
         alt={title}
         className={cn(
           "w-full h-full object-cover transition-all duration-500 transform hover:scale-105",

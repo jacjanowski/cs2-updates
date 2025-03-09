@@ -1,6 +1,8 @@
 
 import { cn } from "@/lib/utils";
 
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
+
 interface UpdateImageProps {
   displayImage: string | null;
   imageError: boolean;
@@ -18,10 +20,8 @@ const UpdateImage = ({
   onImageError,
   onImageLoad
 }: UpdateImageProps) => {
-  // If there's no image to display or if there was an error, don't show anything
-  if (!displayImage || imageError) {
-    return null;
-  }
+  // Always show an image - if there's no image to display or if there was an error, use default
+  const imageToDisplay = (!displayImage || imageError) ? DEFAULT_NEWS_IMAGE : displayImage;
 
   return (
     <div className="w-full relative h-[400px] overflow-hidden mb-6">
@@ -33,7 +33,7 @@ const UpdateImage = ({
         <span className="text-muted-foreground">Loading image...</span>
       </div>
       <img 
-        src={displayImage} 
+        src={imageToDisplay} 
         alt={title} 
         className={cn(
           "w-full h-full object-cover",

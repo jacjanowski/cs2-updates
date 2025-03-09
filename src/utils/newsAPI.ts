@@ -1,4 +1,3 @@
-
 import { UpdateData } from "@/components/UpdateCard";
 import { SteamEvent, SteamResponse } from "./steam/steamTypes";
 import { processHtmlContent, extractImageFromBody } from "./steam/contentProcessor";
@@ -7,6 +6,7 @@ import { shouldCheckForUpdate } from "./steam/schedulingUtils";
 import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 const API_URL = 'https://corsproxy.io/?http://store.steampowered.com/events/ajaxgetpartnereventspageable/?clan_accountid=0&appid=730&offset=0&count=100&l=english&origin=https:%2F%2Fwww.counter-strike.net';
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
 
 export class NewsAPI {
   private static lastCheckedTime: number = 0;
@@ -37,18 +37,9 @@ export class NewsAPI {
       imageUrl = extractImageFromBody(body);
     }
     
-    // If still no image, use a placeholder for news items
+    // If still no image, use the default CS2 image
     if (!imageUrl) {
-      // Use placeholder images for demo purposes - in production you'd want to leave this undefined
-      const placeholders = [
-        'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&h=400&fit=crop',
-        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=400&fit=crop',
-        'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=400&fit=crop',
-        'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop'
-      ];
-      // Use a consistent image based on the event name to avoid random changes on refresh
-      const imageIndex = event.event_name.length % placeholders.length;
-      imageUrl = placeholders[imageIndex];
+      imageUrl = DEFAULT_NEWS_IMAGE;
     }
     
     return {

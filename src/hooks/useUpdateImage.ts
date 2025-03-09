@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { extractImagesFromContent } from "@/utils/updateFormatter";
 
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
+
 interface UseUpdateImageResult {
   displayImage: string | null;
   imageError: boolean;
@@ -20,7 +22,7 @@ export const useUpdateImage = (
   const [displayImage, setDisplayImage] = useState<string | null>(null);
   const [contentImages, setContentImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [hasAnyImage, setHasAnyImage] = useState(false);
+  const [hasAnyImage, setHasAnyImage] = useState(true); // Default to true since we always have a fallback
 
   useEffect(() => {
     setImageError(false);
@@ -31,12 +33,8 @@ export const useUpdateImage = (
     if (description) {
       const extractedImages = extractImagesFromContent(description);
       setContentImages(extractedImages);
-      
-      // Set hasAnyImage based on whether we have content images or an API image
-      setHasAnyImage(extractedImages.length > 0 || !!imageUrl);
     } else {
       setContentImages([]);
-      setHasAnyImage(!!imageUrl);
     }
     
     // Determine best image to display - prioritize content images as they're more reliable
@@ -51,10 +49,11 @@ export const useUpdateImage = (
       
       // Then try the update image if it exists
       if (imageUrl) {
-        return imageUrl.split('?')[0]; // Strip query parameters
+        return imageUrl;
       }
       
-      return null;
+      // Default to CS2 image
+      return DEFAULT_NEWS_IMAGE;
     };
     
     setDisplayImage(getBestImage());
@@ -69,13 +68,14 @@ export const useUpdateImage = (
       setCurrentImageIndex(currentImageIndex + 1);
       setImageError(false);
       setDisplayImage(contentImages[currentImageIndex + 1]);
-    } else if (imageUrl && !contentImages.includes(imageUrl.split('?')[0])) {
+    } else if (imageUrl && !contentImages.includes(imageUrl)) {
       // If we've tried all content images, try the API image as last resort
       setImageError(false);
-      setDisplayImage(imageUrl.split('?')[0]);
+      setDisplayImage(imageUrl);
     } else {
-      // If all images fail, set hasAnyImage to false
-      setHasAnyImage(false);
+      // Use default image if all else fails
+      setImageError(false);
+      setDisplayImage(DEFAULT_NEWS_IMAGE);
     }
   };
 
@@ -89,6 +89,6 @@ export const useUpdateImage = (
     imageLoaded,
     handleImageError,
     handleImageLoad,
-    hasAnyImage
+    hasAnyImage: true // Always true since we now always have a fallback image
   };
 };

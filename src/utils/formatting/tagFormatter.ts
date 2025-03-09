@@ -36,9 +36,8 @@ export const formatDescription = (description: string): string => {
           <video 
             ${controls ? 'controls' : ''}
             ${autoplay ? 'autoplay muted loop playsinline' : ''}
-            poster="${poster}"
+            ${poster ? `poster="${poster}"` : ''}
             class="w-full max-h-[500px]"
-            crossorigin="anonymous"
           >
             ${mp4Src ? `<source src="${mp4Src}" type="video/mp4">` : ''}
             ${webmSrc ? `<source src="${webmSrc}" type="video/webm">` : ''}
@@ -57,11 +56,11 @@ export const formatDescription = (description: string): string => {
   });
   
   // Handle [list] and [/list] tags
-  formattedText = formattedText.replace(/\[list\]/gi, '<ul>');
+  formattedText = formattedText.replace(/\[list\]/gi, '<ul class="my-4">');
   formattedText = formattedText.replace(/\[\/list\]/gi, '</ul>');
   
   // Handle [ul] and [/ul] tags
-  formattedText = formattedText.replace(/\[ul\]/gi, '<ul>');
+  formattedText = formattedText.replace(/\[ul\]/gi, '<ul class="my-4">');
   formattedText = formattedText.replace(/\[\/ul\]/gi, '</ul>');
   
   // Handle nested lists with [*] and bullet points
@@ -85,7 +84,7 @@ export const formatDescription = (description: string): string => {
   
   // Replace [img]...[/img] with actual image tags
   formattedText = formattedText.replace(/\[img\](.*?)\[\/img\]/g, (match, imageUrl) => {
-    return `<img src="${imageUrl}" class="w-full max-h-[400px] object-contain my-4" crossorigin="anonymous" />`;
+    return `<img src="${imageUrl}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" />`;
   });
   
   // Process any orphaned or remaining [*] bullet points

@@ -27,6 +27,21 @@
   margin-bottom: 1rem;
 }
 
+/* Video container styling */
+.update-content .video-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.update-content video {
+  width: 100%;
+  display: block;
+  border-radius: 0.375rem;
+}
+
 /* Dark mode specific styles */
 .dark .update-content {
   color: #e0e0e0;

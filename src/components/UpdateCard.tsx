@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ExternalLink, ImageOff } from "lucide-react";
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 export interface UpdateData {
   title: string;
@@ -33,9 +34,32 @@ const getPreviewDescription = (description: string) => {
 const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [bestImage, setBestImage] = useState<string | null>(null);
   const navigate = useNavigate();
   
   const formattedDate = update.date ? format(new Date(update.date), 'MMMM d, yyyy').toUpperCase() : '';
+  
+  useEffect(() => {
+    // Determine the best image to display
+    const findBestImage = () => {
+      // First check for embedded images in content
+      const contentImages = extractImagesFromContent(update.description);
+      if (contentImages.length > 0) {
+        setBestImage(contentImages[0]);
+        return;
+      }
+      
+      // Fall back to imageUrl from the API
+      if (update.imageUrl) {
+        setBestImage(update.imageUrl.split('?')[0]); // Strip query parameters
+        return;
+      }
+      
+      setBestImage(null);
+    };
+    
+    findBestImage();
+  }, [update]);
   
   // Create URL-friendly slug from the title
   const getUpdateSlug = () => {
@@ -47,19 +71,12 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
   };
 
   const handleImageError = () => {
-    console.error(`Failed to load image: ${update.imageUrl}`);
+    console.error(`Failed to load image:`, bestImage);
     setImageError(true);
   };
 
   const handleImageLoad = () => {
     setImageLoaded(true);
-  };
-  
-  // Helper function to sanitize image URLs
-  const getSanitizedImageUrl = (url: string | undefined) => {
-    if (!url) return null;
-    // Strip any query parameters which might cause CORS issues
-    return url.split('?')[0];
   };
   
   return (
@@ -72,7 +89,7 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
       )}
       onClick={handleCardClick}
     >
-      {update.imageUrl && !imageError ? (
+      {bestImage && !imageError ? (
         <div className="relative w-full h-40 bg-muted/30 overflow-hidden">
           <div 
             className={cn(
@@ -81,7 +98,7 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
             )}
           />
           <img
-            src={getSanitizedImageUrl(update.imageUrl) || ''}
+            src={bestImage}
             alt={update.title}
             className={cn(
               "w-full h-full object-cover transition-all duration-500 transform hover:scale-105",
@@ -89,6 +106,7 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
             )}
             onLoad={handleImageLoad}
             onError={handleImageError}
+            crossOrigin="anonymous"
           />
           {isNew && (
             <div className="absolute top-3 right-3">
@@ -98,7 +116,7 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
             </div>
           )}
         </div>
-      ) : imageError && update.imageUrl ? (
+      ) : imageError && bestImage ? (
         <div className="w-full h-40 flex items-center justify-center bg-muted/30">
           <div className="flex flex-col items-center text-muted-foreground">
             <ImageOff size={24} className="mb-2" />

@@ -8,7 +8,7 @@ import { ArrowLeft, ExternalLink, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
-import { formatDescription } from "@/utils/updateFormatter";
+import { formatDescription, extractImagesFromContent } from "@/utils/updateFormatter";
 import UpdateContent from "@/components/UpdateContent";
 import UpdateLoadingSkeleton from "@/components/UpdateLoadingSkeleton";
 import UpdateError from "@/components/UpdateError";
@@ -23,6 +23,7 @@ const UpdateDetail = () => {
   const [isNewsItem, setIsNewsItem] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [contentImages, setContentImages] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +31,7 @@ const UpdateDetail = () => {
         setLoading(true);
         setImageError(false);
         setImageLoaded(false);
+        setContentImages([]);
         console.log("Fetching data for update ID:", id);
         
         // First try to find the update in CS2 updates
@@ -62,6 +64,12 @@ const UpdateDetail = () => {
             hasImage: !!foundItem.imageUrl,
             imageUrl: foundItem.imageUrl
           });
+          
+          // Extract images from content
+          const extractedImages = extractImagesFromContent(foundItem.description);
+          console.log("Extracted images from content:", extractedImages);
+          setContentImages(extractedImages);
+          
           setUpdate(foundItem);
           setError(null);
         } else {
@@ -101,12 +109,22 @@ const UpdateDetail = () => {
     setImageLoaded(true);
   };
 
-  // Helper function to sanitize image URLs
-  const getSanitizedImageUrl = (url: string | undefined) => {
-    if (!url) return null;
-    // Strip any query parameters which might cause CORS issues
-    return url.split('?')[0];
+  // Determine the best image to display
+  const getBestImageToDisplay = (): string | null => {
+    // First try content images
+    if (contentImages.length > 0) {
+      return contentImages[0];
+    }
+    
+    // Fall back to the update image
+    if (update?.imageUrl) {
+      return update.imageUrl.split('?')[0]; // Strip query parameters
+    }
+    
+    return null;
   };
+
+  const displayImage = getBestImageToDisplay();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -135,17 +153,18 @@ const UpdateDetail = () => {
             
             <h1 className="text-3xl font-bold px-6 pb-4">{update.title}</h1>
             
-            {update.imageUrl && !imageError ? (
+            {displayImage && !imageError ? (
               <div className="w-full relative h-[400px] overflow-hidden mb-6">
                 <div className={`absolute inset-0 bg-muted/50 animate-pulse-subtle flex items-center justify-center ${imageLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
                   <span className="text-muted-foreground">Loading image...</span>
                 </div>
                 <img 
-                  src={getSanitizedImageUrl(update.imageUrl) || ''}
+                  src={displayImage} 
                   alt={update.title} 
                   className={`w-full h-full object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
                   onError={handleImageError}
                   onLoad={handleImageLoad}
+                  crossOrigin="anonymous"
                 />
               </div>
             ) : imageError && (

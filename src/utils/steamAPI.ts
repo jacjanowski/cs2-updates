@@ -45,8 +45,8 @@ export class SteamAPI {
     
     // Clean up description (remove HTML tags)
     const description = event.event_description
-      .replace(/<\/?[^>]+(>|$)/g, "")
-      .trim();
+      ? event.event_description.replace(/<\/?[^>]+(>|$)/g, "").trim()
+      : body.replace(/<\/?[^>]+(>|$)/g, "").trim();
     
     return {
       title: event.event_name,

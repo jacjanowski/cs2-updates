@@ -40,9 +40,15 @@ export class NewsAPI {
     try {
       // Extract the capsule image path from the JSON string
       const imagePathMatch = jsonDataString.match(/"localized_capsule_image":\s*\[\s*"([^"]+)"/);
+      const titleImageMatch = jsonDataString.match(/"localized_title_image":\s*\[\s*"([^"]+)"/);
+      
+      // Use capsule image first, fall back to title image
       if (imagePathMatch && imagePathMatch[1]) {
         return `https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/clanevent/${imagePathMatch[1]}`;
+      } else if (titleImageMatch && titleImageMatch[1]) {
+        return `https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/clanevent/${titleImageMatch[1]}`;
       }
+      
       return undefined;
     } catch (error) {
       console.error("Error parsing JSON data:", error);
@@ -50,7 +56,7 @@ export class NewsAPI {
     }
   }
 
-  // Process HTML content to extract structured information (reused from SteamAPI)
+  // Process HTML content to extract structured information
   private static processHtmlContent(htmlContent: string): string {
     // Replace HTML line breaks with newlines
     let content = htmlContent.replace(/<br\s*\/?>/gi, '\n');

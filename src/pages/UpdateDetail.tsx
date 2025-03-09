@@ -7,6 +7,7 @@ import { UpdateData } from "@/components/UpdateCard";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SteamAPI } from "@/utils/steamAPI";
+import { NewsAPI } from "@/utils/newsAPI";
 import { formatDescription } from "@/utils/updateFormatter";
 import UpdateContent from "@/components/UpdateContent";
 import UpdateLoadingSkeleton from "@/components/UpdateLoadingSkeleton";
@@ -19,53 +20,58 @@ const UpdateDetail = () => {
   const [update, setUpdate] = useState<UpdateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNewsItem, setIsNewsItem] = useState(false);
 
   useEffect(() => {
-    const fetchUpdate = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        // Get all updates and find the one with matching ID
+        // First try to find the update in CS2 updates
         const { updates } = await SteamAPI.getUpdates();
         
-        let foundUpdate;
-        if (updates.length > 0) {
-          // Find by encoded title in URL
-          foundUpdate = updates.find(u => encodeURIComponent(u.title.toLowerCase().replace(/\s+/g, '-')) === id);
-        } else {
-          // If no updates from API, generate a sample one for demo
-          foundUpdate = {
-            title: id ? decodeURIComponent(id).replace(/-/g, ' ') : 'Sample Update',
-            description: `This is a sample CS2 update with some description text.
-            
-[MAPS]
-* Inferno
-  * Fixed roof geometry at church that was visible from boiler entrance.
-            
-[MISC]
-* Fixed a case where voice chat would break after unloading a Steam Workshop map.
-* Fixed a case where game client would crash if certain community server plugins were restricting networking of player entities.
-* Fixed several bugs in applying patches UI.`,
-            date: new Date().toISOString(),
-            url: `https://example.com/update-${id}`,
-            imageUrl: 'https://picsum.photos/800/400?random=1'
-          };
+        let foundItem = updates.find(u => 
+          encodeURIComponent(u.title.toLowerCase().replace(/\s+/g, '-')) === id
+        );
+        
+        // If not found in updates, check the news
+        if (!foundItem) {
+          const newsItems = await NewsAPI.getNews();
+          foundItem = newsItems.find(n => 
+            encodeURIComponent(n.title.toLowerCase().replace(/\s+/g, '-')) === id
+          );
+          
+          if (foundItem) {
+            setIsNewsItem(true);
+          }
         }
         
-        if (foundUpdate) {
-          setUpdate(foundUpdate);
+        if (foundItem) {
+          setUpdate(foundItem);
           setError(null);
         } else {
-          setError('Update not found');
+          // If still not found, use a sample for demo
+          if (id) {
+            const decodedTitle = decodeURIComponent(id).replace(/-/g, ' ');
+            setUpdate({
+              title: decodedTitle,
+              description: `This is a sample content for "${decodedTitle}"`,
+              date: new Date().toISOString(),
+              url: `https://example.com/${id}`,
+              imageUrl: 'https://picsum.photos/800/400?random=1'
+            });
+          } else {
+            setError('Content not found');
+          }
         }
       } catch (err) {
-        console.error('Error fetching update:', err);
-        setError('Failed to load update details');
+        console.error('Error fetching content:', err);
+        setError('Failed to load content details');
       } finally {
         setLoading(false);
       }
     };
     
-    fetchUpdate();
+    fetchData();
   }, [id]);
 
   const formattedDate = update?.date 
@@ -76,6 +82,14 @@ const UpdateDetail = () => {
     ? formatDescription(update.description)
     : '';
 
+  const getBackPath = () => {
+    return isNewsItem ? '/news' : '/';
+  };
+
+  const getContentType = () => {
+    return isNewsItem ? 'news article' : 'update';
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -83,10 +97,10 @@ const UpdateDetail = () => {
         <Button
           variant="ghost"
           className="mb-6"
-          onClick={() => navigate('/')}
+          onClick={() => navigate(getBackPath())}
         >
           <ArrowLeft size={16} className="mr-2" />
-          Back to updates
+          Back to {isNewsItem ? 'news' : 'updates'}
         </Button>
         
         {loading ? (

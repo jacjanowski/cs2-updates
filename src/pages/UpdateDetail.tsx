@@ -22,11 +22,14 @@ const UpdateDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [isNewsItem, setIsNewsItem] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setImageError(false);
+        setImageLoaded(false);
         console.log("Fetching data for update ID:", id);
         
         // First try to find the update in CS2 updates
@@ -57,7 +60,7 @@ const UpdateDetail = () => {
           console.log("Item details:", {
             title: foundItem.title,
             hasImage: !!foundItem.imageUrl,
-            imageUrl: foundItem.imageUrl?.substring(0, 100)
+            imageUrl: foundItem.imageUrl
           });
           setUpdate(foundItem);
           setError(null);
@@ -94,6 +97,17 @@ const UpdateDetail = () => {
     setImageError(true);
   };
 
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  // Helper function to sanitize image URLs
+  const getSanitizedImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    // Strip any query parameters which might cause CORS issues
+    return url.split('?')[0];
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -123,14 +137,15 @@ const UpdateDetail = () => {
             
             {update.imageUrl && !imageError ? (
               <div className="w-full relative h-[400px] overflow-hidden mb-6">
-                <div className="absolute inset-0 bg-muted/50 animate-pulse-subtle flex items-center justify-center">
+                <div className={`absolute inset-0 bg-muted/50 animate-pulse-subtle flex items-center justify-center ${imageLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
                   <span className="text-muted-foreground">Loading image...</span>
                 </div>
                 <img 
-                  src={update.imageUrl} 
+                  src={getSanitizedImageUrl(update.imageUrl) || ''}
                   alt={update.title} 
-                  className="w-full h-full object-cover"
+                  className={`w-full h-full object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
                   onError={handleImageError}
+                  onLoad={handleImageLoad}
                 />
               </div>
             ) : imageError && (

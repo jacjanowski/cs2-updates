@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ImageOff } from "lucide-react";
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,6 +50,17 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
     console.error(`Failed to load image: ${update.imageUrl}`);
     setImageError(true);
   };
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+  
+  // Helper function to sanitize image URLs
+  const getSanitizedImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    // Strip any query parameters which might cause CORS issues
+    return url.split('?')[0];
+  };
   
   return (
     <Card 
@@ -61,7 +72,7 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
       )}
       onClick={handleCardClick}
     >
-      {update.imageUrl && !imageError && (
+      {update.imageUrl && !imageError ? (
         <div className="relative w-full h-40 bg-muted/30 overflow-hidden">
           <div 
             className={cn(
@@ -70,13 +81,13 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
             )}
           />
           <img
-            src={update.imageUrl}
+            src={getSanitizedImageUrl(update.imageUrl) || ''}
             alt={update.title}
             className={cn(
               "w-full h-full object-cover transition-all duration-500 transform hover:scale-105",
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
-            onLoad={() => setImageLoaded(true)}
+            onLoad={handleImageLoad}
             onError={handleImageError}
           />
           {isNew && (
@@ -87,7 +98,14 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
             </div>
           )}
         </div>
-      )}
+      ) : imageError && update.imageUrl ? (
+        <div className="w-full h-40 flex items-center justify-center bg-muted/30">
+          <div className="flex flex-col items-center text-muted-foreground">
+            <ImageOff size={24} className="mb-2" />
+            <span className="text-xs">Image unavailable</span>
+          </div>
+        </div>
+      ) : null}
       
       <div className="p-5">
         <div className="flex flex-col space-y-1">

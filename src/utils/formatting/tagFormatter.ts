@@ -32,12 +32,13 @@ export const formatDescription = (description: string): string => {
     
     if (mp4Src || webmSrc) {
       let videoHtml = `
-        <div class="video-container my-4">
+        <div class="video-container">
           <video 
             ${controls ? 'controls' : ''}
             ${autoplay ? 'autoplay muted loop playsinline' : ''}
             ${poster ? `poster="${poster}"` : ''}
-            class="w-full max-h-[500px]"
+            class="w-full"
+            preload="auto"
           >`;
           
       if (mp4Src) {
@@ -52,7 +53,7 @@ export const formatDescription = (description: string): string => {
       
       // Add fallback but as a hidden div instead of text
       videoHtml += `
-            <div style="display:none">Your browser does not support the video tag.</div>
+            <div class="video-fallback">Your browser does not support the video tag.</div>
           </video>
         </div>`;
         

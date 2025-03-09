@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Eye } from "lucide-react";
 import { format } from 'date-fns';
 
 export interface UpdateData {
@@ -16,6 +15,7 @@ export interface UpdateData {
 interface UpdateCardProps {
   update: UpdateData;
   isNew?: boolean;
+  onViewDetails: (update: UpdateData) => void;
 }
 
 // Helper function to parse and format description content
@@ -91,17 +91,38 @@ const formatDescription = (description: string) => {
   return formattedLines.join('');
 };
 
-const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
+const UpdateCard = ({ update, isNew = false, onViewDetails }: UpdateCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   
   const formattedDate = update.date ? format(new Date(update.date), 'MMMM d, yyyy').toUpperCase() : '';
   
+  // Truncate description for preview
+  const getPreviewDescription = () => {
+    const formatted = formatDescription(update.description);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = formatted;
+    
+    // Get the text content
+    let textContent = tempDiv.textContent || '';
+    
+    // Truncate to approximately 200 characters
+    if (textContent.length > 200) {
+      textContent = textContent.substring(0, 200) + '...';
+    }
+    
+    return textContent;
+  };
+  
   return (
-    <Card className={cn(
-      "overflow-hidden transition-all duration-300 animate-slide-up bg-card/60 backdrop-blur-sm hover:shadow-lg border-border/80",
-      isNew && "ring-2 ring-primary/30",
-      "dark:bg-gray-900/90 text-foreground"
-    )}>
+    <Card 
+      className={cn(
+        "overflow-hidden transition-all duration-300 animate-slide-up bg-card/60 backdrop-blur-sm hover:shadow-lg border-border/80",
+        isNew && "ring-2 ring-primary/30",
+        "dark:bg-gray-900/90 text-foreground",
+        "cursor-pointer hover:scale-[1.01] hover:shadow-xl"
+      )}
+      onClick={() => onViewDetails(update)}
+    >
       {update.imageUrl && (
         <div className="relative w-full h-40 bg-muted/30 overflow-hidden">
           <div 
@@ -139,24 +160,37 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
           
           <div className="flex justify-between items-start mb-3">
             <h3 className="font-bold text-xl leading-tight">{update.title}</h3>
-            {update.url && (
-              <a 
-                href={update.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-secondary ml-2 mt-1 flex-shrink-0"
-                aria-label="Open link"
+            <div className="flex space-x-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails(update);
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-secondary flex-shrink-0"
+                aria-label="View details"
               >
-                <ExternalLink size={16} />
-              </a>
-            )}
+                <Eye size={16} />
+              </button>
+              
+              {update.url && (
+                <a 
+                  href={update.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-secondary flex-shrink-0"
+                  aria-label="Open link"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink size={16} />
+                </a>
+              )}
+            </div>
           </div>
         </div>
         
-        <div 
-          className="text-sm text-foreground/90 space-y-2 update-content"
-          dangerouslySetInnerHTML={{ __html: formatDescription(update.description) }}
-        />
+        <div className="text-sm text-foreground/90 line-clamp-3">
+          {getPreviewDescription()}
+        </div>
       </div>
       
       <style>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import UpdateCard, { UpdateData } from "@/components/UpdateCard";
+import UpdateDetailsModal from "@/components/UpdateDetailsModal";
 import { SteamAPI } from "@/utils/steamAPI";
 import notificationService from "@/utils/notificationService";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +18,8 @@ const Index = () => {
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedUpdate, setSelectedUpdate] = useState<UpdateData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Function to fetch updates
   const fetchUpdates = async (showRefreshAnimation = false) => {
@@ -100,6 +103,12 @@ const Index = () => {
     }, 300);
   };
 
+  // Handler for viewing update details
+  const handleViewDetails = (update: UpdateData) => {
+    setSelectedUpdate(update);
+    setIsModalOpen(true);
+  };
+
   // Get visible updates
   const visibleUpdates = updates.slice(0, visibleCount);
   const hasMoreUpdates = updates.length > visibleCount;
@@ -160,6 +169,7 @@ const Index = () => {
                   key={update.url || index} 
                   update={update} 
                   isNew={index === 0 && visibleCount === 5} 
+                  onViewDetails={handleViewDetails}
                 />
               ))}
               
@@ -189,6 +199,12 @@ const Index = () => {
           )}
         </div>
       </main>
+      
+      <UpdateDetailsModal 
+        update={selectedUpdate}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+      />
     </div>
   );
 };

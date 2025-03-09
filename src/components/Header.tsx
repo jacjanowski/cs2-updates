@@ -2,6 +2,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from "@/lib/utils";
 import { Settings, Home } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const Header = () => {
         </div>
         
         <nav className="flex items-center space-x-1">
+          <ThemeToggle />
           <button
             onClick={() => navigate('/')}
             className={cn(

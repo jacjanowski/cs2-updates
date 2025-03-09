@@ -1,4 +1,3 @@
-
 import { UpdateData } from "@/components/UpdateCard";
 import { SettingsData } from "@/components/SettingsCard";
 
@@ -58,8 +57,7 @@ export class NotificationService {
       const notification = new Notification('New CS2 Update', {
         body: update.title,
         icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        timestamp: new Date(update.date).getTime()
+        badge: '/favicon.ico'
       });
 
       notification.onclick = () => {

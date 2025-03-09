@@ -132,7 +132,7 @@ const News = () => {
             // Loading skeletons
             Array(3).fill(null).map((_, i) => (
               <div key={i} className="rounded-lg overflow-hidden shadow animate-pulse">
-                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-48 w-full" />
                 <div className="p-5 space-y-3">
                   <Skeleton className="h-6 w-2/3" />
                   <Skeleton className="h-4 w-1/4" />

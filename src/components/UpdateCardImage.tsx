@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { cn } from "@/lib/utils";
-import { ImageOff } from "lucide-react";
 import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 interface UpdateCardImageProps {
@@ -17,6 +16,10 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
   const [bestImage, setBestImage] = useState<string | null>(null);
   
   useEffect(() => {
+    // Reset states when props change
+    setImageLoaded(false);
+    setImageError(false);
+    
     // Determine the best image to display
     const findBestImage = () => {
       // First try imageUrl from the API
@@ -53,7 +56,7 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
   }
 
   return (
-    <div className="relative w-full h-40 bg-muted/30 overflow-hidden">
+    <div className="relative w-full h-48 bg-muted/30 overflow-hidden">
       <div 
         className={cn(
           "absolute inset-0 bg-muted/50 animate-pulse-subtle transition-opacity duration-500",

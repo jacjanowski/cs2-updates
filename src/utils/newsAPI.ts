@@ -23,19 +23,26 @@ export class NewsAPI {
       imageUrl = extractImageFromBody(body);
     }
     
+    // If still no image, use a placeholder for news items
+    if (!imageUrl) {
+      // Use placeholder images for demo purposes - in production you'd want to leave this undefined
+      const placeholders = [
+        'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&h=400&fit=crop',
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=400&fit=crop',
+        'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=400&fit=crop',
+        'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop'
+      ];
+      // Use a consistent image based on the event name to avoid random changes on refresh
+      const imageIndex = event.event_name.length % placeholders.length;
+      imageUrl = placeholders[imageIndex];
+    }
+    
     // Process HTML content to extract formatted text
     let description = '';
     
     if (body) {
       description = processHtmlContent(body);
     }
-    
-    // Log the extracted data for debugging
-    console.log("Extracted news item:", {
-      title: event.event_name,
-      hasImage: !!imageUrl,
-      imageUrl: imageUrl?.substring(0, 100) + (imageUrl && imageUrl.length > 100 ? '...' : '')
-    });
     
     return {
       title: event.event_name,
@@ -61,18 +68,6 @@ export class NewsAPI {
       if (!data.success || !Array.isArray(data.events)) {
         console.error("Invalid response format:", data);
         return this.cachedNews;
-      }
-      
-      // Debug the structure of the first event
-      if (data.events.length > 0) {
-        const sampleEvent = data.events[0];
-        console.log("Sample event structure:", {
-          title: sampleEvent.event_name,
-          hasJsonData: !!sampleEvent.jsondata,
-          jsonDataLength: sampleEvent.jsondata?.length,
-          hasBody: !!sampleEvent.announcement_body?.body,
-          bodyLength: sampleEvent.announcement_body?.body?.length
-        });
       }
       
       // Filter out update events and convert to our format

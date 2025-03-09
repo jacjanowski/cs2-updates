@@ -50,7 +50,7 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
     setImageLoaded(true);
   };
 
-  // If there's no image to display or if there was an error, don't show anything
+  // If there's no image to display or if there was an error, show a placeholder for layout consistency
   if (!bestImage || imageError) {
     return <div className="hidden sm:block sm:w-1/3 bg-muted/20" />;
   }

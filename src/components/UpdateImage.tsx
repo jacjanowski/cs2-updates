@@ -19,15 +19,9 @@ const UpdateImage = ({
   onImageError,
   onImageLoad
 }: UpdateImageProps) => {
+  // If there's no image to display or if there was an error, don't show anything
   if (!displayImage || imageError) {
-    return (
-      <div className="w-full h-[200px] flex items-center justify-center bg-muted mb-6">
-        <div className="flex flex-col items-center text-muted-foreground">
-          <ImageOff size={48} className="mb-2" />
-          <p>Image could not be loaded</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

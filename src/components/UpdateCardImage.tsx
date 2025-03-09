@@ -19,16 +19,16 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
   useEffect(() => {
     // Determine the best image to display
     const findBestImage = () => {
-      // First check for embedded images in content
-      const contentImages = extractImagesFromContent(description);
-      if (contentImages.length > 0) {
-        setBestImage(contentImages[0]);
+      // First try imageUrl from the API
+      if (imageUrl) {
+        setBestImage(imageUrl.split('?')[0]); // Strip query parameters
         return;
       }
       
-      // Fall back to imageUrl from the API
-      if (imageUrl) {
-        setBestImage(imageUrl.split('?')[0]); // Strip query parameters
+      // Then check for embedded images in content
+      const contentImages = extractImagesFromContent(description);
+      if (contentImages.length > 0) {
+        setBestImage(contentImages[0]);
         return;
       }
       
@@ -47,17 +47,8 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
     setImageLoaded(true);
   };
 
+  // If there's no image to display or if there was an error, don't show anything
   if (!bestImage || imageError) {
-    if (imageError && bestImage) {
-      return (
-        <div className="w-full h-40 flex items-center justify-center bg-muted/30">
-          <div className="flex flex-col items-center text-muted-foreground">
-            <ImageOff size={24} className="mb-2" />
-            <span className="text-xs">Image unavailable</span>
-          </div>
-        </div>
-      );
-    }
     return null;
   }
 

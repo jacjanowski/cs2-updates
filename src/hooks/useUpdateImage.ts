@@ -16,41 +16,35 @@ export const useUpdateImage = (
 ): UseUpdateImageResult => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [contentImages, setContentImages] = useState<string[]>([]);
   const [displayImage, setDisplayImage] = useState<string | null>(null);
 
   useEffect(() => {
     setImageError(false);
     setImageLoaded(false);
     
-    // Extract images from content if available
-    if (description) {
-      const extractedImages = extractImagesFromContent(description);
-      setContentImages(extractedImages);
-    } else {
-      setContentImages([]);
-    }
-    
     // Determine best image to display
     const getBestImage = () => {
-      // First try content images
-      if (contentImages.length > 0) {
-        return contentImages[0];
-      }
-      
-      // Fall back to the update image
+      // First try the update image if it exists
       if (imageUrl) {
         return imageUrl.split('?')[0]; // Strip query parameters
+      }
+      
+      // Then try to extract images from content
+      if (description) {
+        const extractedImages = extractImagesFromContent(description);
+        if (extractedImages.length > 0) {
+          return extractedImages[0];
+        }
       }
       
       return null;
     };
     
     setDisplayImage(getBestImage());
-  }, [imageUrl, description, contentImages]);
+  }, [imageUrl, description]);
 
   const handleImageError = () => {
-    console.error(`Failed to load image: ${imageUrl}`);
+    console.error(`Failed to load image: ${displayImage}`);
     setImageError(true);
   };
 

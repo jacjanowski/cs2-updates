@@ -1,0 +1,41 @@
+
+.update-content .section-header {
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  color: rgb(var(--foreground-rgb) / 0.9);
+}
+
+.update-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.update-content ul ul {
+  list-style-type: circle;
+  padding-left: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+.update-content li {
+  margin-bottom: 0.5rem;
+}
+
+.update-content p {
+  margin-bottom: 1rem;
+}
+
+/* Dark mode specific styles */
+.dark .update-content {
+  color: #e0e0e0;
+}
+
+.dark .update-content .section-header {
+  color: #f0f0f0;
+}
+
+.dark .update-content ul li {
+  color: #c0c0c0;
+}

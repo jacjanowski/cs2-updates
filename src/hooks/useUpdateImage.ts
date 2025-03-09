@@ -22,7 +22,7 @@ export const useUpdateImage = (
     setImageError(false);
     setImageLoaded(false);
     
-    // Determine best image to display
+    // Determine best image to display - prioritize the main imageUrl
     const getBestImage = () => {
       // First try the update image if it exists
       if (imageUrl) {

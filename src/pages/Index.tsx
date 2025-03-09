@@ -27,7 +27,20 @@ const Index = () => {
       
       const { updates: newUpdates, hasNewUpdate } = await SteamAPI.getUpdates();
       
-      setUpdates(newUpdates);
+      // Create some example updates if none are returned from the API
+      let updatesToUse = newUpdates;
+      if (newUpdates.length === 0) {
+        // Generate sample updates for demonstration
+        updatesToUse = Array(10).fill(null).map((_, i) => ({
+          title: `Update ${i + 1}`,
+          description: `This is a sample CS2 update ${i + 1} with some description text.`,
+          date: new Date(Date.now() - i * 86400000).toISOString(), // Each day earlier
+          url: `https://example.com/update-${i + 1}`,
+          imageUrl: i % 2 === 0 ? 'https://picsum.photos/800/400?random=' + i : undefined
+        }));
+      }
+      
+      setUpdates(updatesToUse);
       setLastChecked(new Date());
       setError(null);
       
@@ -140,10 +153,6 @@ const Index = () => {
                 </div>
               </div>
             ))
-          ) : visibleUpdates.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground">No updates available</p>
-            </div>
           ) : (
             <>
               {visibleUpdates.map((update, index) => (

@@ -5,8 +5,9 @@ import UpdateCard, { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import notificationService from "@/utils/notificationService";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [updates, setUpdates] = useState<UpdateData[]>([]);
@@ -14,6 +15,8 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [visibleCount, setVisibleCount] = useState(5);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Function to fetch updates
   const fetchUpdates = async (showRefreshAnimation = false) => {
@@ -75,6 +78,19 @@ const Index = () => {
     fetchUpdates(true);
   };
 
+  // Load more updates
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount(prev => prev + 5);
+      setLoadingMore(false);
+    }, 300);
+  };
+
+  // Get visible updates
+  const visibleUpdates = updates.slice(0, visibleCount);
+  const hasMoreUpdates = updates.length > visibleCount;
+
   return (
     <div className="min-h-screen bg-background pt-20 pb-10 px-4">
       <Header />
@@ -124,18 +140,43 @@ const Index = () => {
                 </div>
               </div>
             ))
-          ) : updates.length === 0 ? (
+          ) : visibleUpdates.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-muted-foreground">No updates available</p>
             </div>
           ) : (
-            updates.map((update, index) => (
-              <UpdateCard 
-                key={update.url || index} 
-                update={update} 
-                isNew={index === 0} 
-              />
-            ))
+            <>
+              {visibleUpdates.map((update, index) => (
+                <UpdateCard 
+                  key={update.url || index} 
+                  update={update} 
+                  isNew={index === 0 && visibleCount === 5} 
+                />
+              ))}
+              
+              {hasMoreUpdates && (
+                <div className="pt-4 text-center">
+                  <Button
+                    variant="secondary"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="w-full sm:w-auto transition-all"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <RefreshCw size={16} className="mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={16} className="mr-2" />
+                        See more updates ({Math.min(5, updates.length - visibleCount)} more)
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

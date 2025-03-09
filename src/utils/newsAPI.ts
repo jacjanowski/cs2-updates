@@ -79,7 +79,11 @@ export class NewsAPI {
       
       // Filter out update events and convert to our format
       const news = data.events
-        .filter(event => event.event_name !== "Counter-Strike 2 Update") // Exclude CS2 updates
+        .filter(event => {
+          // Exclude CS2 updates and any "Release Notes for" items
+          return event.event_name !== "Counter-Strike 2 Update" && 
+                 !event.event_name.includes("Release Notes for");
+        })
         .map(event => this.convertEventToNews(event))
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       

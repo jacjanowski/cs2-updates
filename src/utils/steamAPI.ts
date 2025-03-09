@@ -1,3 +1,4 @@
+
 import { UpdateData } from "@/components/UpdateCard";
 
 const API_URL = 'https://corsproxy.io/?http://store.steampowered.com/events/ajaxgetpartnereventspageable/?clan_accountid=0&appid=730&offset=0&count=100&l=english&origin=https:%2F%2Fwww.counter-strike.net';
@@ -20,6 +21,7 @@ export interface SteamEvent {
   display_event: boolean;
   event_gid: string;
   left_icon_text: string;
+  jsondata: string;
   steamstoreitem: object[];
 }
 
@@ -111,7 +113,10 @@ export class SteamAPI {
       
       // Convert to our format and sort by date (newest first)
       const updates = data.events
-        .filter(event => event.event_type === 12) // Filter for updates
+        .filter(event => {
+          // Include both regular updates and "Release Notes for" items
+          return event.event_type === 12 || event.event_name.includes("Release Notes for");
+        })
         .map(event => this.convertEventToUpdate(event))
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       

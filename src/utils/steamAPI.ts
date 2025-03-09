@@ -1,4 +1,3 @@
-
 import { UpdateData } from "@/components/UpdateCard";
 
 const API_URL = 'https://corsproxy.io/?http://store.steampowered.com/events/ajaxgetpartnereventspageable/?clan_accountid=0&appid=730&offset=0&count=100&l=english&origin=https:%2F%2Fwww.counter-strike.net';
@@ -35,6 +34,38 @@ export class SteamAPI {
   private static cachedUpdates: UpdateData[] = [];
   private static lastUpdateId: string | null = null;
 
+  // Process HTML content to extract structured information
+  private static processHtmlContent(htmlContent: string): string {
+    // Replace HTML line breaks with newlines
+    let content = htmlContent.replace(/<br\s*\/?>/gi, '\n');
+    
+    // Replace HTML lists with formatted bullet points
+    content = content.replace(/<ul>(.*?)<\/ul>/gis, (match, listContent) => {
+      // Extract list items and format them with bullet points
+      const items = listContent.match(/<li>(.*?)<\/li>/gis) || [];
+      return items
+        .map(item => '• ' + item.replace(/<li>(.*?)<\/li>/i, '$1'))
+        .join('\n');
+    });
+    
+    // Replace headers with section headers
+    content = content.replace(/<h[1-6]>(.*?)<\/h[1-6]>/gi, match => {
+      const headerText = match.replace(/<\/?h[1-6]>/gi, '');
+      return `[${headerText.toUpperCase()}]`;
+    });
+    
+    // Extract section headers that might be in bold tags
+    content = content.replace(/<strong>\[(.*?)\]<\/strong>/gi, '[$1]');
+    
+    // Remove remaining HTML tags
+    content = content.replace(/<\/?[^>]+(>|$)/g, '');
+    
+    // Clean up extra whitespace
+    content = content.replace(/\n\s*\n/g, '\n\n');
+    
+    return content.trim();
+  }
+
   // Helper to convert Steam event to our UpdateData format
   private static convertEventToUpdate(event: SteamEvent): UpdateData {
     const body = event.announcement_body?.body || '';
@@ -43,10 +74,14 @@ export class SteamAPI {
     const imageMatch = body.match(/<img[^>]+src="([^">]+)"/i);
     const imageUrl = imageMatch ? imageMatch[1] : undefined;
     
-    // Clean up description (remove HTML tags)
-    const description = event.event_description
-      ? event.event_description.replace(/<\/?[^>]+(>|$)/g, "").trim()
-      : body.replace(/<\/?[^>]+(>|$)/g, "").trim();
+    // Process HTML content to extract formatted text
+    let description = '';
+    
+    if (event.event_description) {
+      description = this.processHtmlContent(event.event_description);
+    } else if (body) {
+      description = this.processHtmlContent(body);
+    }
     
     return {
       title: event.event_name,

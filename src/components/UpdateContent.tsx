@@ -13,8 +13,11 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
   useEffect(() => {
     // Find all video elements that should autoplay and ensure they play
     if (contentRef.current) {
-      const videos = contentRef.current.querySelectorAll('video[autoplay]');
-      videos.forEach(video => {
+      const videoElements = contentRef.current.querySelectorAll('video[autoplay]');
+      videoElements.forEach(element => {
+        // Cast the element to HTMLVideoElement to access video-specific properties
+        const video = element as HTMLVideoElement;
+        
         // Force autoplay even if browser policies might block it
         video.muted = true;
         

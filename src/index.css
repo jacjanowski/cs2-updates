@@ -170,7 +170,7 @@
 }
 
 .cs2-update-sublist {
-  @apply list-circle ml-5 mt-1 space-y-1;
+  @apply list-[circle] ml-5 mt-1 space-y-1;
 }
 
 .cs2-update-list-item {

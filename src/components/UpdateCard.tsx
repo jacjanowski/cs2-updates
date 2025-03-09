@@ -159,7 +159,8 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
         />
       </div>
       
-      <style jsx>{`
+      <style>
+        {`
         .update-content .section-header {
           font-weight: 600;
           margin-top: 1rem;
@@ -190,7 +191,8 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
         .update-content p {
           margin-bottom: 0.5rem;
         }
-      `}</style>
+        `}
+      </style>
     </Card>
   );
 };

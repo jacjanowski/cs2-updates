@@ -4,6 +4,7 @@ import { SteamEvent, SteamResponse } from "./steam/steamTypes";
 import { processHtmlContent, extractImageFromBody } from "./steam/contentProcessor";
 import { parseJsonData } from "./steam/jsonParser";
 import { shouldCheckForUpdate } from "./steam/schedulingUtils";
+import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 const API_URL = 'https://corsproxy.io/?http://store.steampowered.com/events/ajaxgetpartnereventspageable/?clan_accountid=0&appid=730&offset=0&count=100&l=english&origin=https:%2F%2Fwww.counter-strike.net';
 
@@ -15,10 +16,23 @@ export class NewsAPI {
   private static convertEventToNews(event: SteamEvent): UpdateData {
     const body = event.announcement_body?.body || '';
     
-    // Try multiple sources for images
-    let imageUrl = parseJsonData(event.jsondata);
+    // Process HTML content first to extract formatted text and images
+    let description = '';
     
-    // If no image found in jsondata, try extracting from body
+    if (body) {
+      description = processHtmlContent(body);
+    }
+    
+    // Try multiple sources for images, prioritizing content images first as they are more reliable
+    const contentImages = extractImagesFromContent(description);
+    let imageUrl = contentImages.length > 0 ? contentImages[0] : undefined;
+    
+    // If no image found in content, try JSON data
+    if (!imageUrl) {
+      imageUrl = parseJsonData(event.jsondata);
+    }
+    
+    // If still no image, try extracting directly from body
     if (!imageUrl && body) {
       imageUrl = extractImageFromBody(body);
     }
@@ -35,13 +49,6 @@ export class NewsAPI {
       // Use a consistent image based on the event name to avoid random changes on refresh
       const imageIndex = event.event_name.length % placeholders.length;
       imageUrl = placeholders[imageIndex];
-    }
-    
-    // Process HTML content to extract formatted text
-    let description = '';
-    
-    if (body) {
-      description = processHtmlContent(body);
     }
     
     return {

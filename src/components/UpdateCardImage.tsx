@@ -22,16 +22,18 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
     
     // Determine the best image to display
     const findBestImage = () => {
-      // First try imageUrl from the API
-      if (imageUrl) {
-        setBestImage(imageUrl.split('?')[0]); // Strip query parameters
+      // First check for embedded images in content - these are more reliable
+      const contentImages = extractImagesFromContent(description);
+      if (contentImages.length > 0) {
+        console.log("Using content image:", contentImages[0]);
+        setBestImage(contentImages[0]);
         return;
       }
       
-      // Then check for embedded images in content
-      const contentImages = extractImagesFromContent(description);
-      if (contentImages.length > 0) {
-        setBestImage(contentImages[0]);
+      // Then try imageUrl from the API if content images aren't available
+      if (imageUrl) {
+        console.log("Using API image:", imageUrl.split('?')[0]);
+        setBestImage(imageUrl.split('?')[0]); // Strip query parameters
         return;
       }
       
@@ -44,6 +46,13 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
   const handleImageError = () => {
     console.error(`Failed to load image:`, bestImage);
     setImageError(true);
+    
+    // Try to find another image in the content if the main one fails
+    const contentImages = extractImagesFromContent(description);
+    if (contentImages.length > 1 && bestImage !== contentImages[1]) {
+      console.log("Trying alternative image:", contentImages[1]);
+      setBestImage(contentImages[1]);
+    }
   };
 
   const handleImageLoad = () => {

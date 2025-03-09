@@ -1,6 +1,6 @@
 
 import { format } from 'date-fns';
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ArrowRight } from "lucide-react";
 import { getPreviewDescription } from "@/utils/previewFormatter";
 
 interface UpdateCardContentProps {
@@ -14,7 +14,7 @@ const UpdateCardContent = ({ title, description, date, url }: UpdateCardContentP
   const formattedDate = date ? format(new Date(date), 'MMMM d, yyyy').toUpperCase() : '';
   
   return (
-    <div className="p-5">
+    <div className="p-5 flex-1">
       <div className="flex flex-col space-y-1">
         {formattedDate && (
           <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
@@ -40,8 +40,12 @@ const UpdateCardContent = ({ title, description, date, url }: UpdateCardContentP
         </div>
       </div>
       
-      <div className="text-sm text-foreground/90 line-clamp-3">
+      <div className="text-sm text-foreground/90 line-clamp-3 mb-2">
         {getPreviewDescription(description)}
+      </div>
+      
+      <div className="mt-2 flex items-center text-xs text-primary font-medium">
+        READ MORE <ArrowRight size={14} className="ml-1" />
       </div>
     </div>
   );

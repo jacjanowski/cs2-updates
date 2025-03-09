@@ -52,11 +52,11 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
 
   // If there's no image to display or if there was an error, don't show anything
   if (!bestImage || imageError) {
-    return null;
+    return <div className="hidden sm:block sm:w-1/3 bg-muted/20" />;
   }
 
   return (
-    <div className="relative w-full h-48 bg-muted/30 overflow-hidden">
+    <div className="relative w-full sm:w-1/3 h-48 sm:h-auto bg-muted/30 overflow-hidden">
       <div 
         className={cn(
           "absolute inset-0 bg-muted/50 animate-pulse-subtle transition-opacity duration-500",

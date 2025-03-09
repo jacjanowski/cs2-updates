@@ -127,15 +127,15 @@ const News = () => {
           </div>
         )}
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           {loading ? (
             // Loading skeletons
             Array(3).fill(null).map((_, i) => (
-              <div key={i} className="rounded-lg overflow-hidden shadow animate-pulse">
-                <Skeleton className="h-48 w-full" />
-                <div className="p-5 space-y-3">
-                  <Skeleton className="h-6 w-2/3" />
+              <div key={i} className="rounded-lg overflow-hidden shadow animate-pulse flex flex-col sm:flex-row">
+                <Skeleton className="h-48 sm:h-auto sm:w-1/3" />
+                <div className="p-5 flex-1 space-y-3">
                   <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-6 w-2/3" />
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-full" />
                 </div>

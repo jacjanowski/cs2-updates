@@ -8,6 +8,7 @@ interface UseUpdateImageResult {
   imageLoaded: boolean;
   handleImageError: () => void;
   handleImageLoad: () => void;
+  hasAnyImage: boolean;
 }
 
 export const useUpdateImage = (
@@ -19,6 +20,7 @@ export const useUpdateImage = (
   const [displayImage, setDisplayImage] = useState<string | null>(null);
   const [contentImages, setContentImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [hasAnyImage, setHasAnyImage] = useState(false);
 
   useEffect(() => {
     setImageError(false);
@@ -29,8 +31,12 @@ export const useUpdateImage = (
     if (description) {
       const extractedImages = extractImagesFromContent(description);
       setContentImages(extractedImages);
+      
+      // Set hasAnyImage based on whether we have content images or an API image
+      setHasAnyImage(extractedImages.length > 0 || !!imageUrl);
     } else {
       setContentImages([]);
+      setHasAnyImage(!!imageUrl);
     }
     
     // Determine best image to display - prioritize content images as they're more reliable
@@ -67,6 +73,9 @@ export const useUpdateImage = (
       // If we've tried all content images, try the API image as last resort
       setImageError(false);
       setDisplayImage(imageUrl.split('?')[0]);
+    } else {
+      // If all images fail, set hasAnyImage to false
+      setHasAnyImage(false);
     }
   };
 
@@ -79,6 +88,7 @@ export const useUpdateImage = (
     imageError,
     imageLoaded,
     handleImageError,
-    handleImageLoad
+    handleImageLoad,
+    hasAnyImage
   };
 };

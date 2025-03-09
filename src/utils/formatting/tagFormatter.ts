@@ -15,6 +15,47 @@ export const formatDescription = (description: string): string => {
   // First, normalize line breaks
   let formattedText = description.replace(/\r\n/g, '\n');
   
+  // Handle video tags with various attributes
+  formattedText = formattedText.replace(/\[video(?:\s+[^\]]*?)?\](.*?)\[\/video\]/gs, (match, content) => {
+    // Extract video attributes
+    const mp4Match = match.match(/mp4=([^\s\]]+)/);
+    const webmMatch = match.match(/webm=([^\s\]]+)/);
+    const posterMatch = match.match(/poster=([^\s\]]+)/);
+    const autoplayMatch = match.match(/autoplay=(true|false)/);
+    const controlsMatch = match.match(/controls=(true|false)/);
+    
+    const mp4Src = mp4Match ? mp4Match[1] : '';
+    const webmSrc = webmMatch ? webmMatch[1] : '';
+    const poster = posterMatch ? posterMatch[1] : '';
+    const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : false;
+    const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
+    
+    if (mp4Src || webmSrc) {
+      return `
+        <div class="video-container my-4">
+          <video 
+            ${controls ? 'controls' : ''}
+            ${autoplay ? 'autoplay muted loop playsinline' : ''}
+            poster="${poster}"
+            class="w-full max-h-[500px]"
+            crossorigin="anonymous"
+          >
+            ${mp4Src ? `<source src="${mp4Src}" type="video/mp4">` : ''}
+            ${webmSrc ? `<source src="${webmSrc}" type="video/webm">` : ''}
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      `;
+    }
+    
+    return match; // Return original if couldn't parse
+  });
+  
+  // Handle heading tags [h1], [h2], [h3], etc.
+  formattedText = formattedText.replace(/\[h([1-6])\](.*?)\[\/h\1\]/g, (match, level, content) => {
+    return `<h${level} class="font-bold my-3 text-${4-Math.min(parseInt(level), 3)}xl">${content}</h${level}>`;
+  });
+  
   // Handle [list] and [/list] tags
   formattedText = formattedText.replace(/\[list\]/gi, '<ul>');
   formattedText = formattedText.replace(/\[\/list\]/gi, '</ul>');
@@ -45,37 +86,6 @@ export const formatDescription = (description: string): string => {
   // Replace [img]...[/img] with actual image tags
   formattedText = formattedText.replace(/\[img\](.*?)\[\/img\]/g, (match, imageUrl) => {
     return `<img src="${imageUrl}" class="w-full max-h-[400px] object-contain my-4" crossorigin="anonymous" />`;
-  });
-  
-  // Handle video tags
-  formattedText = formattedText.replace(/\[video.*?\](.*?)\[\/video\]/gs, (match, content) => {
-    // Extract video sources
-    const mp4Match = content.match(/mp4=(.*?)($|\s)/);
-    const webmMatch = content.match(/webm=(.*?)($|\s)/);
-    const posterMatch = content.match(/poster=(.*?)($|\s)/);
-    
-    const mp4Src = mp4Match ? mp4Match[1] : '';
-    const webmSrc = webmMatch ? webmMatch[1] : '';
-    const poster = posterMatch ? posterMatch[1] : '';
-    
-    if (mp4Src || webmSrc) {
-      return `
-        <div class="video-container my-4">
-          <video 
-            controls 
-            poster="${poster}"
-            class="w-full max-h-[500px]"
-            crossorigin="anonymous"
-          >
-            ${mp4Src ? `<source src="${mp4Src}" type="video/mp4">` : ''}
-            ${webmSrc ? `<source src="${webmSrc}" type="video/webm">` : ''}
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      `;
-    }
-    
-    return match; // Return original if couldn't parse
   });
   
   // Process any orphaned or remaining [*] bullet points

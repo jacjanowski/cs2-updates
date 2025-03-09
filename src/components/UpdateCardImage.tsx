@@ -14,19 +14,21 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [bestImage, setBestImage] = useState<string | null>(null);
+  const [hasImage, setHasImage] = useState(false);
   
   useEffect(() => {
     // Reset states when props change
     setImageLoaded(false);
     setImageError(false);
     
-    // Determine the best image to display
+    // Determine if there's any image to display
     const findBestImage = () => {
       // First check for embedded images in content - these are more reliable
       const contentImages = extractImagesFromContent(description);
       if (contentImages.length > 0) {
         console.log("Using content image:", contentImages[0]);
         setBestImage(contentImages[0]);
+        setHasImage(true);
         return;
       }
       
@@ -34,10 +36,12 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
       if (imageUrl) {
         console.log("Using API image:", imageUrl.split('?')[0]);
         setBestImage(imageUrl.split('?')[0]); // Strip query parameters
+        setHasImage(true);
         return;
       }
       
       setBestImage(null);
+      setHasImage(false);
     };
     
     findBestImage();
@@ -52,6 +56,9 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
     if (contentImages.length > 1 && bestImage !== contentImages[1]) {
       console.log("Trying alternative image:", contentImages[1]);
       setBestImage(contentImages[1]);
+    } else {
+      // If we can't find an alternative image, hide the image container
+      setHasImage(false);
     }
   };
 
@@ -59,9 +66,9 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
     setImageLoaded(true);
   };
 
-  // If there's no image to display or if there was an error, show a placeholder for layout consistency
-  if (!bestImage || imageError) {
-    return <div className="hidden sm:block sm:w-1/3 bg-muted/20" />;
+  // If there's no image to display or if there was an error and no alternative, don't show anything
+  if (!hasImage || !bestImage || imageError) {
+    return null;
   }
 
   return (

@@ -30,12 +30,19 @@ export const extractImagesFromContent = (content: string): string[] => {
     }
   }
   
-  // Also check for video poster images
-  const posterRegex = /poster=(https?:\/\/[^"'\s]+)/g;
+  // Look for video poster images
+  const posterRegex = /poster=(https?:\/\/[^"'\s\]]+)/g;
   while ((match = posterRegex.exec(content)) !== null) {
     if (match[1] && match[1].trim()) {
       images.push(match[1].trim());
     }
+  }
+  
+  // Check for mp4/webm videos as potential image sources too
+  const mp4Regex = /mp4=(https?:\/\/[^"'\s\]]+)/g;
+  while ((match = mp4Regex.exec(content)) !== null) {
+    // We don't directly use videos as images, but we note that 
+    // this content has media
   }
   
   console.log("Extracted images:", images);

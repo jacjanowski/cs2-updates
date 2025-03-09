@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { getUpdateSlug } from "@/utils/urlHelpers";
 import UpdateCardImage from "@/components/UpdateCardImage";
 import UpdateCardContent from "@/components/UpdateCardContent";
+import { useState } from "react";
+import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 export interface UpdateData {
   title: string;
@@ -21,6 +23,11 @@ interface UpdateCardProps {
 
 const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
   const navigate = useNavigate();
+  const [hasImage, setHasImage] = useState(() => {
+    // Check if there's an image available
+    const contentImages = extractImagesFromContent(update.description);
+    return contentImages.length > 0 || !!update.imageUrl;
+  });
   
   const handleCardClick = () => {
     navigate(`/update/${getUpdateSlug(update.title)}`);

@@ -1,7 +1,7 @@
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from "@/lib/utils";
-import { Settings, Home } from "lucide-react";
+import { Settings, Home, Newspaper } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 const Header = () => {
@@ -28,6 +28,19 @@ const Header = () => {
             aria-label="Home"
           >
             <Home size={20} />
+          </button>
+          
+          <button
+            onClick={() => navigate('/news')}
+            className={cn(
+              "p-2 rounded-full transition-all duration-200",
+              location.pathname === '/news' 
+                ? "bg-primary/10 text-primary" 
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+            aria-label="News"
+          >
+            <Newspaper size={20} />
           </button>
           
           <button

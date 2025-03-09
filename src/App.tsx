@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import News from "./pages/News";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import UpdateDetail from "./pages/UpdateDetail";
@@ -21,6 +22,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/news" element={<News />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/update/:id" element={<UpdateDetail />} />
             <Route path="*" element={<NotFound />} />

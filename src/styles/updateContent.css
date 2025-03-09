@@ -34,12 +34,19 @@
   overflow: hidden;
   border-radius: 0.375rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin: 1.5rem 0;
 }
 
 .update-content video {
   width: 100%;
   display: block;
   border-radius: 0.375rem;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Make sure fallback text is hidden */
+.update-content video > div {
+  display: none !important;
 }
 
 /* Dark mode specific styles */
@@ -53,4 +60,8 @@
 
 .dark .update-content ul li {
   color: #c0c0c0;
+}
+
+.dark .update-content video {
+  background-color: rgba(255, 255, 255, 0.05);
 }

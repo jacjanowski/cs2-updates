@@ -31,20 +31,32 @@ export const formatDescription = (description: string): string => {
     const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
     
     if (mp4Src || webmSrc) {
-      return `
+      let videoHtml = `
         <div class="video-container my-4">
           <video 
             ${controls ? 'controls' : ''}
             ${autoplay ? 'autoplay muted loop playsinline' : ''}
             ${poster ? `poster="${poster}"` : ''}
             class="w-full max-h-[500px]"
-          >
-            ${mp4Src ? `<source src="${mp4Src}" type="video/mp4">` : ''}
-            ${webmSrc ? `<source src="${webmSrc}" type="video/webm">` : ''}
-            Your browser does not support the video tag.
+          >`;
+          
+      if (mp4Src) {
+        videoHtml += `
+            <source src="${mp4Src}" type="video/mp4">`;
+      }
+      
+      if (webmSrc) {
+        videoHtml += `
+            <source src="${webmSrc}" type="video/webm">`;
+      }
+      
+      // Add fallback but as a hidden div instead of text
+      videoHtml += `
+            <div style="display:none">Your browser does not support the video tag.</div>
           </video>
-        </div>
-      `;
+        </div>`;
+        
+      return videoHtml;
     }
     
     return match; // Return original if couldn't parse
@@ -79,7 +91,7 @@ export const formatDescription = (description: string): string => {
       return match;
     }
     
-    return `<div class="section-header">[${content}]</div>`;
+    return `<div class="section-header">${content}</div>`;
   });
   
   // Replace [img]...[/img] with actual image tags

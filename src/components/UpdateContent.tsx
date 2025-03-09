@@ -13,7 +13,9 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
         "text-foreground/90 space-y-2 update-content dark:text-gray-300",
         "prose dark:prose-invert max-w-none"
       )}
-      dangerouslySetInnerHTML={{ __html: formattedHtml }}
+      dangerouslySetInnerHTML={{ 
+        __html: formattedHtml
+      }}
     />
   );
 };

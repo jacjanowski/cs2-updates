@@ -6,7 +6,7 @@ import { shouldCheckForUpdate } from "./steam/schedulingUtils";
 import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 const API_URL = 'https://corsproxy.io/?http://store.steampowered.com/events/ajaxgetpartnereventspageable/?clan_accountid=0&appid=730&offset=0&count=100&l=english&origin=https:%2F%2Fwww.counter-strike.net';
-const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/8db559b1-a09b-4644-b634-2215dba9100c.png';
 
 export class NewsAPI {
   private static lastCheckedTime: number = 0;

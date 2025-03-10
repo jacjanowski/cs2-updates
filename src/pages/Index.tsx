@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import UpdateCard, { UpdateData } from "@/components/UpdateCard";
@@ -9,7 +8,7 @@ import { RefreshCw, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT_NEWS_IMAGE = '/lovable-uploads/5beb1488-343d-4154-9343-0c04aa0728f5.png';
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/8db559b1-a09b-4644-b634-2215dba9100c.png';
 
 const Index = () => {
   const [updates, setUpdates] = useState<UpdateData[]>([]);
@@ -20,7 +19,6 @@ const Index = () => {
   const [visibleCount, setVisibleCount] = useState(5);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Function to fetch updates
   const fetchUpdates = async (showRefreshAnimation = false) => {
     try {
       if (showRefreshAnimation) {
@@ -29,16 +27,14 @@ const Index = () => {
       
       const { updates: newUpdates, hasNewUpdate } = await SteamAPI.getUpdates();
       
-      // Create some example updates if none are returned from the API
       let updatesToUse = newUpdates;
       if (newUpdates.length === 0) {
-        // Generate sample updates for demonstration
         updatesToUse = Array(10).fill(null).map((_, i) => ({
           title: `Update ${i + 1}`,
           description: `This is a sample CS2 update ${i + 1} with some description text.`,
-          date: new Date(Date.now() - i * 86400000).toISOString(), // Each day earlier
+          date: new Date(Date.now() - i * 86400000).toISOString(),
           url: `https://example.com/update-${i + 1}`,
-          imageUrl: DEFAULT_NEWS_IMAGE // Use our default image instead of picsum
+          imageUrl: DEFAULT_NEWS_IMAGE
         }));
       }
       
@@ -46,7 +42,6 @@ const Index = () => {
       setLastChecked(new Date());
       setError(null);
       
-      // Show notification for new update
       if (hasNewUpdate && newUpdates.length > 0) {
         notificationService.showNotification(newUpdates[0]);
       }
@@ -61,17 +56,13 @@ const Index = () => {
     }
   };
 
-  // Initialize
   useEffect(() => {
-    // Initialize notification service
     notificationService.init((updates) => {
       fetchUpdates();
     });
     
-    // Fetch updates on component mount
     fetchUpdates();
     
-    // Add event listener for when app comes back from background
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const settings = notificationService.getSettings();
@@ -88,12 +79,10 @@ const Index = () => {
     };
   }, []);
 
-  // Manual refresh
   const handleRefresh = () => {
     fetchUpdates(true);
   };
 
-  // Load more updates
   const handleLoadMore = () => {
     setLoadingMore(true);
     setTimeout(() => {
@@ -102,7 +91,6 @@ const Index = () => {
     }, 300);
   };
 
-  // Get visible updates
   const visibleUpdates = updates.slice(0, visibleCount);
   const hasMoreUpdates = updates.length > visibleCount;
 
@@ -143,7 +131,6 @@ const Index = () => {
         
         <div className="space-y-4">
           {loading ? (
-            // Loading skeletons
             Array(3).fill(null).map((_, i) => (
               <div key={i} className="rounded-lg overflow-hidden shadow animate-pulse">
                 <Skeleton className="h-40 w-full" />

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { extractImagesFromContent } from "@/utils/updateFormatter";
 
-const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/5beb1488-343d-4154-9343-0c04aa0728f5.png';
 
 interface UseUpdateImageResult {
   displayImage: string | null;

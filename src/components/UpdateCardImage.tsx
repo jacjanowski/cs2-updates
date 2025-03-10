@@ -8,11 +8,12 @@ interface UpdateCardImageProps {
   imageUrl?: string;
   title: string;
   isNew?: boolean;
+  isNewsItem?: boolean; // Added parameter to differentiate news from updates
 }
 
 const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
 
-const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: UpdateCardImageProps) => {
+const UpdateCardImage = ({ description, imageUrl, title, isNew = false, isNewsItem = false }: UpdateCardImageProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [bestImage, setBestImage] = useState<string | null>(null);
@@ -25,10 +26,18 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
     
     // Determine if there's any image to display
     const findBestImage = () => {
-      // First check for embedded images in content - these are more reliable
+      // For updates, always use the default image
+      if (!isNewsItem) {
+        console.log("Using default CS2 image for update");
+        setBestImage(DEFAULT_NEWS_IMAGE);
+        setHasImage(true);
+        return;
+      }
+      
+      // For news articles, first check for embedded images in content - these are more reliable
       const contentImages = extractImagesFromContent(description);
       if (contentImages.length > 0) {
-        console.log("Using content image:", contentImages[0]);
+        console.log("Using content image for news:", contentImages[0]);
         setBestImage(contentImages[0]);
         setHasImage(true);
         return;
@@ -36,39 +45,47 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false }: Update
       
       // Then try imageUrl from the API if content images aren't available
       if (imageUrl) {
-        console.log("Using API image:", imageUrl);
+        console.log("Using API image for news:", imageUrl);
         setBestImage(imageUrl); 
         setHasImage(true);
         return;
       }
       
       // If no image available, use default
-      console.log("Using default CS2 image");
+      console.log("Using default CS2 image for news (no other images found)");
       setBestImage(DEFAULT_NEWS_IMAGE);
       setHasImage(true);
     };
     
     findBestImage();
-  }, [description, imageUrl]);
+  }, [description, imageUrl, isNewsItem]);
 
   const handleImageError = () => {
     console.error(`Failed to load image:`, bestImage);
     setImageError(true);
     
-    // Try to find another image in the content if the main one fails
+    // For updates, just use the default image
+    if (!isNewsItem) {
+      console.log("Using default CS2 image for update after error");
+      setBestImage(DEFAULT_NEWS_IMAGE);
+      setImageError(false);
+      return;
+    }
+    
+    // For news, try to find another image
     const contentImages = extractImagesFromContent(description);
     if (contentImages.length > 1 && bestImage !== contentImages[1]) {
-      console.log("Trying alternative image:", contentImages[1]);
+      console.log("Trying alternative image for news:", contentImages[1]);
       setBestImage(contentImages[1]);
       setImageError(false);
     } else if (imageUrl && !contentImages.includes(imageUrl) && bestImage !== imageUrl) {
       // Try the original imageUrl if we haven't tried it yet
-      console.log("Falling back to original image URL:", imageUrl);
+      console.log("Falling back to original image URL for news:", imageUrl);
       setBestImage(imageUrl);
       setImageError(false);
     } else {
       // Use default image as last resort
-      console.log("Using default CS2 image after error");
+      console.log("Using default CS2 image for news after all attempts failed");
       setBestImage(DEFAULT_NEWS_IMAGE);
       setImageError(false);
     }

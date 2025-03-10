@@ -15,7 +15,8 @@ interface UseUpdateImageResult {
 
 export const useUpdateImage = (
   imageUrl: string | undefined, 
-  description: string | undefined
+  description: string | undefined,
+  isNewsItem: boolean = false // Added parameter to differentiate news from updates
 ): UseUpdateImageResult => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -37,9 +38,14 @@ export const useUpdateImage = (
       setContentImages([]);
     }
     
-    // Determine best image to display - prioritize content images as they're more reliable
+    // Determine best image to display
     const getBestImage = () => {
-      // First try to extract images from content
+      // For updates, always use the default image
+      if (!isNewsItem) {
+        return DEFAULT_NEWS_IMAGE;
+      }
+      
+      // For news, try to find an image from content first
       if (description) {
         const extractedImages = extractImagesFromContent(description);
         if (extractedImages.length > 0) {
@@ -47,23 +53,30 @@ export const useUpdateImage = (
         }
       }
       
-      // Then try the update image if it exists
+      // Then try the API image if it exists
       if (imageUrl) {
         return imageUrl;
       }
       
-      // Default to CS2 image
+      // Default to CS2 image if no other image is available
       return DEFAULT_NEWS_IMAGE;
     };
     
     setDisplayImage(getBestImage());
-  }, [imageUrl, description]);
+  }, [imageUrl, description, isNewsItem]);
 
   const handleImageError = () => {
     console.error(`Failed to load image: ${displayImage}`);
     setImageError(true);
     
-    // Try next content image if available
+    // For updates, just use the default image
+    if (!isNewsItem) {
+      setImageError(false);
+      setDisplayImage(DEFAULT_NEWS_IMAGE);
+      return;
+    }
+    
+    // For news, try next content image if available
     if (contentImages.length > currentImageIndex + 1) {
       setCurrentImageIndex(currentImageIndex + 1);
       setImageError(false);

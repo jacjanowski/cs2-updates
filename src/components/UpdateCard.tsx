@@ -19,9 +19,10 @@ export interface UpdateData {
 interface UpdateCardProps {
   update: UpdateData;
   isNew?: boolean;
+  isNewsItem?: boolean; // Added parameter to differentiate news from updates
 }
 
-const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
+const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardProps) => {
   const navigate = useNavigate();
   const [hasImage, setHasImage] = useState(() => {
     // Check if there's an image available
@@ -48,6 +49,7 @@ const UpdateCard = ({ update, isNew = false }: UpdateCardProps) => {
         imageUrl={update.imageUrl}
         title={update.title}
         isNew={isNew}
+        isNewsItem={isNewsItem}
       />
       
       <UpdateCardContent

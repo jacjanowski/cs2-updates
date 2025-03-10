@@ -148,6 +148,7 @@ const News = () => {
                   key={newsItem.url || index} 
                   update={newsItem} 
                   isNew={index === 0 && visibleCount === 5} 
+                  isNewsItem={true} // Mark this as a news item
                 />
               ))}
               

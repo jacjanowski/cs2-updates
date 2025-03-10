@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from "@/lib/utils";
 import { extractImagesFromContent } from "@/utils/updateFormatter";
 
@@ -14,23 +14,15 @@ interface UpdateCardImageProps {
 const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
 
 const UpdateCardImage = ({ description, imageUrl, title, isNew = false, isNewsItem = false }: UpdateCardImageProps) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const [bestImage, setBestImage] = useState<string | null>(null);
-  const [hasImage, setHasImage] = useState(false);
   
   useEffect(() => {
-    // Reset states when props change
-    setImageLoaded(false);
-    setImageError(false);
-    
     // Determine if there's any image to display
     const findBestImage = () => {
       // For updates, always use the default image
       if (!isNewsItem) {
         console.log("Using default CS2 image for update");
         setBestImage(DEFAULT_NEWS_IMAGE);
-        setHasImage(true);
         return;
       }
       
@@ -39,7 +31,6 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false, isNewsIt
       if (contentImages.length > 0) {
         console.log("Using content image for news:", contentImages[0]);
         setBestImage(contentImages[0]);
-        setHasImage(true);
         return;
       }
       
@@ -47,72 +38,24 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false, isNewsIt
       if (imageUrl) {
         console.log("Using API image for news:", imageUrl);
         setBestImage(imageUrl); 
-        setHasImage(true);
         return;
       }
       
       // If no image available, use default
       console.log("Using default CS2 image for news (no other images found)");
       setBestImage(DEFAULT_NEWS_IMAGE);
-      setHasImage(true);
     };
     
     findBestImage();
   }, [description, imageUrl, isNewsItem]);
 
-  const handleImageError = () => {
-    console.error(`Failed to load image:`, bestImage);
-    setImageError(true);
-    
-    // For updates, just use the default image
-    if (!isNewsItem) {
-      console.log("Using default CS2 image for update after error");
-      setBestImage(DEFAULT_NEWS_IMAGE);
-      setImageError(false);
-      return;
-    }
-    
-    // For news, try to find another image
-    const contentImages = extractImagesFromContent(description);
-    if (contentImages.length > 1 && bestImage !== contentImages[1]) {
-      console.log("Trying alternative image for news:", contentImages[1]);
-      setBestImage(contentImages[1]);
-      setImageError(false);
-    } else if (imageUrl && !contentImages.includes(imageUrl) && bestImage !== imageUrl) {
-      // Try the original imageUrl if we haven't tried it yet
-      console.log("Falling back to original image URL for news:", imageUrl);
-      setBestImage(imageUrl);
-      setImageError(false);
-    } else {
-      // Use default image as last resort
-      console.log("Using default CS2 image for news after all attempts failed");
-      setBestImage(DEFAULT_NEWS_IMAGE);
-      setImageError(false);
-    }
-  };
-
-  const handleImageLoad = () => {
-    setImageLoaded(true);
-  };
-
   // Always show an image - either the content image, API image, or default
   return (
     <div className="relative w-full sm:w-1/3 h-48 sm:h-auto bg-muted/30 overflow-hidden">
-      <div 
-        className={cn(
-          "absolute inset-0 bg-muted/50 animate-pulse-subtle transition-opacity duration-500",
-          imageLoaded ? "opacity-0" : "opacity-100"
-        )}
-      />
       <img
         src={bestImage || DEFAULT_NEWS_IMAGE}
         alt={title}
-        className={cn(
-          "w-full h-full object-cover transition-all duration-500 transform hover:scale-105",
-          imageLoaded ? "opacity-100" : "opacity-0"
-        )}
-        onLoad={handleImageLoad}
-        onError={handleImageError}
+        className="w-full h-full object-cover"
         crossOrigin="anonymous"
       />
       {isNew && (

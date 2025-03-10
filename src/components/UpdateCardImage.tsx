@@ -8,13 +8,14 @@ interface UpdateCardImageProps {
   imageUrl?: string;
   title: string;
   isNew?: boolean;
-  isNewsItem?: boolean; // Added parameter to differentiate news from updates
+  isNewsItem?: boolean;
 }
 
 const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
 
 const UpdateCardImage = ({ description, imageUrl, title, isNew = false, isNewsItem = false }: UpdateCardImageProps) => {
   const [bestImage, setBestImage] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
   
   useEffect(() => {
     // Determine if there's any image to display
@@ -49,14 +50,20 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false, isNewsIt
     findBestImage();
   }, [description, imageUrl, isNewsItem]);
 
+  const handleImageError = () => {
+    console.log("Image failed to load, using fallback image");
+    setImageError(true);
+  };
+
   // Always show an image - either the content image, API image, or default
   return (
     <div className="relative w-full sm:w-1/3 h-48 sm:h-auto bg-muted/30 overflow-hidden">
       <img
-        src={bestImage || DEFAULT_NEWS_IMAGE}
+        src={imageError ? DEFAULT_NEWS_IMAGE : (bestImage || DEFAULT_NEWS_IMAGE)}
         alt={title}
         className="w-full h-full object-cover"
         crossOrigin="anonymous"
+        onError={handleImageError}
       />
       {isNew && (
         <div className="absolute top-3 right-3">

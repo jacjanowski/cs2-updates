@@ -16,14 +16,14 @@ interface UseUpdateImageResult {
 export const useUpdateImage = (
   imageUrl: string | undefined, 
   description: string | undefined,
-  isNewsItem: boolean = false // Added parameter to differentiate news from updates
+  isNewsItem: boolean = false
 ): UseUpdateImageResult => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [displayImage, setDisplayImage] = useState<string | null>(null);
   const [contentImages, setContentImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [hasAnyImage, setHasAnyImage] = useState(true); // Default to true since we always have a fallback
+  const [hasAnyImage, setHasAnyImage] = useState(true);
 
   useEffect(() => {
     setImageError(false);
@@ -66,30 +66,10 @@ export const useUpdateImage = (
   }, [imageUrl, description, isNewsItem]);
 
   const handleImageError = () => {
-    console.error(`Failed to load image: ${displayImage}`);
+    console.log(`Failed to load image: ${displayImage}, falling back to default image`);
     setImageError(true);
-    
-    // For updates, just use the default image
-    if (!isNewsItem) {
-      setImageError(false);
-      setDisplayImage(DEFAULT_NEWS_IMAGE);
-      return;
-    }
-    
-    // For news, try next content image if available
-    if (contentImages.length > currentImageIndex + 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
-      setImageError(false);
-      setDisplayImage(contentImages[currentImageIndex + 1]);
-    } else if (imageUrl && !contentImages.includes(imageUrl)) {
-      // If we've tried all content images, try the API image as last resort
-      setImageError(false);
-      setDisplayImage(imageUrl);
-    } else {
-      // Use default image if all else fails
-      setImageError(false);
-      setDisplayImage(DEFAULT_NEWS_IMAGE);
-    }
+    setDisplayImage(DEFAULT_NEWS_IMAGE);
+    setImageLoaded(true); // Mark as loaded so UI updates
   };
 
   const handleImageLoad = () => {

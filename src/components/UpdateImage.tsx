@@ -1,5 +1,6 @@
 
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
 
@@ -20,27 +21,24 @@ const UpdateImage = ({
   onImageError,
   onImageLoad
 }: UpdateImageProps) => {
+  const [localImageError, setLocalImageError] = useState(false);
+  
   // Always show an image - if there's no image to display or if there was an error, use default
-  const imageToDisplay = (!displayImage || imageError) ? DEFAULT_NEWS_IMAGE : displayImage;
+  const imageToDisplay = localImageError || !displayImage ? DEFAULT_NEWS_IMAGE : displayImage;
+
+  const handleImageError = () => {
+    setLocalImageError(true);
+    console.log("UpdateImage: Image error, using fallback image instead");
+    onImageError();
+  };
 
   return (
     <div className="w-full relative h-[400px] overflow-hidden mb-6">
-      <div className={cn(
-        "absolute inset-0 bg-muted/50 animate-pulse-subtle flex items-center justify-center",
-        imageLoaded ? 'opacity-0' : 'opacity-100',
-        "transition-opacity duration-300"
-      )}>
-        <span className="text-muted-foreground">Loading image...</span>
-      </div>
       <img 
         src={imageToDisplay} 
         alt={title} 
-        className={cn(
-          "w-full h-full object-cover",
-          imageLoaded ? 'opacity-100' : 'opacity-0',
-          "transition-opacity duration-300"
-        )}
-        onError={onImageError}
+        className="w-full h-full object-cover"
+        onError={handleImageError}
         onLoad={onImageLoad}
         crossOrigin="anonymous"
       />

@@ -1,5 +1,6 @@
+
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const DEFAULT_NEWS_IMAGE = '/lovable-uploads/8db559b1-a09b-4644-b634-2215dba9100c.png';
 
@@ -31,15 +32,19 @@ const UpdateImage = ({
     onImageError();
   };
 
+  // Add a check to make sure we're not trying to display an empty or invalid URL
+  useEffect(() => {
+    setLocalImageError(false); // Reset error state when displayImage changes
+  }, [displayImage]);
+
   return (
     <div className="w-full relative h-[400px] overflow-hidden mb-6">
       <img 
         src={imageToDisplay} 
-        alt={title} 
+        alt={title || "CS2 Update"} 
         className="w-full h-full object-cover"
         onError={handleImageError}
         onLoad={onImageLoad}
-        crossOrigin="anonymous"
       />
     </div>
   );

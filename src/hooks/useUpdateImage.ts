@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { extractImagesFromContent } from "@/utils/updateFormatter";
 
@@ -19,15 +20,13 @@ export const useUpdateImage = (
 ): UseUpdateImageResult => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [displayImage, setDisplayImage] = useState<string | null>(null);
+  const [displayImage, setDisplayImage] = useState<string | null>(DEFAULT_NEWS_IMAGE);
   const [contentImages, setContentImages] = useState<string[]>([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [hasAnyImage, setHasAnyImage] = useState(true);
 
   useEffect(() => {
     setImageError(false);
     setImageLoaded(false);
-    setCurrentImageIndex(0);
     
     // Extract all possible images
     if (description) {
@@ -37,32 +36,33 @@ export const useUpdateImage = (
       setContentImages([]);
     }
     
-    // Determine best image to display
-    const getBestImage = () => {
-      // For updates, always use the default image
-      if (!isNewsItem) {
-        return DEFAULT_NEWS_IMAGE;
-      }
-      
-      // For news, try to find an image from content first
-      if (description) {
-        const extractedImages = extractImagesFromContent(description);
-        if (extractedImages.length > 0) {
-          return extractedImages[0];
-        }
-      }
-      
-      // Then try the API image if it exists
-      if (imageUrl) {
-        return imageUrl;
-      }
-      
-      // Default to CS2 image if no other image is available
-      return DEFAULT_NEWS_IMAGE;
-    };
+    // For updates, always default to the CS2 image
+    if (!isNewsItem) {
+      console.log("Is an update, using default CS2 image");
+      setDisplayImage(DEFAULT_NEWS_IMAGE);
+      return;
+    }
     
-    setDisplayImage(getBestImage());
-  }, [imageUrl, description, isNewsItem]);
+    // For news, try to find the best image
+    // First try content images
+    if (contentImages.length > 0) {
+      console.log("Using image from content:", contentImages[0]);
+      setDisplayImage(contentImages[0]);
+      return;
+    }
+    
+    // Then try API image
+    if (imageUrl) {
+      console.log("Using API image:", imageUrl);
+      setDisplayImage(imageUrl);
+      return;
+    }
+    
+    // Default to CS2 image if nothing else works
+    console.log("No suitable image found, using default CS2 image");
+    setDisplayImage(DEFAULT_NEWS_IMAGE);
+    
+  }, [imageUrl, description, isNewsItem, contentImages]);
 
   const handleImageError = () => {
     console.log(`Failed to load image: ${displayImage}, falling back to default image`);

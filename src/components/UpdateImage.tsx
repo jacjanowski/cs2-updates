@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
-const DEFAULT_NEWS_IMAGE = '/lovable-uploads/8db559b1-a09b-4644-b634-2215dba9100c.png';
+const DEFAULT_NEWS_IMAGE = 'https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/event_header.png';
 
 interface UpdateImageProps {
   displayImage: string | null;

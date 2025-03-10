@@ -9,6 +9,8 @@ import { RefreshCw, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/5beb1488-343d-4154-9343-0c04aa0728f5.png';
+
 const Index = () => {
   const [updates, setUpdates] = useState<UpdateData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ const Index = () => {
           description: `This is a sample CS2 update ${i + 1} with some description text.`,
           date: new Date(Date.now() - i * 86400000).toISOString(), // Each day earlier
           url: `https://example.com/update-${i + 1}`,
-          imageUrl: i % 2 === 0 ? 'https://picsum.photos/800/400?random=' + i : undefined
+          imageUrl: DEFAULT_NEWS_IMAGE // Use our default image instead of picsum
         }));
       }
       

@@ -13,12 +13,16 @@ interface UpdateImageProps {
 }
 
 const UpdateImage = ({ 
-  title,
+  displayImage, 
+  imageError, 
   imageLoaded,
+  title,
   onImageError,
   onImageLoad
 }: UpdateImageProps) => {
-  // Always use the default image
+  // Always show an image - if there's no image to display or if there was an error, use default
+  const imageToDisplay = (!displayImage || imageError) ? DEFAULT_NEWS_IMAGE : displayImage;
+
   return (
     <div className="w-full relative h-[400px] overflow-hidden mb-6">
       <div className={cn(
@@ -29,7 +33,7 @@ const UpdateImage = ({
         <span className="text-muted-foreground">Loading image...</span>
       </div>
       <img 
-        src={DEFAULT_NEWS_IMAGE} 
+        src={imageToDisplay} 
         alt={title} 
         className={cn(
           "w-full h-full object-cover",

@@ -1,89 +1,31 @@
 
 import { UpdateData } from "@/components/UpdateCard";
+import { SteamEvent, SteamResponse } from "./steam/steamTypes";
+import { processHtmlContent, extractImageFromBody } from "./steam/contentProcessor";
+import { parseJsonData } from "./steam/jsonParser";
+import { shouldCheckForUpdate } from "./steam/schedulingUtils";
+import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 const API_URL = 'https://corsproxy.io/?http://store.steampowered.com/events/ajaxgetpartnereventspageable/?clan_accountid=0&appid=730&offset=0&count=100&l=english&origin=https:%2F%2Fwww.counter-strike.net';
-
-export interface SteamEvent {
-  announcement_body: {
-    gid: string;
-    clanid: string;
-    posterid: string;
-    headline: string;
-    posttime: number;
-    updatetime: number;
-    body: string;
-  };
-  event_description: string;
-  event_name: string;
-  event_type: number;
-  rtime32_start_time: number;
-  rtime32_end_time: number;
-  display_event: boolean;
-  event_gid: string;
-  left_icon_text: string;
-  jsondata: string;
-  steamstoreitem: object[];
-}
-
-export interface SteamResponse {
-  success: boolean;
-  events: SteamEvent[];
-  strAvatar?: string;
-}
+const DEFAULT_NEWS_IMAGE = '/lovable-uploads/953a1bfe-ab54-4c85-9968-2c79a39168d1.png';
 
 export class SteamAPI {
   private static lastCheckedTime: number = 0;
   private static cachedUpdates: UpdateData[] = [];
-  private static lastUpdateId: string | null = null;
-
-  // Process HTML content to extract structured information
-  private static processHtmlContent(htmlContent: string): string {
-    // Replace HTML line breaks with newlines
-    let content = htmlContent.replace(/<br\s*\/?>/gi, '\n');
-    
-    // Replace HTML lists with formatted bullet points
-    content = content.replace(/<ul>(.*?)<\/ul>/gis, (match, listContent) => {
-      // Extract list items and format them with bullet points
-      const items = listContent.match(/<li>(.*?)<\/li>/gis) || [];
-      return items
-        .map(item => '• ' + item.replace(/<li>(.*?)<\/li>/i, '$1'))
-        .join('\n');
-    });
-    
-    // Replace headers with section headers
-    content = content.replace(/<h[1-6]>(.*?)<\/h[1-6]>/gi, match => {
-      const headerText = match.replace(/<\/?h[1-6]>/gi, '');
-      return `[${headerText.toUpperCase()}]`;
-    });
-    
-    // Extract section headers that might be in bold tags
-    content = content.replace(/<strong>\[(.*?)\]<\/strong>/gi, '[$1]');
-    
-    // Remove remaining HTML tags
-    content = content.replace(/<\/?[^>]+(>|$)/g, '');
-    
-    // Clean up extra whitespace
-    content = content.replace(/\n\s*\n/g, '\n\n');
-    
-    return content.trim();
-  }
 
   // Helper to convert Steam event to our UpdateData format
   private static convertEventToUpdate(event: SteamEvent): UpdateData {
     const body = event.announcement_body?.body || '';
     
-    // Extract first image from the body if it exists
-    const imageMatch = body.match(/<img[^>]+src="([^">]+)"/i);
-    const imageUrl = imageMatch ? imageMatch[1] : undefined;
-    
-    // Process HTML content to extract formatted text
+    // Process HTML content first to extract formatted text and images
     let description = '';
     
-    if (event.event_description) {
-      description = this.processHtmlContent(event.event_description);
-    } else if (body) {
-      description = this.processHtmlContent(body);
+    if (body) {
+      description = processHtmlContent(body);
     }
+    
+    // Try multiple sources for images, but prioritize using the default image
+    const imageUrl = DEFAULT_NEWS_IMAGE;
     
     return {
       title: event.event_name,
@@ -94,7 +36,7 @@ export class SteamAPI {
     };
   }
 
-  // Get updates from Steam
+  // Get updates from Steam - only CS2 updates
   public static async getUpdates(): Promise<{updates: UpdateData[], hasNewUpdate: boolean}> {
     try {
       console.log("Fetching updates from Steam API...");
@@ -111,22 +53,25 @@ export class SteamAPI {
         return { updates: this.cachedUpdates, hasNewUpdate: false };
       }
       
-      // Convert to our format and sort by date (newest first)
+      // Get all CS2 updates (excluding other events)
       const updates = data.events
         .filter(event => {
-          // Include both regular updates and "Release Notes for" items
-          return event.event_type === 12 || event.event_name.includes("Release Notes for");
+          // Include only CS2 updates and any "Release Notes for" items
+          return event.event_name === "Counter-Strike 2 Update" || 
+                 event.event_name.includes("Release Notes for");
         })
         .map(event => this.convertEventToUpdate(event))
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
+      // Check for new update
+      const hasNewUpdate = this.cachedUpdates.length === 0 || 
+        (updates.length > 0 && this.cachedUpdates.length > 0 && 
+         updates[0].title !== this.cachedUpdates[0].title);
+      
       this.cachedUpdates = updates;
       this.lastCheckedTime = Date.now();
       
-      // Check if there's a new update
-      const hasNewUpdate = this.hasNewUpdate(updates);
-      
-      console.log(`Fetched ${updates.length} updates. New updates: ${hasNewUpdate}`);
+      console.log(`Fetched ${updates.length} updates. New update: ${hasNewUpdate}`);
       return { updates, hasNewUpdate };
     } catch (error) {
       console.error("Error fetching updates:", error);
@@ -134,43 +79,8 @@ export class SteamAPI {
     }
   }
 
-  // Check if there's a new update
-  private static hasNewUpdate(updates: UpdateData[]): boolean {
-    if (updates.length === 0) return false;
-    
-    const latestUpdateDate = new Date(updates[0].date).getTime();
-    const currentUpdateId = updates[0].title + updates[0].date;
-    
-    // First time checking
-    if (!this.lastUpdateId) {
-      this.lastUpdateId = currentUpdateId;
-      return false;
-    }
-    
-    // Check if the latest update is different
-    const isNewUpdate = this.lastUpdateId !== currentUpdateId;
-    
-    if (isNewUpdate) {
-      this.lastUpdateId = currentUpdateId;
-    }
-    
-    return isNewUpdate;
-  }
-
-  // Check if we should fetch updates based on settings
+  // Check if we should fetch updates based on last check time
   public static shouldCheckForUpdates(checkFrequency: 'hourly' | 'daily' | 'weekly'): boolean {
-    if (this.lastCheckedTime === 0) return true;
-    
-    const now = Date.now();
-    const timeSinceLastCheck = now - this.lastCheckedTime;
-    
-    // Convert frequency to milliseconds
-    const frequencyMs = {
-      hourly: 60 * 60 * 1000,
-      daily: 24 * 60 * 60 * 1000,
-      weekly: 7 * 24 * 60 * 60 * 1000
-    };
-    
-    return timeSinceLastCheck >= frequencyMs[checkFrequency];
+    return shouldCheckForUpdate(this.lastCheckedTime, checkFrequency);
   }
 }

@@ -1,3 +1,4 @@
+
 import { UpdateData } from "@/components/UpdateCard";
 import { SteamEvent, SteamResponse } from "./steam/steamTypes";
 import { processHtmlContent, extractImageFromBody } from "./steam/contentProcessor";
@@ -23,24 +24,8 @@ export class NewsAPI {
       description = processHtmlContent(body);
     }
     
-    // Try multiple sources for images, prioritizing content images first as they are more reliable
-    const contentImages = extractImagesFromContent(description);
-    let imageUrl = contentImages.length > 0 ? contentImages[0] : undefined;
-    
-    // If no image found in content, try JSON data
-    if (!imageUrl) {
-      imageUrl = parseJsonData(event.jsondata);
-    }
-    
-    // If still no image, try extracting directly from body
-    if (!imageUrl && body) {
-      imageUrl = extractImageFromBody(body);
-    }
-    
-    // If still no image, use the default CS2 image
-    if (!imageUrl) {
-      imageUrl = DEFAULT_NEWS_IMAGE;
-    }
+    // Always use the default image for consistency
+    const imageUrl = DEFAULT_NEWS_IMAGE;
     
     return {
       title: event.event_name,

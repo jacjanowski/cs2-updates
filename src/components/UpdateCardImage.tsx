@@ -57,7 +57,7 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false, isNewsIt
 
   // Always show an image - either the content image, API image, or default
   return (
-    <div className="relative w-1/3 h-48 overflow-hidden bg-muted/30">
+    <div className="relative flex-shrink-0 w-[33.333%] h-48 bg-muted/30 overflow-hidden">
       <img
         src={imageError ? DEFAULT_NEWS_IMAGE : (bestImage || DEFAULT_NEWS_IMAGE)}
         alt={title}

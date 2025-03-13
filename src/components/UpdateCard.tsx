@@ -34,7 +34,7 @@ const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardPro
         "overflow-hidden transition-all duration-300 animate-slide-up bg-card/60 backdrop-blur-sm hover:shadow-lg border-border/80",
         isNew && "ring-2 ring-primary/30",
         "dark:bg-gray-900/90 text-foreground",
-        "cursor-pointer hover:scale-[1.01] hover:shadow-xl flex flex-col sm:flex-row"
+        "cursor-pointer hover:scale-[1.01] hover:shadow-xl flex"
       )}
       onClick={handleCardClick}
     >

@@ -25,7 +25,8 @@ const UpdateDetail = () => {
     imageError, 
     imageLoaded, 
     handleImageError, 
-    handleImageLoad 
+    handleImageLoad,
+    hasAnyImage
   } = useUpdateImage(update?.imageUrl, update?.description, isNewsItem);
   
   // Format the description for display
@@ -37,6 +38,9 @@ const UpdateDetail = () => {
   const getBackPath = () => {
     return isNewsItem ? '/news' : '/';
   };
+
+  // For news items, check if image is already included in the content
+  const shouldHideHeaderImage = isNewsItem && hasAnyImage;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -66,6 +70,7 @@ const UpdateDetail = () => {
               title={update.title}
               onImageError={handleImageError}
               onImageLoad={handleImageLoad}
+              hideForNewsItems={shouldHideHeaderImage}
             />
             
             <div className="px-6 pb-6">

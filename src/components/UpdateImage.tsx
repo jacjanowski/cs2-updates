@@ -11,6 +11,7 @@ interface UpdateImageProps {
   title: string;
   onImageError: () => void;
   onImageLoad: () => void;
+  hideForNewsItems?: boolean;
 }
 
 const UpdateImage = ({ 
@@ -19,7 +20,8 @@ const UpdateImage = ({
   imageLoaded,
   title,
   onImageError,
-  onImageLoad
+  onImageLoad,
+  hideForNewsItems = false
 }: UpdateImageProps) => {
   const [localImageError, setLocalImageError] = useState(false);
   
@@ -32,10 +34,16 @@ const UpdateImage = ({
     onImageError();
   };
 
-  // Add a check to make sure we're not trying to display an empty or invalid URL
+  // Reset error state when displayImage changes
   useEffect(() => {
-    setLocalImageError(false); // Reset error state when displayImage changes
+    setLocalImageError(false);
   }, [displayImage]);
+
+  // If this is a news item and we should hide the image (to avoid duplication)
+  // and the image is from the content, return null
+  if (hideForNewsItems) {
+    return null;
+  }
 
   return (
     <div className="w-full relative h-[400px] overflow-hidden mb-6">

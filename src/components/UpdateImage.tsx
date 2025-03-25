@@ -46,11 +46,11 @@ const UpdateImage = ({
   }
 
   return (
-    <div className="w-full relative h-[400px] overflow-hidden mb-6">
+    <div className="w-full relative h-auto mb-6 overflow-hidden">
       <img 
         src={imageToDisplay} 
         alt={title || "CS2 Update"} 
-        className="w-full h-full object-cover"
+        className="w-full object-contain max-h-[500px]"
         onError={handleImageError}
         onLoad={onImageLoad}
       />

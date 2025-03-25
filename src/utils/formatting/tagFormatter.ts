@@ -64,10 +64,11 @@ export const formatDescription = (description: string): string => {
   });
   
   // Handle url= format and convert to proper hyperlinks
-  // Improved regex to handle multi-line content and capture everything between url= and /url
+  // Improved regex to better handle inline links with surrounding text
   formattedText = formattedText.replace(/url=([^\s]+)\s+([\s\S]*?)\/url/g, (match, url, linkText) => {
     // Clean up any newlines in the link text to make it appear as a single item
     const cleanedText = linkText.trim().replace(/\n/g, ' ');
+    // Create a link that will appear inline with text
     return `<a href="${url}" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   

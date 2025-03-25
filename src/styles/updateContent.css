@@ -32,6 +32,7 @@
   color: hsl(var(--primary));
   text-decoration: none;
   transition: text-decoration 0.2s ease;
+  display: inline; /* Ensure links remain inline with text */
 }
 
 .update-content a:hover {

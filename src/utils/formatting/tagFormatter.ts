@@ -64,11 +64,11 @@ export const formatDescription = (description: string): string => {
   });
   
   // Handle url= format and convert to proper hyperlinks
-  // Look for url=link Text /url pattern even when it's part of a sentence
+  // Use a non-greedy regex that won't break sentences
   formattedText = formattedText.replace(/url=([^\s]+)\s+(.*?)\/url/g, (match, url, linkText) => {
-    // Clean up any newlines or extra spaces to ensure inline display
+    // Ensure the link text is properly cleaned up
     const cleanedText = linkText.trim().replace(/\n/g, ' ');
-    // Return just the linked text that will flow inline with the surrounding content
+    // Return the link as an inline element within the text flow
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   

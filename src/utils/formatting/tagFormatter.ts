@@ -64,8 +64,11 @@ export const formatDescription = (description: string): string => {
   });
   
   // Handle url= format and convert to proper hyperlinks
-  formattedText = formattedText.replace(/url=([^\s]+)\s+([^\/]+)\/url/g, (match, url, linkText) => {
-    return `<a href="${url}" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">${linkText.trim()}</a>`;
+  // Improved regex to handle multi-line content and capture everything between url= and /url
+  formattedText = formattedText.replace(/url=([^\s]+)\s+([\s\S]*?)\/url/g, (match, url, linkText) => {
+    // Clean up any newlines in the link text to make it appear as a single item
+    const cleanedText = linkText.trim().replace(/\n/g, ' ');
+    return `<a href="${url}" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   
   // Handle heading tags [h1], [h2], [h3], etc.

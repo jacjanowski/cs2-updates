@@ -63,6 +63,11 @@ export const formatDescription = (description: string): string => {
     return match; // Return original if couldn't parse
   });
   
+  // Handle url= format and convert to proper hyperlinks
+  formattedText = formattedText.replace(/url=([^\s]+)\s+([^\/]+)\/url/g, (match, url, linkText) => {
+    return `<a href="${url}" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">${linkText.trim()}</a>`;
+  });
+  
   // Handle heading tags [h1], [h2], [h3], etc.
   formattedText = formattedText.replace(/\[h([1-6])\](.*?)\[\/h\1\]/g, (match, level, content) => {
     return `<h${level} class="font-bold my-3 text-${4-Math.min(parseInt(level), 3)}xl">${content}</h${level}>`;

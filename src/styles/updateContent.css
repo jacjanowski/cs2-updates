@@ -27,6 +27,17 @@
   margin-bottom: 1rem;
 }
 
+/* Link styling */
+.update-content a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+  transition: text-decoration 0.2s ease;
+}
+
+.update-content a:hover {
+  text-decoration: underline;
+}
+
 /* Video container styling */
 .update-content .video-container {
   position: relative;
@@ -62,6 +73,10 @@
 
 .dark .update-content ul li {
   color: #c0c0c0;
+}
+
+.dark .update-content a {
+  color: hsl(var(--primary));
 }
 
 .dark .update-content .video-container {

@@ -64,8 +64,10 @@ export const formatDescription = (description: string): string => {
   });
   
   // Handle url= format and convert to proper hyperlinks
-  // Use a non-greedy regex that won't break sentences
-  formattedText = formattedText.replace(/url=([^\s]+)\s+(.*?)\/url/g, (match, url, linkText) => {
+  // This pattern handles both formats:
+  // 1. url=link Text /url
+  // 2. url=link\nText\n/url (with line breaks)
+  formattedText = formattedText.replace(/url=([^\s]+)\s+(.*?)\/url/gs, (match, url, linkText) => {
     // Ensure the link text is properly cleaned up
     const cleanedText = linkText.trim().replace(/\n/g, ' ');
     // Return the link as an inline element within the text flow

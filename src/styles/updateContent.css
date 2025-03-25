@@ -34,6 +34,8 @@
   text-decoration: none;
   transition: text-decoration 0.2s ease;
   display: inline; /* Ensure links remain inline with text */
+  white-space: normal; /* Allow text to wrap normally */
+  word-break: break-word; /* Break long words if needed */
 }
 
 .update-content a:hover,

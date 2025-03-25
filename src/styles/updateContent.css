@@ -28,14 +28,16 @@
 }
 
 /* Link styling */
-.update-content a {
+.update-content a, 
+.update-content .inline-link {
   color: hsl(var(--primary));
   text-decoration: none;
   transition: text-decoration 0.2s ease;
   display: inline; /* Ensure links remain inline with text */
 }
 
-.update-content a:hover {
+.update-content a:hover,
+.update-content .inline-link:hover {
   text-decoration: underline;
 }
 
@@ -76,7 +78,8 @@
   color: #c0c0c0;
 }
 
-.dark .update-content a {
+.dark .update-content a,
+.dark .update-content .inline-link {
   color: hsl(var(--primary));
 }
 

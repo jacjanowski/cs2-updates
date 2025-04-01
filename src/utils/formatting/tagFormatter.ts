@@ -27,7 +27,7 @@ export const formatDescription = (description: string): string => {
     const mp4Src = mp4Match ? mp4Match[1] : '';
     const webmSrc = webmMatch ? webmMatch[1] : '';
     const poster = posterMatch ? posterMatch[1] : '';
-    const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : false;
+    const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : true; // Default to true
     const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
     
     if (mp4Src || webmSrc) {
@@ -79,7 +79,7 @@ export const formatDescription = (description: string): string => {
     return `<em>${text.trim()}</em>`;
   });
   
-  // Handle carousel tag - Wrap images between [carousel] tags in a special div
+  // Handle carousel tag - Use our custom Carousel component
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -96,47 +96,20 @@ export const formatDescription = (description: string): string => {
       return match; // No images found, return original
     }
     
-    // Create a container with a unique ID for the carousel
-    const carouselId = `swiper-carousel-${Math.random().toString(36).substring(2, 10)}`;
+    // Create a unique ID for this carousel
+    const carouselId = `carousel-${Math.random().toString(36).substring(2, 10)}`;
     
+    // Generate HTML for our custom carousel component
     let carouselHtml = `
-      <div class="swiper-carousel-container my-6" id="${carouselId}">
-        <div class="swiper">
-          <div class="swiper-wrapper">`;
-    
-    // Add each image as a slide
-    images.forEach(imgSrc => {
-      carouselHtml += `
-            <div class="swiper-slide">
-              <img src="${imgSrc}" class="w-full object-contain" alt="Carousel image" />
-            </div>`;
-    });
-    
-    // Add navigation and pagination
-    carouselHtml += `
+      <div class="cs2-carousel" data-carousel-id="${carouselId}" data-images="${encodeURIComponent(JSON.stringify(images))}">
+        <div class="cs2-carousel-placeholder">
+          <img src="${images[0]}" alt="Carousel image" class="w-full object-contain max-h-[400px]" />
+          <div class="cs2-carousel-indicator">
+            <span>1</span>/<span>${images.length}</span>
           </div>
-          <div class="swiper-pagination"></div>
-          <div class="swiper-button-prev"></div>
-          <div class="swiper-button-next"></div>
         </div>
       </div>
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          new Swiper('#${carouselId} .swiper', {
-            slidesPerView: 1,
-            spaceBetween: 30,
-            loop: ${images.length > 1 ? 'true' : 'false'},
-            pagination: {
-              el: '#${carouselId} .swiper-pagination',
-              clickable: true,
-            },
-            navigation: {
-              nextEl: '#${carouselId} .swiper-button-next',
-              prevEl: '#${carouselId} .swiper-button-prev',
-            },
-          });
-        });
-      </script>`;
+    `;
     
     return carouselHtml;
   });

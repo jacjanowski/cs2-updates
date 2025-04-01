@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import ContentCarousel from "./ContentCarousel";
@@ -88,7 +87,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Initialize both carousels and videos - do this sooner and retry if needed
+    // Initialize both carousels and videos
     initializeCarousels();
     initializeVideos();
     
@@ -96,7 +95,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     const timer = setTimeout(() => {
       initializeCarousels();
       initializeVideos();
-    }, 200);
+    }, 300);
     
     return () => {
       clearTimeout(timer);

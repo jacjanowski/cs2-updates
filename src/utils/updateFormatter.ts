@@ -3,7 +3,7 @@
  */
 
 // Import the fixHtmlTags function
-import { fixHtmlTags } from './htmlFormatter';
+import { fixHtmlTags } from './formatting/htmlFormatter';
 
 /**
  * Formats the description text into structured HTML

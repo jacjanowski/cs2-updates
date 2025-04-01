@@ -4,6 +4,7 @@ import { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
 import { extractImagesFromContent } from "@/utils/updateFormatter";
+import { compareUpdateSlugs } from "@/utils/urlHelpers";
 
 interface UseUpdateDetailResult {
   update: UpdateData | null;
@@ -34,18 +35,16 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
         // First try to find the update in CS2 updates
         const { updates } = await SteamAPI.getUpdates();
         
-        let foundItem = updates.find(u => 
-          encodeURIComponent(u.title.toLowerCase().replace(/\s+/g, '-')) === id
-        );
+        // Use our new slug comparison function
+        let foundItem = updates.find(u => compareUpdateSlugs(id, getUpdateSlug(u.title)));
         
         // If not found in updates, check the news
         if (!foundItem) {
           console.log("Item not found in updates, checking news...");
           const newsItems = await NewsAPI.getNews();
           
-          foundItem = newsItems.find(n => 
-            encodeURIComponent(n.title.toLowerCase().replace(/\s+/g, '-')) === id
-          );
+          // Use the same comparison function for news items
+          foundItem = newsItems.find(n => compareUpdateSlugs(id, getUpdateSlug(n.title)));
           
           if (foundItem) {
             console.log("Found item in news:", foundItem.title);

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
+import { getUpdateSlug } from "@/utils/urlHelpers";
 
 export const useUpdateDetail = (id: string | undefined): {
   update: UpdateData | null;
@@ -30,9 +31,7 @@ export const useUpdateDetail = (id: string | undefined): {
         const { updates } = await SteamAPI.getUpdates();
         
         let foundUpdate = updates.find(update => {
-          const updateSlug = update.title.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-');
+          const updateSlug = getUpdateSlug(update.title);
           console.log(`Comparing ${updateSlug} with ${id}`);
           return updateSlug === id;
         });
@@ -42,9 +41,7 @@ export const useUpdateDetail = (id: string | undefined): {
           console.log("Not found in updates, checking news items...");
           const news = await NewsAPI.getNews();
           foundUpdate = news.find(newsItem => {
-            const newsSlug = newsItem.title.toLowerCase()
-              .replace(/[^\w\s-]/g, '')
-              .replace(/\s+/g, '-');
+            const newsSlug = getUpdateSlug(newsItem.title);
             console.log(`Comparing ${newsSlug} with ${id}`);
             return newsSlug === id;
           });

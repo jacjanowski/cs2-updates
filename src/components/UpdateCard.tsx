@@ -24,7 +24,9 @@ const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardPro
   const navigate = useNavigate();
   
   const handleCardClick = () => {
-    navigate(`/update/${getUpdateSlug(update.title)}`);
+    const slug = getUpdateSlug(update.title);
+    console.log(`Navigating to update: ${slug}`);
+    navigate(`/update/${slug}`);
   };
   
   return (

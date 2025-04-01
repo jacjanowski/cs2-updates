@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { getUpdateSlug } from "@/utils/urlHelpers";
 import UpdateCardImage from "@/components/UpdateCardImage";
 import UpdateCardContent from "@/components/UpdateCardContent";
+import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 export interface UpdateData {
   title: string;
@@ -24,9 +25,7 @@ const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardPro
   const navigate = useNavigate();
   
   const handleCardClick = () => {
-    const slug = getUpdateSlug(update.title);
-    console.log(`Navigating to update: ${slug}`);
-    navigate(`/update/${slug}`);
+    navigate(`/update/${getUpdateSlug(update.title)}`);
   };
   
   return (

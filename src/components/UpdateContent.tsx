@@ -1,6 +1,11 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+// Import Swiper
+import { Swiper } from 'swiper/types';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 interface UpdateContentProps {
   description: string;
@@ -11,77 +16,79 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    // Process videos to ensure autoplay works
+    // Initialize Swiper carousels if they exist
+    let swiperInstances: Swiper[] = [];
+    
+    const initSwiper = async () => {
+      if (!contentRef.current) return;
+      
+      // Dynamic import Swiper with the modules we need
+      const { Swiper, Navigation, Pagination } = await import('swiper');
+      import('swiper/modules');
+      
+      // Find all carousel containers
+      const carousels = contentRef.current.querySelectorAll('.swiper-carousel-container .swiper');
+      
+      // Initialize each carousel
+      carousels.forEach(carousel => {
+        // Don't initialize the same carousel twice
+        if ((carousel as any).__swiper__) return;
+        
+        const container = carousel.closest('.swiper-carousel-container') as HTMLElement;
+        if (!container) return;
+        
+        const swiper = new Swiper(carousel as HTMLElement, {
+          modules: [Navigation, Pagination],
+          slidesPerView: 1,
+          spaceBetween: 30,
+          loop: carousel.querySelectorAll('.swiper-slide').length > 1,
+          pagination: {
+            el: container.querySelector('.swiper-pagination') as HTMLElement,
+            clickable: true,
+          },
+          navigation: {
+            nextEl: container.querySelector('.swiper-button-next') as HTMLElement,
+            prevEl: container.querySelector('.swiper-button-prev') as HTMLElement,
+          },
+        });
+        
+        swiperInstances.push(swiper);
+      });
+    };
+    
+    // Find all video elements that should autoplay and ensure they play
     if (contentRef.current) {
-      // Initialize videos
       const videoElements = contentRef.current.querySelectorAll('video[autoplay]');
       videoElements.forEach(element => {
+        // Cast the element to HTMLVideoElement to access video-specific properties
         const video = element as HTMLVideoElement;
-        video.muted = true; // Must be muted to autoplay
-        video.loop = true; // Loop the video
         
-        // Try to play the video
+        // Force autoplay even if browser policies might block it
+        video.muted = true;
+        
+        // Attempt to play the video
         const playPromise = video.play();
         
         if (playPromise !== undefined) {
           playPromise.catch(error => {
             console.error('Auto-play was prevented:', error);
+            // Add a play button or other UI if autoplay fails
           });
         }
       });
-      
-      // Define carousel navigation function
-      window.navigateCarousel = (button: HTMLButtonElement, direction: 'prev' | 'next') => {
-        const carousel = button.closest('.embla');
-        if (!carousel) return;
-        
-        const container = carousel.querySelector('.embla__container');
-        const slides = carousel.querySelectorAll('.embla__slide');
-        if (!container || slides.length === 0) return;
-        
-        // Find currently visible slide
-        let currentIndex = 0;
-        slides.forEach((slide, index) => {
-          if (slide.classList.contains('is-selected')) {
-            currentIndex = index;
-          }
-        });
-        
-        // Calculate next index
-        let nextIndex = currentIndex;
-        if (direction === 'prev') {
-          nextIndex = (currentIndex - 1 + slides.length) % slides.length;
-        } else {
-          nextIndex = (currentIndex + 1) % slides.length;
-        }
-        
-        // Update slides
-        slides.forEach((slide, index) => {
-          if (index === nextIndex) {
-            slide.classList.add('is-selected');
-          } else {
-            slide.classList.remove('is-selected');
-          }
-          
-          (slide as HTMLElement).style.transform = `translateX(${100 * (index - nextIndex)}%)`;
-        });
-      };
-      
-      // Initialize all carousels
-      const carousels = contentRef.current.querySelectorAll('.embla');
-      carousels.forEach(carousel => {
-        const slides = carousel.querySelectorAll('.embla__slide');
-        if (slides.length === 0) return;
-        
-        // Select first slide
-        slides[0].classList.add('is-selected');
-        
-        // Position all slides
-        slides.forEach((slide, index) => {
-          (slide as HTMLElement).style.transform = index === 0 ? 'translateX(0%)' : `translateX(${100}%)`;
-        });
-      });
     }
+    
+    // Initialize Swiper only after the content is rendered
+    initSwiper();
+    
+    // Cleanup
+    return () => {
+      swiperInstances.forEach(swiper => {
+        if (swiper && typeof swiper.destroy === 'function') {
+          swiper.destroy();
+        }
+      });
+    };
   }, [formattedHtml]);
   
   return (
@@ -97,12 +104,5 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     />
   );
 };
-
-// Add the navigateCarousel function to the window object
-declare global {
-  interface Window {
-    navigateCarousel: (button: HTMLButtonElement, direction: 'prev' | 'next') => void;
-  }
-}
 
 export default UpdateContent;

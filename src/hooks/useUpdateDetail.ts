@@ -3,75 +3,86 @@ import { useState, useEffect } from 'react';
 import { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
-import { getUpdateSlug, compareUpdateSlugs } from "@/utils/urlHelpers";
+import { extractImagesFromContent } from "@/utils/updateFormatter";
 
-export const useUpdateDetail = (id: string | undefined): {
+interface UseUpdateDetailResult {
   update: UpdateData | null;
   loading: boolean;
   error: string | null;
   isNewsItem: boolean;
-} => {
+}
+
+export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult => {
   const [update, setUpdate] = useState<UpdateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewsItem, setIsNewsItem] = useState(false);
+  const [contentImages, setContentImages] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchUpdateDetail = async () => {
+    const fetchData = async () => {
       if (!id) {
-        setError("Update ID is missing");
+        setError('Invalid update ID');
         setLoading(false);
         return;
       }
 
       try {
-        console.log(`Looking for update with slug: ${id}`);
+        setLoading(true);
+        console.log("Fetching data for update ID:", id);
         
-        // First try to find the update in regular updates
+        // First try to find the update in CS2 updates
         const { updates } = await SteamAPI.getUpdates();
         
-        let foundUpdate = updates.find(update => {
-          const updateSlug = getUpdateSlug(update.title);
-          console.log(`Comparing ${updateSlug} with ${id}`);
-          // Use our improved comparison function
-          return compareUpdateSlugs(updateSlug, id);
-        });
-
-        // If not found in updates, check news items
-        if (!foundUpdate) {
-          console.log("Not found in updates, checking news items...");
-          const news = await NewsAPI.getNews();
-          foundUpdate = news.find(newsItem => {
-            const newsSlug = getUpdateSlug(newsItem.title);
-            console.log(`Comparing ${newsSlug} with ${id}`);
-            // Use our improved comparison function
-            return compareUpdateSlugs(newsSlug, id);
-          });
+        let foundItem = updates.find(u => 
+          encodeURIComponent(u.title.toLowerCase().replace(/\s+/g, '-')) === id
+        );
+        
+        // If not found in updates, check the news
+        if (!foundItem) {
+          console.log("Item not found in updates, checking news...");
+          const newsItems = await NewsAPI.getNews();
           
-          if (foundUpdate) {
-            console.log("Found in news items");
+          foundItem = newsItems.find(n => 
+            encodeURIComponent(n.title.toLowerCase().replace(/\s+/g, '-')) === id
+          );
+          
+          if (foundItem) {
+            console.log("Found item in news:", foundItem.title);
             setIsNewsItem(true);
           }
         } else {
-          console.log("Found in updates");
+          console.log("Found item in updates:", foundItem.title);
         }
-
-        if (foundUpdate) {
-          console.log("Found update:", foundUpdate.title);
-          setUpdate(foundUpdate);
+        
+        if (foundItem) {
+          console.log("Item details:", {
+            title: foundItem.title,
+            hasImage: !!foundItem.imageUrl,
+            imageUrl: foundItem.imageUrl
+          });
+          
+          // Extract images from content
+          const extractedImages = extractImagesFromContent(foundItem.description);
+          console.log("Extracted images from content:", extractedImages);
+          setContentImages(extractedImages);
+          
+          setUpdate(foundItem);
+          setError(null);
         } else {
-          console.log("Update not found");
-          setError("Update not found");
+          // If still not found, show an error
+          console.error("Content not found for ID:", id);
+          setError('Content not found');
         }
       } catch (err) {
-        console.error("Error fetching update detail:", err);
-        setError("Failed to load update. Please try again.");
+        console.error('Error fetching content:', err);
+        setError('Failed to load content details');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchUpdateDetail();
+    
+    fetchData();
   }, [id]);
 
   return { update, loading, error, isNewsItem };

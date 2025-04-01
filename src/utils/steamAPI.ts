@@ -120,15 +120,6 @@ export class SteamAPI {
         .map(event => this.convertEventToUpdate(event))
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
-      // For development/testing when API returns no results, create sample data
-      if (updates.length === 0) {
-        console.log("No real updates found, creating sample data");
-        return { 
-          updates: this.generateSampleUpdates(),
-          hasNewUpdate: false 
-        };
-      }
-      
       this.cachedUpdates = updates;
       this.lastCheckedTime = Date.now();
       
@@ -139,45 +130,8 @@ export class SteamAPI {
       return { updates, hasNewUpdate };
     } catch (error) {
       console.error("Error fetching updates:", error);
-      
-      // If there's an error and we have no cached updates, return sample data
-      if (this.cachedUpdates.length === 0) {
-        console.log("Error occurred and no cached updates exist, using sample data");
-        return { 
-          updates: this.generateSampleUpdates(), 
-          hasNewUpdate: false 
-        };
-      }
-      
       return { updates: this.cachedUpdates, hasNewUpdate: false };
     }
-  }
-
-  // Generate sample updates for development/testing
-  private static generateSampleUpdates(): UpdateData[] {
-    return [
-      {
-        title: "Counter-Strike 2 Update - August 4, 2023",
-        description: "[ MAPS ]\n\n• Dust 2\n• Fixed a bug where players could get stuck between double doors\n• Improved bomb plant zones on B site\n\n[ GAMEPLAY ]\n• Adjusted movement acceleration values\n• Fixed a bug with smoke grenades",
-        date: new Date(Date.now() - 1 * 86400000).toISOString(),
-        url: "https://www.counter-strike.net/newsentry/1",
-        imageUrl: "https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/event_header.png"
-      },
-      {
-        title: "Release Notes for 7/25/2023",
-        description: "[ SOUND ]\n\n• Added new weapon sounds for the AK-47\n• Fixed audio occlusion issues\n\n[ MISC ]\n• Updated localization files\n• Performance optimizations",
-        date: new Date(Date.now() - 10 * 86400000).toISOString(),
-        url: "https://www.counter-strike.net/newsentry/2",
-        imageUrl: "https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/event_header.png"
-      },
-      {
-        title: "Counter-Strike 2 Update - July 13, 2023",
-        description: "[ MATCHMAKING ]\n\n• Improved matchmaking algorithm\n• Reduced wait times for less popular maps\n\n[ WEAPONS ]\n• Balance adjustments to the Desert Eagle\n• Fixed animation issues with certain weapons",
-        date: new Date(Date.now() - 20 * 86400000).toISOString(),
-        url: "https://www.counter-strike.net/newsentry/3",
-        imageUrl: "https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/event_header.png"
-      }
-    ];
   }
 
   // Check if there's a new update

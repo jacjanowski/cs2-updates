@@ -19,7 +19,10 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       const videoElements = contentRef.current.querySelectorAll('video[autoplay]');
       videoElements.forEach(element => {
         const video = element as HTMLVideoElement;
-        video.muted = true;
+        video.muted = true; // Must be muted to autoplay
+        video.loop = true; // Loop the video
+        
+        // Try to play the video
         const playPromise = video.play();
         
         if (playPromise !== undefined) {

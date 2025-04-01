@@ -3,86 +3,66 @@ import { useState, useEffect } from 'react';
 import { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
-import { extractImagesFromContent } from "@/utils/updateFormatter";
 
-interface UseUpdateDetailResult {
+export const useUpdateDetail = (id: string | undefined): {
   update: UpdateData | null;
   loading: boolean;
   error: string | null;
   isNewsItem: boolean;
-}
-
-export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult => {
+} => {
   const [update, setUpdate] = useState<UpdateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewsItem, setIsNewsItem] = useState(false);
-  const [contentImages, setContentImages] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUpdateDetail = async () => {
       if (!id) {
-        setError('Invalid update ID');
+        setError("Update ID is missing");
         setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
-        console.log("Fetching data for update ID:", id);
-        
-        // First try to find the update in CS2 updates
+        // First try to find the update in regular updates
         const { updates } = await SteamAPI.getUpdates();
         
-        let foundItem = updates.find(u => 
-          encodeURIComponent(u.title.toLowerCase().replace(/\s+/g, '-')) === id
-        );
-        
-        // If not found in updates, check the news
-        if (!foundItem) {
-          console.log("Item not found in updates, checking news...");
-          const newsItems = await NewsAPI.getNews();
-          
-          foundItem = newsItems.find(n => 
-            encodeURIComponent(n.title.toLowerCase().replace(/\s+/g, '-')) === id
-          );
-          
-          if (foundItem) {
-            console.log("Found item in news:", foundItem.title);
-            setIsNewsItem(true);
-          }
-        } else {
-          console.log("Found item in updates:", foundItem.title);
-        }
-        
-        if (foundItem) {
-          console.log("Item details:", {
-            title: foundItem.title,
-            hasImage: !!foundItem.imageUrl,
-            imageUrl: foundItem.imageUrl
+        let foundUpdate = updates.find(update => {
+          const updateSlug = update.title.toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-');
+          return updateSlug === id;
+        });
+
+        // If not found in updates, check news items
+        if (!foundUpdate) {
+          const news = await NewsAPI.getNews();
+          foundUpdate = news.find(newsItem => {
+            const newsSlug = newsItem.title.toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-');
+            return newsSlug === id;
           });
           
-          // Extract images from content
-          const extractedImages = extractImagesFromContent(foundItem.description);
-          console.log("Extracted images from content:", extractedImages);
-          setContentImages(extractedImages);
-          
-          setUpdate(foundItem);
-          setError(null);
+          if (foundUpdate) {
+            setIsNewsItem(true);
+          }
+        }
+
+        if (foundUpdate) {
+          setUpdate(foundUpdate);
         } else {
-          // If still not found, show an error
-          console.error("Content not found for ID:", id);
-          setError('Content not found');
+          setError("Update not found");
         }
       } catch (err) {
-        console.error('Error fetching content:', err);
-        setError('Failed to load content details');
+        console.error("Error fetching update detail:", err);
+        setError("Failed to load update. Please try again.");
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchData();
+
+    fetchUpdateDetail();
   }, [id]);
 
   return { update, loading, error, isNewsItem };

@@ -35,7 +35,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
             // Replace the placeholder with our container
             carousel.replaceWith(container);
             
-            // Render the carousel component directly
+            // Render the carousel component
             const reactRoot = createRoot(container);
             reactRoot.render(
               <ContentCarousel 
@@ -47,6 +47,33 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
             console.error('Error initializing carousel:', error);
           }
         }
+      });
+    };
+    
+    // Find and clean up any debug/dimension text nodes
+    const cleanupDebugInfo = () => {
+      if (!contentRef.current) return;
+      
+      // Find all text nodes
+      const walk = document.createTreeWalker(
+        contentRef.current,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+      
+      const nodesToRemove = [];
+      let node;
+      
+      while ((node = walk.nextNode())) {
+        // Check for dimension text like "400px" or html tags
+        if (/^\d+px[\s]*["']?\s*[/>]/.test(node.textContent || '')) {
+          nodesToRemove.push(node);
+        }
+      }
+      
+      // Remove found debug nodes
+      nodesToRemove.forEach(node => {
+        node.parentNode?.removeChild(node);
       });
     };
     
@@ -75,6 +102,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
               playButton.className = 'video-play-button absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors';
               playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
               playButton.onclick = () => {
+                video.muted = false; // Unmute when user clicks
                 video.play().catch(e => console.error('Play failed after click:', e));
                 video.controls = true; // Show controls after starting playback
                 playButton.remove();
@@ -89,15 +117,17 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Initialize both carousels and videos
+    // Initialize components and clean up debug info
     initializeCarousels();
+    cleanupDebugInfo();
     initializeVideos();
     
     // Try again after a short delay to catch any that might have loaded later
     const timer = setTimeout(() => {
       initializeCarousels();
+      cleanupDebugInfo();
       initializeVideos();
-    }, 500); // Increased delay for better initialization
+    }, 500);
     
     return () => {
       clearTimeout(timer);

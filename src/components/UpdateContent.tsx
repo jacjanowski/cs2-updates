@@ -11,11 +11,22 @@ interface UpdateContentProps {
 
 const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const carouselRootsRef = useRef<Map<string, any>>(new Map());
   
   useEffect(() => {
     if (!contentRef.current) return;
     
-    // Initialize carousels
+    // Clean up previous carousel instances
+    carouselRootsRef.current.forEach(root => {
+      try {
+        root.unmount();
+      } catch (e) {
+        console.error("Error unmounting carousel:", e);
+      }
+    });
+    carouselRootsRef.current.clear();
+    
+    // Initialize new carousels
     const initializeCarousels = () => {
       const carousels = contentRef.current?.querySelectorAll('.cs2-carousel');
       
@@ -27,16 +38,20 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
           try {
             const images = JSON.parse(decodeURIComponent(imagesData));
             
-            // Create a div to render our React component
-            const container = document.createElement('div');
-            container.id = `carousel-container-${carouselId}`;
-            container.className = 'simple-carousel-container';
+            // Create a div for our React component if it doesn't exist
+            let container = document.getElementById(`carousel-container-${carouselId}`);
+            if (!container) {
+              container = document.createElement('div');
+              container.id = `carousel-container-${carouselId}`;
+              container.className = 'carousel-container';
+              carousel.parentNode?.replaceChild(container, carousel);
+            }
             
-            // Replace the placeholder with our container
-            carousel.replaceWith(container);
+            // Create and store the React root
+            const reactRoot = createRoot(container);
+            carouselRootsRef.current.set(carouselId, reactRoot);
             
             // Render the carousel component
-            const reactRoot = createRoot(container);
             reactRoot.render(
               <ContentCarousel 
                 images={images} 
@@ -117,20 +132,30 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Initialize components and clean up debug info
+    // Run initialization
     initializeCarousels();
     cleanupDebugInfo();
     initializeVideos();
     
-    // Try again after a short delay to catch any that might have loaded later
+    // Run again after a short delay to catch any dynamic content
     const timer = setTimeout(() => {
       initializeCarousels();
       cleanupDebugInfo();
       initializeVideos();
-    }, 500);
+    }, 300);
     
     return () => {
       clearTimeout(timer);
+      
+      // Clean up all React roots when component unmounts
+      carouselRootsRef.current.forEach(root => {
+        try {
+          root.unmount();
+        } catch (e) {
+          console.error("Error unmounting carousel:", e);
+        }
+      });
+      carouselRootsRef.current.clear();
     };
   }, [formattedHtml]);
   

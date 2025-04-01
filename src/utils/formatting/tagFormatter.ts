@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting specific content tags
  */
@@ -139,15 +138,10 @@ export const formatDescription = (description: string): string => {
     // Create a unique ID for this carousel
     const carouselId = `carousel-${Math.random().toString(36).substring(2, 10)}`;
     
-    // Generate HTML for our custom carousel component with full image data
+    // Generate a simpler placeholder that will be replaced by our React component
     return `
       <div class="cs2-carousel" data-carousel-id="${carouselId}" data-images="${encodeURIComponent(JSON.stringify(images))}">
-        <div class="cs2-carousel-placeholder">
-          <img src="${images[0]}" alt="Carousel image" class="w-full object-contain max-h-[400px]" />
-          <div class="cs2-carousel-indicator">
-            <span>1</span>/<span>${images.length}</span>
-          </div>
-        </div>
+        <div class="cs2-carousel-loading">Loading carousel...</div>
       </div>
     `;
   });

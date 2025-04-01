@@ -15,14 +15,15 @@ export const formatDescription = (description: string): string => {
   // First, normalize line breaks
   let formattedText = description.replace(/\r\n/g, '\n');
   
-  // Handle BBCode video tags
-  formattedText = formattedText.replace(/\[video(?:=([^\]]+))?\](.*?)\[\/video\]/gs, (match, attributes, content) => {
+  // Handle BBCode video tags with quoted attributes
+  // Format: [video mp4="url" webm="url" poster="url" autoplay="true/false" controls="true/false"][/video]
+  formattedText = formattedText.replace(/\[video\s+(.*?)\]\[\/video\]/gs, (match, attributes) => {
     // Extract video attributes if present
-    const mp4Match = attributes ? attributes.match(/mp4=([^ ]+)/) : null;
-    const webmMatch = attributes ? attributes.match(/webm=([^ ]+)/) : null;
-    const posterMatch = attributes ? attributes.match(/poster=([^ ]+)/) : null;
-    const autoplayMatch = attributes ? attributes.match(/autoplay=(true|false)/) : null;
-    const controlsMatch = attributes ? attributes.match(/controls=(true|false)/) : null;
+    const mp4Match = attributes.match(/mp4=["']([^"']*)["']/);
+    const webmMatch = attributes.match(/webm=["']([^"']*)["']/);
+    const posterMatch = attributes.match(/poster=["']([^"']*)["']/);
+    const autoplayMatch = attributes.match(/autoplay=["'](true|false)["']/);
+    const controlsMatch = attributes.match(/controls=["'](true|false)["']/);
     
     const mp4Src = mp4Match ? mp4Match[1] : '';
     const webmSrc = webmMatch ? webmMatch[1] : '';
@@ -30,10 +31,7 @@ export const formatDescription = (description: string): string => {
     const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : false;
     const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
     
-    // Use content as source if no specific format provided
-    const sourceSrc = content.trim() || mp4Src || webmSrc;
-    
-    if (sourceSrc) {
+    if (mp4Src || webmSrc) {
       let videoHtml = `
         <div class="video-container">
           <video 
@@ -44,9 +42,9 @@ export const formatDescription = (description: string): string => {
             preload="auto"
           >`;
           
-      if (mp4Src || (sourceSrc && !webmSrc)) {
+      if (mp4Src) {
         videoHtml += `
-            <source src="${mp4Src || sourceSrc}" type="video/mp4">`;
+            <source src="${mp4Src}" type="video/mp4">`;
       }
       
       if (webmSrc) {
@@ -60,6 +58,28 @@ export const formatDescription = (description: string): string => {
         </div>`;
         
       return videoHtml;
+    }
+    
+    return match; // Return original if couldn't parse
+  });
+  
+  // Handle older format video tags (for backward compatibility)
+  // Format: [video]url[/video]
+  formattedText = formattedText.replace(/\[video\](.*?)\[\/video\]/gs, (match, content) => {
+    if (content && content.trim()) {
+      const videoUrl = content.trim();
+      
+      return `
+        <div class="video-container">
+          <video 
+            controls
+            class="w-full"
+            preload="auto"
+          >
+            <source src="${videoUrl}" type="video/mp4">
+            <div class="video-fallback">Your browser does not support the video tag.</div>
+          </video>
+        </div>`;
     }
     
     return match; // Return original if couldn't parse
@@ -176,6 +196,15 @@ export const formatDescription = (description: string): string => {
   formattedText = formattedText.replace(/\[code\](.*?)\[\/code\]/gs, (match, content) => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${content.trim()}</code></pre>`;
   });
+  
+  // Convert single newlines to <br> tags but preserve paragraph breaks (double newlines)
+  formattedText = formattedText.replace(/\n\n/g, '</p><p>');
+  formattedText = formattedText.replace(/\n/g, '<br>');
+  
+  // Wrap text in paragraphs if not already wrapped
+  if (!formattedText.startsWith('<')) {
+    formattedText = `<p>${formattedText}</p>`;
+  }
   
   // Clean up any broken HTML tags
   formattedText = fixHtmlTags(formattedText);

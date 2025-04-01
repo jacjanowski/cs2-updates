@@ -19,12 +19,18 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       const videoElements = contentRef.current.querySelectorAll('video[autoplay]');
       videoElements.forEach(element => {
         const video = element as HTMLVideoElement;
-        video.muted = true;
+        video.muted = true; // Ensure muted for autoplay to work
+        video.loop = true;  // Ensure loop is set for continuous playback
+        
         const playPromise = video.play();
         
         if (playPromise !== undefined) {
           playPromise.catch(error => {
             console.error('Auto-play was prevented:', error);
+            // Try playing again after user interaction
+            document.addEventListener('click', () => {
+              video.play().catch(err => console.warn('Still could not play video:', err));
+            }, { once: true });
           });
         }
       });

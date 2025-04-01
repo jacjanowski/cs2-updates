@@ -100,6 +100,9 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
             const images = JSON.parse(decodeURIComponent(imagesData));
             
             if (images.length > 0) {
+              // Log information about carousel for debugging
+              console.log(`Initializing carousel ${carouselId} with ${images.length} images:`, images);
+              
               // Create a container for the ContentCarousel component
               const carouselContainer = document.createElement('div');
               carouselContainer.id = `carousel-container-${carouselId}`;
@@ -109,23 +112,31 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
               
               // Create and render our carousel manually
               const carouselDiv = document.createElement('div');
-              carouselDiv.className = 'splide-carousel';
+              carouselDiv.className = 'w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50';
               carouselContainer.appendChild(carouselDiv);
               
+              // Create the Splide container
+              const splideDiv = document.createElement('div');
+              splideDiv.className = 'splide';
+              carouselDiv.appendChild(splideDiv);
+              
               // Create the slides container
-              const slidesContainer = document.createElement('div');
-              slidesContainer.className = 'splide__track';
-              carouselDiv.appendChild(slidesContainer);
+              const track = document.createElement('div');
+              track.className = 'splide__track';
+              splideDiv.appendChild(track);
               
               // Create the list
-              const slidesList = document.createElement('ul');
-              slidesList.className = 'splide__list';
-              slidesContainer.appendChild(slidesList);
+              const list = document.createElement('ul');
+              list.className = 'splide__list';
+              track.appendChild(list);
               
               // Add slides
               images.forEach((image: string, index: number) => {
                 const slide = document.createElement('li');
                 slide.className = 'splide__slide';
+                
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'relative aspect-video w-full bg-muted/50';
                 
                 const img = document.createElement('img');
                 img.src = image;
@@ -133,26 +144,32 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
                 img.className = 'w-full h-full object-contain';
                 img.loading = 'lazy';
                 
-                slide.appendChild(img);
-                slidesList.appendChild(slide);
+                slideDiv.appendChild(img);
+                slide.appendChild(slideDiv);
+                list.appendChild(slide);
               });
               
               // Initialize Splide
-              new Splide(carouselDiv, {
-                type: 'slide',
-                perPage: 1,
-                perMove: 1,
-                pagination: images.length > 1,
-                arrows: images.length > 1,
-                drag: images.length > 1,
-              }).mount();
-              
-              // Add counter if multiple images
-              if (images.length > 1) {
-                const counter = document.createElement('div');
-                counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium';
-                counter.textContent = `1 / ${images.length}`;
-                carouselDiv.appendChild(counter);
+              try {
+                new Splide(splideDiv, {
+                  type: 'slide',
+                  perPage: 1,
+                  perMove: 1,
+                  pagination: images.length > 1,
+                  arrows: images.length > 1,
+                  drag: images.length > 1,
+                  autoHeight: true,
+                }).mount();
+                
+                // Add counter if multiple images
+                if (images.length > 1) {
+                  const counter = document.createElement('div');
+                  counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium';
+                  counter.textContent = `1 / ${images.length}`;
+                  carouselDiv.appendChild(counter);
+                }
+              } catch (e) {
+                console.error('Error initializing Splide:', e);
               }
             }
           }

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Splide, SplideSlide } from '@splidejs/react-splide';
 import '@splidejs/react-splide/css';
 
@@ -11,13 +11,28 @@ interface ContentCarouselProps {
 const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(1);
+  const [imagesLoaded, setImagesLoaded] = useState(0);
+  
+  useEffect(() => {
+    // Reset loading state when images prop changes
+    setIsLoading(true);
+    setImagesLoaded(0);
+  }, [images]);
+
+  useEffect(() => {
+    // Check if all images are loaded
+    if (images.length > 0 && imagesLoaded >= images.length) {
+      setIsLoading(false);
+    }
+  }, [imagesLoaded, images]);
   
   const handleLoad = () => {
-    setIsLoading(false);
+    setImagesLoaded(prev => prev + 1);
   };
 
   const handleError = () => {
-    setIsLoading(false);
+    setImagesLoaded(prev => prev + 1);
+    console.error("Failed to load carousel image");
   };
 
   // Don't render if there are no images
@@ -27,6 +42,12 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
 
   return (
     <div id={`carousel-${carouselId}`} className="w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
+          <p className="text-sm text-muted-foreground animate-pulse">Loading images...</p>
+        </div>
+      )}
+      
       <Splide
         options={{
           type: 'slide',
@@ -46,11 +67,6 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
         {images.map((image, index) => (
           <SplideSlide key={`${carouselId}-slide-${index}`}>
             <div className="relative aspect-video w-full bg-muted/50">
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
-                  <p className="text-sm text-muted-foreground animate-pulse">Loading image...</p>
-                </div>
-              )}
               <img
                 src={image}
                 alt={`Carousel image ${index + 1}`}

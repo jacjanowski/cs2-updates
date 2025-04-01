@@ -13,6 +13,12 @@
   margin-bottom: 1rem;
 }
 
+.update-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
 .update-content ul ul {
   list-style-type: circle;
   padding-left: 1.5rem;
@@ -112,6 +118,37 @@
   display: inline;
 }
 
+/* Bold text */
+.update-content strong {
+  font-weight: bold;
+  display: inline;
+}
+
+/* Code blocks */
+.update-content pre {
+  background-color: hsl(var(--muted));
+  padding: 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.update-content code {
+  font-family: monospace;
+  white-space: pre;
+}
+
+/* Blockquote styling */
+.update-content blockquote {
+  border-left: 4px solid hsl(var(--primary) / 0.2);
+  padding-left: 1rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
 /* Dark mode specific styles */
 .dark .update-content {
   color: #e0e0e0;
@@ -135,5 +172,13 @@
 }
 
 .dark .update-content .cs2-carousel-placeholder {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .update-content blockquote {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .update-content pre {
   background-color: rgba(255, 255, 255, 0.05);
 }

@@ -63,10 +63,12 @@ export const formatDescription = (description: string): string => {
     return match; // Return original if couldn't parse
   });
   
-  // Handle url= format and convert to proper hyperlinks
-  // This pattern handles both formats:
-  // 1. url=link Text /url
-  // 2. url=link\nText\n/url (with line breaks)
+  // Handle [url] format (BBCode style)
+  formattedText = formattedText.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/g, (match, url, text) => {
+    return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${text}</a>`;
+  });
+  
+  // Handle url= format (legacy style)
   formattedText = formattedText.replace(/url=([^\s]+)\s+(.*?)\/url/gs, (match, url, linkText) => {
     // Ensure the link text is properly cleaned up
     const cleanedText = linkText.trim().replace(/\n/g, ' ');
@@ -74,9 +76,47 @@ export const formatDescription = (description: string): string => {
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   
-  // Handle italics - format: i text /i
-  formattedText = formattedText.replace(/i\s+(.*?)\s+\/i/g, (match, text) => {
+  // Handle italics with [i]...[/i] (standard BBCode format)
+  formattedText = formattedText.replace(/\[i\](.*?)\[\/i\]/gs, (match, text) => {
     return `<em>${text.trim()}</em>`;
+  });
+  
+  // Handle italics - alternative format: i text /i (without brackets)
+  formattedText = formattedText.replace(/(?<![a-zA-Z])i\s+(.*?)\s+\/i(?![a-zA-Z])/g, (match, text) => {
+    return `<em>${text.trim()}</em>`;
+  });
+  
+  // Handle bold with [b]...[/b]
+  formattedText = formattedText.replace(/\[b\](.*?)\[\/b\]/gs, (match, text) => {
+    return `<strong>${text.trim()}</strong>`;
+  });
+  
+  // Handle underline with [u]...[/u]
+  formattedText = formattedText.replace(/\[u\](.*?)\[\/u\]/gs, (match, text) => {
+    return `<span class="underline">${text.trim()}</span>`;
+  });
+  
+  // Handle strikethrough with [s]...[/s]
+  formattedText = formattedText.replace(/\[s\](.*?)\[\/s\]/gs, (match, text) => {
+    return `<span class="line-through">${text.trim()}</span>`;
+  });
+  
+  // Handle quote blocks with [quote]...[/quote]
+  formattedText = formattedText.replace(/\[quote\](.*?)\[\/quote\]/gs, (match, text) => {
+    return `<blockquote class="border-l-4 border-primary/20 pl-4 py-1 my-4 italic text-muted-foreground">${text.trim()}</blockquote>`;
+  });
+  
+  // Handle named quotes with [quote="name"]...[/quote]
+  formattedText = formattedText.replace(/\[quote="([^"]+)"\](.*?)\[\/quote\]/gs, (match, name, text) => {
+    return `<blockquote class="border-l-4 border-primary/20 pl-4 py-1 my-4">
+      <div class="text-sm font-medium mb-1">${name} wrote:</div>
+      <div class="italic text-muted-foreground">${text.trim()}</div>
+    </blockquote>`;
+  });
+  
+  // Handle code blocks with [code]...[/code]
+  formattedText = formattedText.replace(/\[code\](.*?)\[\/code\]/gs, (match, text) => {
+    return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
   });
   
   // Handle carousel tag - Use our custom Carousel component
@@ -114,32 +154,62 @@ export const formatDescription = (description: string): string => {
     return carouselHtml;
   });
   
+  // Handle color with [color=X]...[/color]
+  formattedText = formattedText.replace(/\[color=([^\]]+)\](.*?)\[\/color\]/gs, (match, color, text) => {
+    return `<span style="color: ${color}">${text}</span>`;
+  });
+  
+  // Handle size with [size=X]...[/size]
+  formattedText = formattedText.replace(/\[size=([^\]]+)\](.*?)\[\/size\]/gs, (match, size, text) => {
+    // Convert numeric sizes to appropriate rem values
+    const sizeValue = parseInt(size);
+    let fontSize = 'inherit';
+    
+    if (!isNaN(sizeValue)) {
+      // Map numeric sizes to reasonable font sizes
+      if (sizeValue <= 8) fontSize = '0.75rem'; // xs
+      else if (sizeValue <= 10) fontSize = '0.875rem'; // sm
+      else if (sizeValue <= 12) fontSize = '1rem'; // base
+      else if (sizeValue <= 14) fontSize = '1.125rem'; // lg
+      else if (sizeValue <= 16) fontSize = '1.25rem'; // xl
+      else if (sizeValue <= 20) fontSize = '1.5rem'; // 2xl
+      else fontSize = '1.875rem'; // 3xl and above
+    } else {
+      // Handle named sizes
+      fontSize = size; // Use as is for CSS values like "larger", "smaller", etc.
+    }
+    
+    return `<span style="font-size: ${fontSize}">${text}</span>`;
+  });
+  
   // Handle heading tags [h1], [h2], [h3], etc.
   formattedText = formattedText.replace(/\[h([1-6])\](.*?)\[\/h\1\]/g, (match, level, content) => {
     return `<h${level} class="font-bold my-3 text-${4-Math.min(parseInt(level), 3)}xl">${content}</h${level}>`;
   });
   
-  // Handle [list] and [/list] tags
+  // Handle lists
+  // [list] and [/list] tags
   formattedText = formattedText.replace(/\[list\]/gi, '<ul class="my-4">');
   formattedText = formattedText.replace(/\[\/list\]/gi, '</ul>');
   
-  // Handle [ul] and [/ul] tags
+  // [ul] and [/ul] tags (alternative list format)
   formattedText = formattedText.replace(/\[ul\]/gi, '<ul class="my-4">');
   formattedText = formattedText.replace(/\[\/ul\]/gi, '</ul>');
   
-  // Handle nested lists with [*] and bullet points
-  formattedText = formattedText.replace(/\[\*\](.*?)(?=\[list\])/g, '<li>$1');
-  formattedText = formattedText.replace(/\[\*\](.*?)(?=\[\*\]|$|\[\/list\])/gs, '<li>$1</li>');
+  // [ol] and [/ol] tags (ordered lists)
+  formattedText = formattedText.replace(/\[ol\]/gi, '<ol class="my-4 list-decimal pl-5">');
+  formattedText = formattedText.replace(/\[\/ol\]/gi, '</ol>');
+  
+  // Handle list items with [*]
+  formattedText = formattedText.replace(/\[\*\](.*?)(?=\[\*\]|\[\/list\]|\[\/ul\]|\[\/ol\]|$)/gs, '<li>$1</li>');
+  
+  // Handle list items with [li]...[/li]
+  formattedText = formattedText.replace(/\[li\](.*?)\[\/li\]/gs, '<li>$1</li>');
   
   // Process section headers
   formattedText = formattedText.replace(/\[(.*?)\]/g, (match, content) => {
-    // Skip if it's a list tag that we've already processed
-    if (/list|ul|\/list|\/ul|\*/.test(content)) {
-      return match;
-    }
-    
-    // Skip if it's an image, video, or carousel tag
-    if (/img|\/img|video|\/video|carousel|\/carousel/.test(content)) {
+    // Skip if it's a tag we've already processed
+    if (/list|ul|ol|\/list|\/ul|\/ol|\*|li|\/li|b|\/b|i|\/i|u|\/u|s|\/s|url|\/url|img|\/img|video|\/video|carousel|\/carousel|quote|\/quote|code|\/code|color|\/color|size|\/size/i.test(content)) {
       return match;
     }
     

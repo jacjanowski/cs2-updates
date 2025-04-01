@@ -74,6 +74,73 @@ export const formatDescription = (description: string): string => {
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   
+  // Handle italics - format: i text /i
+  formattedText = formattedText.replace(/i\s+(.*?)\s+\/i/g, (match, text) => {
+    return `<em>${text.trim()}</em>`;
+  });
+  
+  // Handle carousel tag - Wrap images between [carousel] tags in a special div
+  formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
+    // Extract all img tags from the carousel content
+    const images = [];
+    const imgRegex = /\[img\](.*?)\[\/img\]/g;
+    let imgMatch;
+    
+    while ((imgMatch = imgRegex.exec(content)) !== null) {
+      if (imgMatch[1] && imgMatch[1].trim()) {
+        images.push(imgMatch[1].trim());
+      }
+    }
+    
+    if (images.length === 0) {
+      return match; // No images found, return original
+    }
+    
+    // Create a container with a unique ID for the carousel
+    const carouselId = `swiper-carousel-${Math.random().toString(36).substring(2, 10)}`;
+    
+    let carouselHtml = `
+      <div class="swiper-carousel-container my-6" id="${carouselId}">
+        <div class="swiper">
+          <div class="swiper-wrapper">`;
+    
+    // Add each image as a slide
+    images.forEach(imgSrc => {
+      carouselHtml += `
+            <div class="swiper-slide">
+              <img src="${imgSrc}" class="w-full object-contain" alt="Carousel image" />
+            </div>`;
+    });
+    
+    // Add navigation and pagination
+    carouselHtml += `
+          </div>
+          <div class="swiper-pagination"></div>
+          <div class="swiper-button-prev"></div>
+          <div class="swiper-button-next"></div>
+        </div>
+      </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          new Swiper('#${carouselId} .swiper', {
+            slidesPerView: 1,
+            spaceBetween: 30,
+            loop: ${images.length > 1 ? 'true' : 'false'},
+            pagination: {
+              el: '#${carouselId} .swiper-pagination',
+              clickable: true,
+            },
+            navigation: {
+              nextEl: '#${carouselId} .swiper-button-next',
+              prevEl: '#${carouselId} .swiper-button-prev',
+            },
+          });
+        });
+      </script>`;
+    
+    return carouselHtml;
+  });
+  
   // Handle heading tags [h1], [h2], [h3], etc.
   formattedText = formattedText.replace(/\[h([1-6])\](.*?)\[\/h\1\]/g, (match, level, content) => {
     return `<h${level} class="font-bold my-3 text-${4-Math.min(parseInt(level), 3)}xl">${content}</h${level}>`;
@@ -98,8 +165,8 @@ export const formatDescription = (description: string): string => {
       return match;
     }
     
-    // Skip if it's an image or video tag
-    if (/img|\/img|video|\/video/.test(content)) {
+    // Skip if it's an image, video, or carousel tag
+    if (/img|\/img|video|\/video|carousel|\/carousel/.test(content)) {
       return match;
     }
     

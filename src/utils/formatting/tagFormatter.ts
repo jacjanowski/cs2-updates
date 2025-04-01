@@ -51,7 +51,6 @@ export const formatDescription = (description: string): string => {
             <source src="${webmSrc}" type="video/webm">`;
       }
       
-      // Add fallback but as a hidden div instead of text
       videoHtml += `
             <div class="video-fallback">Your browser does not support the video tag.</div>
           </video>
@@ -64,22 +63,17 @@ export const formatDescription = (description: string): string => {
   });
   
   // Handle url= format and convert to proper hyperlinks
-  // This pattern handles both formats:
-  // 1. url=link Text /url
-  // 2. url=link\nText\n/url (with line breaks)
   formattedText = formattedText.replace(/url=([^\s]+)\s+(.*?)\/url/gs, (match, url, linkText) => {
-    // Ensure the link text is properly cleaned up
     const cleanedText = linkText.trim().replace(/\n/g, ' ');
-    // Return the link as an inline element within the text flow
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   
-  // Handle italics - format: i text /i
-  formattedText = formattedText.replace(/i\s+(.*?)\s+\/i/g, (match, text) => {
-    return `<em>${text.trim()}</em>`;
-  });
+  // Handle italics - FIXED: Properly match the pattern "i text /i" without requiring spaces
+  formattedText = formattedText.replace(/i\s+(.*?)\s+\/i/g, '<em>$1</em>');
+  // Additional pattern for "i text/i" (no space before closing)
+  formattedText = formattedText.replace(/i\s+(.*?)\/i/g, '<em>$1</em>');
   
-  // Handle carousel tag - Use Shadcn UI carousel component
+  // Handle carousel tag - Using a simpler implementation with shadcn/ui carousel
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -96,99 +90,97 @@ export const formatDescription = (description: string): string => {
       return match; // No images found, return original
     }
     
-    // Create a proper carousel using Shadcn UI carousel markup
+    // Create a carousel using shadcn/ui structure
     let carouselHtml = `
       <div class="carousel-container my-6">
-        <div class="relative w-full overflow-hidden rounded-lg">
-          <div class="embla">
-            <div class="embla__container">`;
+        <div class="shadcn-carousel">
+          <div class="overflow-hidden">
+            <div class="flex transition-transform duration-300 space-x-4">`;
     
     // Add each image as a slide
-    images.forEach(imgSrc => {
+    images.forEach((imgSrc, index) => {
       carouselHtml += `
-              <div class="embla__slide min-w-0 flex-[0_0_100%]">
-                <img src="${imgSrc}" class="w-full object-contain max-h-[400px]" alt="Carousel image" />
+              <div class="carousel-slide min-w-full flex-shrink-0" data-index="${index}">
+                <img src="${imgSrc}" class="w-full object-contain max-h-[400px]" alt="Carousel image ${index + 1}" />
               </div>`;
     });
     
-    // Close container
+    // Close the carousel structure
     carouselHtml += `
             </div>
           </div>
           
-          <button class="embla__prev absolute left-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-md hover:bg-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m15 18-6-6 6-6"/></svg>
-            <span class="sr-only">Previous slide</span>
-          </button>
-          
-          <button class="embla__next absolute right-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-md hover:bg-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m9 18 6-6-6-6"/></svg>
-            <span class="sr-only">Next slide</span>
-          </button>
+          <div class="flex justify-between mt-4">
+            <button class="carousel-prev bg-primary text-white rounded-full p-2 hover:bg-primary/90">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              <span class="sr-only">Previous</span>
+            </button>
+            
+            <button class="carousel-next bg-primary text-white rounded-full p-2 hover:bg-primary/90">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              <span class="sr-only">Next</span>
+            </button>
+          </div>
         </div>
-      </div>
-      
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const emblaNodes = document.querySelectorAll('.embla');
-          
-          emblaNodes.forEach(emblaNode => {
-            // Don't initialize twice
-            if (emblaNode.classList.contains('initialized')) return;
+        
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const carouselContainers = document.querySelectorAll('.carousel-container');
             
-            const container = emblaNode.querySelector('.embla__container');
-            const prevBtn = emblaNode.parentElement.querySelector('.embla__prev');
-            const nextBtn = emblaNode.parentElement.querySelector('.embla__next');
-            
-            if (!container || !prevBtn || !nextBtn) return;
-            
-            // Add sliding functionality
-            let currentIndex = 0;
-            const slides = container.querySelectorAll('.embla__slide');
-            const slideCount = slides.length;
-            
-            if (slideCount <= 1) {
-              // Hide navigation if only one slide
-              prevBtn.style.display = 'none';
-              nextBtn.style.display = 'none';
-              return;
-            }
-            
-            const updateSlides = () => {
-              slides.forEach((slide, index) => {
-                slide.style.transform = \`translateX(\${(index - currentIndex) * 100}%)\`;
+            carouselContainers.forEach(container => {
+              if (container.classList.contains('js-processed')) return;
+              
+              const slides = container.querySelectorAll('.carousel-slide');
+              const slideCount = slides.length;
+              const slideContainer = container.querySelector('.flex');
+              const prevBtn = container.querySelector('.carousel-prev');
+              const nextBtn = container.querySelector('.carousel-next');
+              
+              if (!slideContainer || !prevBtn || !nextBtn) return;
+              
+              let currentIndex = 0;
+              
+              function updateSlides() {
+                const offset = -100 * currentIndex;
+                slideContainer.style.transform = \`translateX(\${offset}%)\`;
+                
+                // Update active state
+                slides.forEach((slide, index) => {
+                  if (index === currentIndex) {
+                    slide.setAttribute('aria-current', 'true');
+                  } else {
+                    slide.removeAttribute('aria-current');
+                  }
+                });
+              }
+              
+              prevBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + slideCount) % slideCount;
+                updateSlides();
               });
               
-              // Update button states
-              prevBtn.style.opacity = currentIndex <= 0 ? '0.5' : '1';
-              nextBtn.style.opacity = currentIndex >= slideCount - 1 ? '0.5' : '1';
-            };
-            
-            // Initial position
-            updateSlides();
-            
-            // Add click handlers
-            prevBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              if (currentIndex > 0) {
-                currentIndex--;
+              nextBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % slideCount;
                 updateSlides();
-              }
+              });
+              
+              // Handle keyboard navigation
+              container.setAttribute('tabindex', '0');
+              container.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                  prevBtn.click();
+                } else if (e.key === 'ArrowRight') {
+                  nextBtn.click();
+                }
+              });
+              
+              // Initial setup
+              updateSlides();
+              container.classList.add('js-processed');
             });
-            
-            nextBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              if (currentIndex < slideCount - 1) {
-                currentIndex++;
-                updateSlides();
-              }
-            });
-            
-            // Mark as initialized
-            emblaNode.classList.add('initialized');
           });
-        });
-      </script>`;
+        </script>
+      </div>`;
     
     return carouselHtml;
   });

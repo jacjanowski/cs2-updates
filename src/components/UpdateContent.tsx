@@ -23,11 +23,8 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       if (!contentRef.current) return;
       
       try {
-        // Correctly import Swiper and its modules
-        const swiperModule = await import('swiper');
-        const Swiper = swiperModule.default;
-        
-        // Import modules from the correct location
+        // Import Swiper and modules
+        const { default: Swiper } = await import('swiper');
         const { Navigation, Pagination } = await import('swiper/modules');
         
         // Find all carousel containers

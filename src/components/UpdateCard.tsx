@@ -25,23 +25,19 @@ const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardPro
   const navigate = useNavigate();
   
   const handleCardClick = () => {
+    // Generate a slug from the update title
     const slug = getUpdateSlug(update.title);
     
-    // Add detailed logging to debug navigation issues
-    console.log(`[UpdateCard] Navigating to update:`, {
+    // Log detailed information about the update being clicked
+    console.log(`[UpdateCard] Navigating to:`, {
       title: update.title,
       type: isNewsItem ? 'news' : 'update',
-      date: update.date,
-      slug: slug,
-      originalTitle: update.title,
-      normalizedSlug: update.title.toLowerCase().replace(/\s+/g, '-')
+      slug,
+      path: `/update/${slug}`
     });
     
-    // In case the URL already contains "update", avoid doubling it
-    const path = `/update/${slug}`;
-    console.log(`[UpdateCard] Navigating to path: ${path}`);
-    
-    navigate(path);
+    // Navigate to the detail page with the slug
+    navigate(`/update/${slug}`);
   };
   
   return (

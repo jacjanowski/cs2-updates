@@ -32,70 +32,69 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
         setLoading(true);
         console.log("Fetching data for update ID:", id);
         
-        // First try to find the update in CS2 updates
+        // Fetch all updates from CS2
         const { updates } = await SteamAPI.getUpdates();
         
-        // Debug: log all available updates with their slugs
-        console.log("Available updates:", updates.map(u => ({ 
+        // Debug: List all available updates with slugs for comparison
+        console.log("All updates:", updates.map(u => ({ 
           title: u.title, 
           slug: getUpdateSlug(u.title),
           date: u.date
         })));
         
-        // Look for an exact match in updates
-        let foundItem = updates.find(u => {
-          const updateSlug = getUpdateSlug(u.title);
-          const matches = compareUpdateSlugs(id, updateSlug);
-          console.log(`Comparing update: "${id}" with "${updateSlug}" - Match: ${matches}`);
-          return matches;
-        });
+        // Find the update with a matching slug
+        let foundItem = null;
+        for (const update of updates) {
+          const updateSlug = getUpdateSlug(update.title);
+          if (compareUpdateSlugs(id, updateSlug)) {
+            console.log("Found matching update:", update.title);
+            foundItem = update;
+            break;
+          }
+        }
         
-        // If not found in updates, check the news
+        // If not found in updates, check news items
         if (!foundItem) {
-          console.log("Item not found in updates, checking news...");
+          console.log("Update not found, checking news items...");
           const newsItems = await NewsAPI.getNews();
           
-          // Debug the available news items with their slugs
-          console.log("Available news items:", newsItems.map(n => ({ 
+          // Debug: List all news items with slugs
+          console.log("All news items:", newsItems.map(n => ({ 
             title: n.title, 
             slug: getUpdateSlug(n.title),
             date: n.date
           })));
           
-          // Look for an exact match in news
-          foundItem = newsItems.find(n => {
-            const newsSlug = getUpdateSlug(n.title);
-            const matches = compareUpdateSlugs(id, newsSlug);
-            console.log(`Comparing news: "${id}" with "${newsSlug}" - Match: ${matches}`);
-            return matches;
-          });
-          
-          if (foundItem) {
-            console.log("Found item in news:", foundItem.title);
-            setIsNewsItem(true);
+          // Check each news item for a match
+          for (const newsItem of newsItems) {
+            const newsSlug = getUpdateSlug(newsItem.title);
+            if (compareUpdateSlugs(id, newsSlug)) {
+              console.log("Found matching news item:", newsItem.title);
+              foundItem = newsItem;
+              setIsNewsItem(true);
+              break;
+            }
           }
-        } else {
-          console.log("Found item in updates:", foundItem.title);
         }
         
         if (foundItem) {
-          console.log("Item details:", {
+          console.log("Content found:", {
             title: foundItem.title,
             date: foundItem.date,
-            hasImage: !!foundItem.imageUrl,
-            imageUrl: foundItem.imageUrl
+            type: isNewsItem ? 'News' : 'Update'
           });
           
-          // Extract images from content
-          const extractedImages = extractImagesFromContent(foundItem.description);
-          console.log("Extracted images from content:", extractedImages);
-          setContentImages(extractedImages);
+          // Extract images from content for display
+          if (foundItem.description) {
+            const extractedImages = extractImagesFromContent(foundItem.description);
+            console.log("Content images:", extractedImages);
+            setContentImages(extractedImages);
+          }
           
           setUpdate(foundItem);
           setError(null);
         } else {
-          // If still not found, show an error
-          console.error("Content not found for ID:", id);
+          console.error("No matching content found for ID:", id);
           setError('Content not found');
         }
       } catch (err) {

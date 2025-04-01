@@ -142,18 +142,18 @@ export const formatDescription = (description: string): string => {
     
     // If only one image, just display it without carousel
     if (images.length === 1) {
-      return `<img src="${images[0]}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" />`;
+      return `<div class="w-full my-4">
+        <img src="${images[0]}" class="w-full h-auto object-contain" alt="Update image" />
+      </div>`;
     }
     
     // Generate HTML for a simple custom carousel
-    const imagesJson = JSON.stringify(images);
-    
     return `
       <div class="custom-carousel my-4 relative border border-border rounded-md overflow-hidden" data-carousel-id="${carouselId}">
-        <div class="carousel-container relative">
+        <div class="carousel-container">
           ${images.map((img, index) => 
-            `<div class="carousel-slide w-full ${index === 0 ? 'active' : ''}" data-index="${index}">
-              <img src="${img}" class="w-full h-auto max-h-[400px] object-contain" loading="lazy" alt="Carousel image ${index + 1}" />
+            `<div class="carousel-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
+              <img src="${img}" class="w-full h-auto object-contain mx-auto" alt="Carousel image ${index + 1}" />
             </div>`
           ).join('')}
           
@@ -167,11 +167,11 @@ export const formatDescription = (description: string): string => {
           
           <div class="carousel-indicators absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
             ${images.map((_, index) => 
-              `<button class="w-2 h-2 rounded-full bg-background/50 ${index === 0 ? 'active bg-primary' : ''}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
+              `<button class="w-2 h-2 rounded-full ${index === 0 ? 'active bg-primary' : 'bg-background/50'}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
             ).join('')}
           </div>
           
-          <div class="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium carousel-counter">
+          <div class="carousel-counter absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
             1 / ${images.length}
           </div>
         </div>
@@ -246,7 +246,7 @@ export const formatDescription = (description: string): string => {
     if (!imageUrl || !imageUrl.trim()) {
       return ''; // Skip empty image tags
     }
-    return `<img src="${imageUrl.trim()}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" loading="lazy" />`;
+    return `<img src="${imageUrl.trim()}" class="w-full max-h-[500px] object-contain my-4" alt="Update image" loading="lazy" />`;
   });
   
   // Process any orphaned or remaining [*] bullet points

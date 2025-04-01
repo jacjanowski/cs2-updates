@@ -175,11 +175,11 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
         let touchStartX = 0;
         let touchEndX = 0;
         
-        carousel.addEventListener('touchstart', (e) => {
+        carousel.addEventListener('touchstart', (e: TouchEvent) => {
           touchStartX = e.changedTouches[0].screenX;
         }, { passive: true });
         
-        carousel.addEventListener('touchend', (e) => {
+        carousel.addEventListener('touchend', (e: TouchEvent) => {
           touchEndX = e.changedTouches[0].screenX;
           handleSwipe();
         }, { passive: true });

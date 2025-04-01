@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
-import { getUpdateSlug } from "@/utils/urlHelpers";
+import { getUpdateSlug, compareUpdateSlugs } from "@/utils/urlHelpers";
 
 export const useUpdateDetail = (id: string | undefined): {
   update: UpdateData | null;
@@ -33,7 +33,8 @@ export const useUpdateDetail = (id: string | undefined): {
         let foundUpdate = updates.find(update => {
           const updateSlug = getUpdateSlug(update.title);
           console.log(`Comparing ${updateSlug} with ${id}`);
-          return updateSlug === id;
+          // Use our improved comparison function
+          return compareUpdateSlugs(updateSlug, id);
         });
 
         // If not found in updates, check news items
@@ -43,7 +44,8 @@ export const useUpdateDetail = (id: string | undefined): {
           foundUpdate = news.find(newsItem => {
             const newsSlug = getUpdateSlug(newsItem.title);
             console.log(`Comparing ${newsSlug} with ${id}`);
-            return newsSlug === id;
+            // Use our improved comparison function
+            return compareUpdateSlugs(newsSlug, id);
           });
           
           if (foundUpdate) {

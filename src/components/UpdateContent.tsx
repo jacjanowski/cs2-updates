@@ -1,6 +1,6 @@
-
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import ReactDOM from "react-dom";
 import ContentCarousel from "./ContentCarousel";
 
 interface UpdateContentProps {
@@ -54,57 +54,21 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
           if (carouselId && imagesData) {
             const images = JSON.parse(decodeURIComponent(imagesData));
             
-            // Create the carousel element directly
+            // Create a container for the React carousel
             const carouselContainer = document.createElement('div');
             carouselContainer.id = `carousel-container-${carouselId}`;
             carouselContainer.className = 'carousel-container';
             
-            // Create a carousel instance
-            const carouselInstance = document.createElement('div');
-            carouselInstance.className = 'w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50';
-            
-            // Image container
-            const imageContainer = document.createElement('div');
-            imageContainer.className = 'relative aspect-video w-full';
-            
-            // Current image
-            const img = document.createElement('img');
-            img.src = images[0];
-            img.alt = 'Carousel image 1';
-            img.className = 'w-full h-full object-contain';
-            img.loading = 'lazy';
-            
-            // Append elements
-            imageContainer.appendChild(img);
-            carouselInstance.appendChild(imageContainer);
-            
-            // Add navigation if multiple images
-            if (images.length > 1) {
-              // Add counter
-              const counter = document.createElement('div');
-              counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium';
-              counter.textContent = `1 / ${images.length}`;
-              carouselInstance.appendChild(counter);
-            }
-            
-            // Replace the placeholder with our carousel
-            carouselContainer.appendChild(carouselInstance);
+            // Replace the placeholder with our container
             carousel.parentNode?.replaceChild(carouselContainer, carousel);
             
-            // Create a real React carousel
-            const carouselElement = document.createElement('div');
-            carouselElement.id = `carousel-${carouselId}`;
-            carouselElement.className = 'carousel-react-container';
-            carouselContainer.appendChild(carouselElement);
-            
-            // Import the ContentCarousel component at runtime and render it
-            const carouselComponent = new ContentCarousel({ 
-              images: images,
-              carouselId: carouselId
-            });
-            
-            // Replace our dummy carousel with the real one
-            carouselContainer.replaceChild(carouselElement, carouselInstance);
+            // Use ReactDOM to render the carousel component
+            if (images.length > 0) {
+              ReactDOM.render(
+                <ContentCarousel images={images} carouselId={carouselId} />,
+                carouselContainer
+              );
+            }
           }
         } catch (error) {
           console.error('Error initializing carousel:', error);
@@ -185,8 +149,15 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       initializeVideos();
     }, 300);
     
+    // Cleanup function to remove any mounted components on unmount
     return () => {
       clearTimeout(timer);
+      
+      // Find and cleanup any carousel containers
+      const carouselContainers = document.querySelectorAll('[id^="carousel-container-"]');
+      carouselContainers.forEach(container => {
+        ReactDOM.unmountComponentAtNode(container);
+      });
     };
   }, [formattedHtml]);
   

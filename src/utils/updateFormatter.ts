@@ -1,295 +1,240 @@
+import { formatHtmlContent } from './formatting/htmlFormatter';
 
-/**
- * Utility functions for formatting specific content tags
- */
+interface CarouselData {
+  id: string;
+  images: string[];
+}
 
-// Import the fixHtmlTags function
-import { fixHtmlTags } from './formatting/htmlFormatter';
+let carouselCounter = 0;
+const extractedCarousels: CarouselData[] = [];
 
-/**
- * Formats the description text into structured HTML
- */
 export const formatDescription = (description: string): string => {
-  if (!description) return '';
+  // Reset carousel counter and extracted images for this format operation
+  carouselCounter = 0;
+  extractedCarousels.length = 0;
   
-  // First, normalize line breaks
-  let formattedText = description.replace(/\r\n/g, '\n');
+  // Format the HTML content using our formatter
+  let formattedContent = formatHtmlContent(description);
   
-  // Handle video tags with various attributes
-  formattedText = formattedText.replace(/\[video(?:\s+[^\]]*?)?\](.*?)\[\/video\]/gs, (match, content) => {
-    // Extract video attributes
-    const mp4Match = match.match(/mp4=([^\s\]]+)/);
-    const webmMatch = match.match(/webm=([^\s\]]+)/);
-    const posterMatch = match.match(/poster=([^\s\]]+)/);
-    const autoplayMatch = match.match(/autoplay=(true|false)/);
-    const controlsMatch = match.match(/controls=(true|false)/);
-    
-    const mp4Src = mp4Match ? mp4Match[1] : '';
-    const webmSrc = webmMatch ? webmMatch[1] : '';
-    const poster = posterMatch ? posterMatch[1] : '';
-    const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : true; // Default to true
-    const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
-    
-    if (mp4Src || webmSrc) {
-      let videoHtml = `
-        <div class="video-container">
-          <video 
-            ${controls ? 'controls' : ''}
-            ${autoplay ? 'autoplay muted loop playsinline' : ''}
-            ${poster ? `poster="${poster}"` : ''}
-            class="w-full"
-            preload="auto"
-          >`;
-          
-      if (mp4Src) {
-        videoHtml += `
-            <source src="${mp4Src}" type="video/mp4">`;
-      }
+  // Process VIDEO tags
+  formattedContent = processVideoTags(formattedContent);
+  
+  // Process IMG tags to create carousels for consecutive images
+  formattedContent = processImageGroups(formattedContent);
+  
+  // Process remaining standalone images
+  formattedContent = processStandaloneImages(formattedContent);
+  
+  return formattedContent;
+};
+
+const processVideoTags = (content: string): string => {
+  const videoRegex = /<video[^>]*>(.*?)<\/video>/gis;
+  
+  return content.replace(videoRegex, (videoTag) => {
+    if (videoTag.includes('gfycat.com') || videoTag.includes('giant.gfycat.com')) {
+      // Extract the Gfycat ID
+      const gfycatIdMatch = videoTag.match(/(?:gfycat\.com\/|giant\.gfycat\.com\/)([a-zA-Z0-9]+)/i);
+      const gfycatId = gfycatIdMatch ? gfycatIdMatch[1] : null;
       
-      if (webmSrc) {
-        videoHtml += `
-            <source src="${webmSrc}" type="video/webm">`;
-      }
-      
-      // Add fallback but as a hidden div instead of text
-      videoHtml += `
-            <div class="video-fallback">Your browser does not support the video tag.</div>
-          </video>
+      if (gfycatId) {
+        // Create an iframe for Gfycat embeds
+        return `<div class="video-container aspect-video">
+          <iframe src="https://gfycat.com/ifr/${gfycatId}" 
+            frameborder="0" scrolling="no" width="100%" height="100%" 
+            allowfullscreen>
+          </iframe>
         </div>`;
-        
-      return videoHtml;
-    }
-    
-    return match; // Return original if couldn't parse
-  });
-  
-  // Handle [url] format (BBCode style)
-  formattedText = formattedText.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/g, (match, url, text) => {
-    return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${text}</a>`;
-  });
-  
-  // Handle url= format (legacy style)
-  formattedText = formattedText.replace(/url=([^\s]+)\s+(.*?)\/url/gs, (match, url, linkText) => {
-    // Ensure the link text is properly cleaned up
-    const cleanedText = linkText.trim().replace(/\n/g, ' ');
-    // Return the link as an inline element within the text flow
-    return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
-  });
-  
-  // Handle italics with [i]...[/i] (standard BBCode format)
-  formattedText = formattedText.replace(/\[i\](.*?)\[\/i\]/gs, (match, text) => {
-    return `<em>${text.trim()}</em>`;
-  });
-  
-  // Handle italics - alternative format: i text /i (without brackets)
-  formattedText = formattedText.replace(/(?<![a-zA-Z])i\s+(.*?)\s+\/i(?![a-zA-Z])/g, (match, text) => {
-    return `<em>${text.trim()}</em>`;
-  });
-  
-  // Handle bold with [b]...[/b]
-  formattedText = formattedText.replace(/\[b\](.*?)\[\/b\]/gs, (match, text) => {
-    return `<strong>${text.trim()}</strong>`;
-  });
-  
-  // Handle underline with [u]...[/u]
-  formattedText = formattedText.replace(/\[u\](.*?)\[\/u\]/gs, (match, text) => {
-    return `<span class="underline">${text.trim()}</span>`;
-  });
-  
-  // Handle strikethrough with [s]...[/s]
-  formattedText = formattedText.replace(/\[s\](.*?)\[\/s\]/gs, (match, text) => {
-    return `<span class="line-through">${text.trim()}</span>`;
-  });
-  
-  // Handle quote blocks with [quote]...[/quote]
-  formattedText = formattedText.replace(/\[quote\](.*?)\[\/quote\]/gs, (match, text) => {
-    return `<blockquote class="border-l-4 border-primary/20 pl-4 py-1 my-4 italic text-muted-foreground">${text.trim()}</blockquote>`;
-  });
-  
-  // Handle named quotes with [quote="name"]...[/quote]
-  formattedText = formattedText.replace(/\[quote="([^"]+)"\](.*?)\[\/quote\]/gs, (match, name, text) => {
-    return `<blockquote class="border-l-4 border-primary/20 pl-4 py-1 my-4">
-      <div class="text-sm font-medium mb-1">${name} wrote:</div>
-      <div class="italic text-muted-foreground">${text.trim()}</div>
-    </blockquote>`;
-  });
-  
-  // Handle code blocks with [code]...[/code]
-  formattedText = formattedText.replace(/\[code\](.*?)\[\/code\]/gs, (match, text) => {
-    return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
-  });
-  
-  // Process carousel tag with simple custom carousel
-  formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
-    // Extract all img tags from the carousel content
-    const images = [];
-    const imgRegex = /\[img\](.*?)\[\/img\]/g;
-    let imgMatch;
-    
-    while ((imgMatch = imgRegex.exec(content)) !== null) {
-      if (imgMatch[1] && imgMatch[1].trim()) {
-        images.push(imgMatch[1].trim());
       }
     }
     
-    if (images.length === 0) {
-      // If no images found, return a placeholder
-      return `<div class="bg-muted p-4 rounded-md text-center">No images found in carousel</div>`;
-    }
+    // Check for source tags with src attributes
+    const sourceMatch = videoTag.match(/<source[^>]*src="([^"]+)"[^>]*>/i);
+    const srcMatch = videoTag.match(/src="([^"]+)"/i);
+    const posterMatch = videoTag.match(/poster="([^"]+)"/i);
     
-    // Create a unique ID for this carousel
-    const carouselId = `carousel-${Math.random().toString(36).substring(2, 10)}`;
+    const videoSrc = sourceMatch ? sourceMatch[1] : (srcMatch ? srcMatch[1] : null);
+    const posterSrc = posterMatch ? posterMatch[1] : null;
     
-    // If only one image, just display it without carousel
-    if (images.length === 1) {
-      return `<div class="w-full my-4">
-        <img src="${images[0]}" class="w-full h-auto object-contain" alt="Update image" />
+    if (videoSrc) {
+      // Create a clean video container
+      return `<div class="video-container">
+        <video 
+          ${posterSrc ? `poster="${posterSrc}"` : ''} 
+          controls 
+          autoplay 
+          loop 
+          muted 
+          playsinline
+          class="w-full">
+            <source src="${videoSrc}" type="${getVideoMimeType(videoSrc)}">
+            <div class="video-fallback">Your browser does not support video playback.</div>
+        </video>
       </div>`;
     }
     
-    // Generate HTML for a simple custom carousel
-    return `
-      <div class="custom-carousel my-4 relative border border-border rounded-md overflow-hidden" data-carousel-id="${carouselId}">
-        <div class="carousel-container">
-          ${images.map((img, index) => 
-            `<div class="carousel-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
-              <img src="${img}" class="w-full h-auto object-contain mx-auto" alt="Carousel image ${index + 1}" />
-            </div>`
+    // Return original tag if we couldn't process it
+    return videoTag;
+  });
+};
+
+const getVideoMimeType = (url: string): string => {
+  const extension = url.split('.').pop()?.toLowerCase();
+  
+  switch (extension) {
+    case 'mp4':
+      return 'video/mp4';
+    case 'webm':
+      return 'video/webm';
+    case 'ogg':
+      return 'video/ogg';
+    case 'mov':
+      return 'video/quicktime';
+    default:
+      return 'video/mp4'; // Default to mp4
+  }
+};
+
+const processImageGroups = (content: string): string => {
+  // First, identify all image tags
+  const imgRegex = /<img[^>]*src="([^"]+)"[^>]*>/gi;
+  const imgMatches: { full: string, src: string, index: number }[] = [];
+  
+  let match;
+  while ((match = imgRegex.exec(content)) !== null) {
+    imgMatches.push({
+      full: match[0],
+      src: match[1],
+      index: match.index
+    });
+  }
+  
+  // If we found fewer than 2 images, no need to create carousels
+  if (imgMatches.length < 2) {
+    return content;
+  }
+  
+  // Identify consecutive images (images that have no significant content between them)
+  const groupedImages: { startIndex: number, endIndex: number, srcs: string[] }[] = [];
+  let currentGroup: { startIndex: number, endIndex: number, srcs: string[] } | null = null;
+  
+  for (let i = 0; i < imgMatches.length; i++) {
+    const current = imgMatches[i];
+    const next = i < imgMatches.length - 1 ? imgMatches[i + 1] : null;
+    
+    // Start a new group if we don't have one
+    if (!currentGroup) {
+      currentGroup = {
+        startIndex: current.index,
+        endIndex: current.index + current.full.length,
+        srcs: [current.src]
+      };
+    } else {
+      // Add to existing group
+      currentGroup.endIndex = current.index + current.full.length;
+      currentGroup.srcs.push(current.src);
+    }
+    
+    // Check if we should close this group
+    if (!next || (next.index - currentGroup.endIndex > 100)) {
+      // If there's more than 100 characters between images, consider them separate
+      // Or if this is the last image
+      
+      // Only create a carousel for groups with at least 2 images
+      if (currentGroup.srcs.length >= 2) {
+        groupedImages.push(currentGroup);
+      }
+      
+      currentGroup = null;
+    }
+  }
+  
+  // Replace image groups with carousels, starting from the end to not mess up indices
+  let modifiedContent = content;
+  
+  // Process groups in reverse order to maintain correct indices
+  for (let i = groupedImages.length - 1; i >= 0; i--) {
+    const group = groupedImages[i];
+    
+    // Create a carousel for this group
+    const carouselId = `carousel-${++carouselCounter}`;
+    const carouselHtml = createCarouselHtml(group.srcs, carouselId);
+    
+    // Store the carousel data for potential future use
+    extractedCarousels.push({
+      id: carouselId,
+      images: group.srcs
+    });
+    
+    // Replace the group of images with the carousel
+    modifiedContent = modifiedContent.substring(0, group.startIndex) + 
+                      carouselHtml + 
+                      modifiedContent.substring(group.endIndex);
+  }
+  
+  return modifiedContent;
+};
+
+const createCarouselHtml = (images: string[], carouselId: string): string => {
+  if (!images || images.length === 0) {
+    return '';
+  }
+  
+  // If only one image, just display it without carousel
+  if (images.length === 1) {
+    return `<div class="w-full my-4">
+      <img src="${images[0]}" class="w-full h-auto object-contain" alt="Update image" />
+    </div>`;
+  }
+  
+  // Generate HTML for a simple custom carousel
+  return `
+    <div class="custom-carousel my-4 relative border border-border rounded-md overflow-hidden" data-carousel-id="${carouselId}">
+      <div class="carousel-container">
+        ${images.map((img, index) => 
+          `<div class="carousel-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
+            <img src="${img}" class="w-full h-auto object-contain mx-auto" alt="Carousel image ${index + 1}" />
+          </div>`
+        ).join('')}
+        
+        <button class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background text-foreground w-8 h-8 rounded-full flex items-center justify-center" aria-label="Previous slide">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        
+        <button class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background text-foreground w-8 h-8 rounded-full flex items-center justify-center" aria-label="Next slide">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        
+        <div class="carousel-indicators absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+          ${images.map((_, index) => 
+            `<button class="w-2 h-2 rounded-full ${index === 0 ? 'active bg-primary' : 'bg-background/50'}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
           ).join('')}
-          
-          <button class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Previous slide">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
-          
-          <button class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Next slide">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
-          
-          <div class="carousel-indicators absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
-            ${images.map((_, index) => 
-              `<button class="w-2 h-2 rounded-full ${index === 0 ? 'active bg-primary' : 'bg-background/50'}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
-            ).join('')}
-          </div>
-          
-          <div class="carousel-counter absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
-            1 / ${images.length}
-          </div>
+        </div>
+        
+        <div class="carousel-counter absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
+          1 / ${images.length}
         </div>
       </div>
-    `;
-  });
-  
-  // Handle color with [color=X]...[/color]
-  formattedText = formattedText.replace(/\[color=([^\]]+)\](.*?)\[\/color\]/gs, (match, color, text) => {
-    return `<span style="color: ${color}">${text}</span>`;
-  });
-  
-  // Handle size with [size=X]...[/size]
-  formattedText = formattedText.replace(/\[size=([^\]]+)\](.*?)\[\/size\]/gs, (match, size, text) => {
-    // Convert numeric sizes to appropriate rem values
-    const sizeValue = parseInt(size);
-    let fontSize = 'inherit';
+    </div>
+  `;
+};
+
+const processStandaloneImages = (content: string): string => {
+  // Find any remaining image tags not in carousels
+  return content.replace(/<img[^>]*src="([^"]+)"[^>]*>/gi, (match, imageUrl) => {
+    // Skip image tags that are already inside a carousel
+    const isInCarousel = extractedCarousels.some(carousel => 
+      carousel.images.includes(imageUrl)
+    );
     
-    if (!isNaN(sizeValue)) {
-      // Map numeric sizes to reasonable font sizes
-      if (sizeValue <= 8) fontSize = '0.75rem'; // xs
-      else if (sizeValue <= 10) fontSize = '0.875rem'; // sm
-      else if (sizeValue <= 12) fontSize = '1rem'; // base
-      else if (sizeValue <= 14) fontSize = '1.125rem'; // lg
-      else if (sizeValue <= 16) fontSize = '1.25rem'; // xl
-      else if (sizeValue <= 20) fontSize = '1.5rem'; // 2xl
-      else fontSize = '1.875rem'; // 3xl and above
-    } else {
-      // Handle named sizes
-      fontSize = size; // Use as is for CSS values like "larger", "smaller", etc.
+    if (isInCarousel) {
+      return match; // Return original tag if it's part of a carousel
     }
     
-    return `<span style="font-size: ${fontSize}">${text}</span>`;
-  });
-  
-  // Handle heading tags [h1], [h2], [h3], etc.
-  formattedText = formattedText.replace(/\[h([1-6])\](.*?)\[\/h\1\]/g, (match, level, content) => {
-    return `<h${level} class="font-bold my-3 text-${4-Math.min(parseInt(level), 3)}xl">${content}</h${level}>`;
-  });
-  
-  // Handle lists
-  // [list] and [/list] tags
-  formattedText = formattedText.replace(/\[list\]/gi, '<ul class="my-4">');
-  formattedText = formattedText.replace(/\[\/list\]/gi, '</ul>');
-  
-  // [ul] and [/ul] tags (alternative list format)
-  formattedText = formattedText.replace(/\[ul\]/gi, '<ul class="my-4">');
-  formattedText = formattedText.replace(/\[\/ul\]/gi, '</ul>');
-  
-  // [ol] and [/ol] tags (ordered lists)
-  formattedText = formattedText.replace(/\[ol\]/gi, '<ol class="my-4 list-decimal pl-5">');
-  formattedText = formattedText.replace(/\[\/ol\]/gi, '</ol>');
-  
-  // Handle list items with [*]
-  formattedText = formattedText.replace(/\[\*\](.*?)(?=\[\*\]|\[\/list\]|\[\/ul\]|\[\/ol\]|$)/gs, '<li>$1</li>');
-  
-  // Handle list items with [li]...[/li]
-  formattedText = formattedText.replace(/\[li\](.*?)\[\/li\]/gs, '<li>$1</li>');
-  
-  // Process section headers
-  formattedText = formattedText.replace(/\[(.*?)\]/g, (match, content) => {
-    // Skip if it's a tag we've already processed
-    if (/list|ul|ol|\/list|\/ul|\/ol|\*|li|\/li|b|\/b|i|\/i|u|\/u|s|\/s|url|\/url|img|\/img|video|\/video|carousel|\/carousel|quote|\/quote|code|\/code|color|\/color|size|\/size/i.test(content)) {
-      return match;
-    }
-    
-    return `<div class="section-header">${content}</div>`;
-  });
-  
-  // Replace [img]...[/img] with actual image tags
-  formattedText = formattedText.replace(/\[img\](.*?)\[\/img\]/g, (match, imageUrl) => {
+    // Skip empty image URLs
     if (!imageUrl || !imageUrl.trim()) {
       return ''; // Skip empty image tags
     }
     return `<img src="${imageUrl.trim()}" class="w-full max-h-[500px] object-contain my-4" alt="Update image" loading="lazy" />`;
   });
-  
-  // Process any orphaned or remaining [*] bullet points
-  formattedText = formattedText.replace(/\[\*\](.*?)(?=$|\n)/g, '<li>$1</li>');
-  
-  // Clean up any broken HTML tags
-  formattedText = fixHtmlTags(formattedText);
-  
-  return formattedText;
-};
-
-// Extracts and returns all images from content
-export const extractImagesFromContent = (content: string): string[] => {
-  if (!content) return [];
-  
-  const images: string[] = [];
-  
-  // Extract all <img> tags
-  const imgRegex = /<img[^>]*src="([^"]*)"[^>]*>/gi;
-  let imgMatch;
-  while ((imgMatch = imgRegex.exec(content)) !== null) {
-    if (imgMatch[1] && !images.includes(imgMatch[1])) {
-      images.push(imgMatch[1]);
-    }
-  }
-  
-  // Extract video thumbnails/posters
-  const posterRegex = /<video[^>]*poster="([^"]*)"[^>]*>/gi;
-  let posterMatch;
-  while ((posterMatch = posterRegex.exec(content)) !== null) {
-    if (posterMatch[1] && !images.includes(posterMatch[1])) {
-      images.push(posterMatch[1]);
-    }
-  }
-  
-  // Look for [img] tags as well (BBCode style)
-  const bbcodeRegex = /\[img\](.*?)\[\/img\]/gi;
-  let bbcodeMatch;
-  while ((bbcodeMatch = bbcodeRegex.exec(content)) !== null) {
-    if (bbcodeMatch[1] && !images.includes(bbcodeMatch[1])) {
-      images.push(bbcodeMatch[1]);
-    }
-  }
-  
-  return images;
 };

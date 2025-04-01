@@ -1,5 +1,5 @@
+
 import { formatHtmlContent } from './formatting/htmlFormatter';
-export { extractImagesFromContent } from './formatting/mediaExtractor';
 
 interface CarouselData {
   id: string;
@@ -188,7 +188,7 @@ const createCarouselHtml = (images: string[], carouselId: string): string => {
     </div>`;
   }
   
-  // Generate HTML for a simple custom carousel with correct button styling
+  // Generate HTML for a simple custom carousel
   return `
     <div class="custom-carousel my-4 relative border border-border rounded-md overflow-hidden" data-carousel-id="${carouselId}">
       <div class="carousel-container">
@@ -198,17 +198,17 @@ const createCarouselHtml = (images: string[], carouselId: string): string => {
           </div>`
         ).join('')}
         
-        <button type="button" class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background text-foreground w-8 h-8 rounded-full flex items-center justify-center" aria-label="Previous slide">
+        <button class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background text-foreground w-8 h-8 rounded-full flex items-center justify-center" aria-label="Previous slide">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         
-        <button type="button" class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background text-foreground w-8 h-8 rounded-full flex items-center justify-center" aria-label="Next slide">
+        <button class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background text-foreground w-8 h-8 rounded-full flex items-center justify-center" aria-label="Next slide">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
         
         <div class="carousel-indicators absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
           ${images.map((_, index) => 
-            `<button type="button" class="w-2 h-2 rounded-full ${index === 0 ? 'active bg-primary' : 'bg-background/50'}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
+            `<button class="w-2 h-2 rounded-full ${index === 0 ? 'active bg-primary' : 'bg-background/50'}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
           ).join('')}
         </div>
         
@@ -239,3 +239,6 @@ const processStandaloneImages = (content: string): string => {
     return `<img src="${imageUrl.trim()}" class="w-full max-h-[500px] object-contain my-4" alt="Update image" loading="lazy" />`;
   });
 };
+
+// Export the extractImagesFromContent function from mediaExtractor
+export { extractImagesFromContent } from './formatting/mediaExtractor';

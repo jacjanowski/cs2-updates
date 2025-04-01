@@ -118,7 +118,7 @@ export const formatDescription = (description: string): string => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
   });
   
-  // Handle carousel tag - Use our custom Carousel component
+  // Handle carousel tag with a simpler approach
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -132,16 +132,27 @@ export const formatDescription = (description: string): string => {
     }
     
     if (images.length === 0) {
-      return match; // No images found, return original
+      // If no images found, return a placeholder
+      return `<div class="bg-muted p-4 rounded-md text-center">No images found in carousel</div>`;
     }
     
     // Create a unique ID for this carousel
     const carouselId = `carousel-${Math.random().toString(36).substring(2, 10)}`;
     
-    // Generate a simpler placeholder that will be replaced by our React component
+    // If only one image, just display it without carousel
+    if (images.length === 1) {
+      return `<img src="${images[0]}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" />`;
+    }
+    
+    // Generate a placeholder that will be replaced with React
+    const imageDataAttr = encodeURIComponent(JSON.stringify(images));
+    
+    // Create a simple non-React placeholder first that will later be replaced
     return `
-      <div class="cs2-carousel" data-carousel-id="${carouselId}" data-images="${encodeURIComponent(JSON.stringify(images))}">
-        <div class="cs2-carousel-loading">Loading carousel...</div>
+      <div class="cs2-carousel" data-carousel-id="${carouselId}" data-images="${imageDataAttr}">
+        <div class="cs2-carousel-loading text-center p-4 bg-muted/30 rounded-md">
+          Loading images...
+        </div>
       </div>
     `;
   });
@@ -210,7 +221,10 @@ export const formatDescription = (description: string): string => {
   
   // Replace [img]...[/img] with actual image tags
   formattedText = formattedText.replace(/\[img\](.*?)\[\/img\]/g, (match, imageUrl) => {
-    return `<img src="${imageUrl}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" />`;
+    if (!imageUrl || !imageUrl.trim()) {
+      return ''; // Skip empty image tags
+    }
+    return `<img src="${imageUrl.trim()}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" loading="lazy" />`;
   });
   
   // Process any orphaned or remaining [*] bullet points

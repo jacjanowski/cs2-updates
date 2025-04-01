@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -10,6 +10,12 @@ interface ContentCarouselProps {
 
 const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Reset loading state when images change
+  useEffect(() => {
+    setIsLoading(true);
+  }, [images]);
   
   // Don't render if there are no images
   if (images.length === 0) {
@@ -20,22 +26,41 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
     setCurrentIndex((prevIndex) => 
       prevIndex > 0 ? prevIndex - 1 : images.length - 1
     );
+    setIsLoading(true);
   };
 
   const handleNext = () => {
     setCurrentIndex((prevIndex) => 
       prevIndex < images.length - 1 ? prevIndex + 1 : 0
     );
+    setIsLoading(true);
+  };
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+  };
+
+  const handleImageError = () => {
+    setIsLoading(false);
   };
 
   return (
-    <div className="w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50">
-      <div className="relative aspect-video w-full">
+    <div id={`carousel-${carouselId}`} className="w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50">
+      <div className="relative aspect-video w-full bg-muted/50">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
+            <p className="text-sm text-muted-foreground animate-pulse">Loading image...</p>
+          </div>
+        )}
+        
         <img
+          key={`${carouselId}-${currentIndex}`}
           src={images[currentIndex]}
           alt={`Carousel image ${currentIndex + 1}`}
           className="w-full h-full object-contain"
           loading="lazy"
+          onLoad={handleImageLoad}
+          onError={handleImageError}
         />
       </div>
       

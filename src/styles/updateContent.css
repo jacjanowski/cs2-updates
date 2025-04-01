@@ -92,6 +92,7 @@
 .update-content .carousel-container {
   margin: 1.5rem 0;
   width: 100%;
+  position: relative;
 }
 
 .update-content .cs2-carousel-loading {
@@ -101,6 +102,25 @@
   border-radius: 0.375rem;
   color: hsl(var(--muted-foreground));
   font-style: italic;
+}
+
+/* Fade animation for carousel images */
+.update-content .carousel-fade-enter {
+  opacity: 0;
+}
+
+.update-content .carousel-fade-enter-active {
+  opacity: 1;
+  transition: opacity 300ms;
+}
+
+.update-content .carousel-fade-exit {
+  opacity: 1;
+}
+
+.update-content .carousel-fade-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
 }
 
 /* Italic text */

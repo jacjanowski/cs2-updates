@@ -1,7 +1,8 @@
+
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import ReactDOM from "react-dom";
-import ContentCarousel from "./ContentCarousel";
+// Import shadcn/ui Carousel components
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface UpdateContentProps {
   description: string;
@@ -41,42 +42,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Initialize carousels directly without React DOM
-    const initializeCarousels = () => {
-      // Find all carousel placeholders
-      const carousels = contentRef.current?.querySelectorAll('.cs2-carousel');
-      
-      carousels?.forEach(carousel => {
-        try {
-          const carouselId = carousel.getAttribute('data-carousel-id');
-          const imagesData = carousel.getAttribute('data-images');
-          
-          if (carouselId && imagesData) {
-            const images = JSON.parse(decodeURIComponent(imagesData));
-            
-            // Create a container for the React carousel
-            const carouselContainer = document.createElement('div');
-            carouselContainer.id = `carousel-container-${carouselId}`;
-            carouselContainer.className = 'carousel-container';
-            
-            // Replace the placeholder with our container
-            carousel.parentNode?.replaceChild(carouselContainer, carousel);
-            
-            // Use ReactDOM to render the carousel component
-            if (images.length > 0) {
-              ReactDOM.render(
-                <ContentCarousel images={images} carouselId={carouselId} />,
-                carouselContainer
-              );
-            }
-          }
-        } catch (error) {
-          console.error('Error initializing carousel:', error);
-        }
-      });
-    };
-    
-    // Find all video elements and ensure they play
+    // Process videos to ensure autoplay works
     const initializeVideos = () => {
       const videoElements = contentRef.current?.querySelectorAll('video[autoplay]');
       
@@ -120,9 +86,6 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Run initialization
-    cleanupDebugInfo();
-    
     // Update the formatting for carousel tags in the HTML
     const updateCarouselTags = () => {
       if (!contentRef.current) return;
@@ -139,7 +102,125 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Run the update for carousel tags
+    // Define carousel navigation function
+    window.navigateCarousel = (button: HTMLButtonElement, direction: 'prev' | 'next') => {
+      const carousel = button.closest('.embla');
+      if (!carousel) return;
+      
+      const container = carousel.querySelector('.embla__container');
+      const slides = carousel.querySelectorAll('.embla__slide');
+      if (!container || slides.length === 0) return;
+      
+      // Find currently visible slide
+      let currentIndex = 0;
+      slides.forEach((slide, index) => {
+        if (slide.classList.contains('is-selected')) {
+          currentIndex = index;
+        }
+      });
+      
+      // Calculate next index
+      let nextIndex = currentIndex;
+      if (direction === 'prev') {
+        nextIndex = (currentIndex - 1 + slides.length) % slides.length;
+      } else {
+        nextIndex = (currentIndex + 1) % slides.length;
+      }
+      
+      // Update slides
+      slides.forEach((slide, index) => {
+        if (index === nextIndex) {
+          slide.classList.add('is-selected');
+        } else {
+          slide.classList.remove('is-selected');
+        }
+        
+        (slide as HTMLElement).style.transform = `translateX(${100 * (index - nextIndex)}%)`;
+      });
+    };
+    
+    // Initialize carousels directly
+    const initializeCarousels = () => {
+      // Find all carousel placeholders
+      const carousels = contentRef.current?.querySelectorAll('.cs2-carousel');
+      
+      carousels?.forEach(carousel => {
+        try {
+          const carouselId = carousel.getAttribute('data-carousel-id');
+          const imagesData = carousel.getAttribute('data-images');
+          
+          if (carouselId && imagesData) {
+            const images = JSON.parse(decodeURIComponent(imagesData));
+            
+            // Create the carousel container
+            const carouselContainer = document.createElement('div');
+            carouselContainer.id = `carousel-container-${carouselId}`;
+            carouselContainer.className = 'embla w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50';
+            
+            // Create the container for slides
+            const slideContainer = document.createElement('div');
+            slideContainer.className = 'embla__container flex transition-transform duration-300';
+            
+            // Create slides for each image
+            images.forEach((image: string, index: number) => {
+              const slide = document.createElement('div');
+              slide.className = `embla__slide flex-shrink-0 flex-grow-0 min-w-full relative ${index === 0 ? 'is-selected' : ''}`;
+              slide.style.transform = index === 0 ? 'translateX(0%)' : `translateX(100%)`;
+              
+              const img = document.createElement('img');
+              img.src = image;
+              img.alt = `Carousel image ${index + 1}`;
+              img.className = 'w-full h-full object-contain';
+              img.loading = 'lazy';
+              
+              slide.appendChild(img);
+              slideContainer.appendChild(slide);
+            });
+            
+            // Add the slide container to the carousel
+            carouselContainer.appendChild(slideContainer);
+            
+            // Add navigation if there are multiple images
+            if (images.length > 1) {
+              // Create previous button
+              const prevButton = document.createElement('button');
+              prevButton.className = 'absolute left-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-secondary text-secondary-foreground opacity-90 hover:opacity-100 shadow-md flex items-center justify-center';
+              prevButton.setAttribute('aria-label', 'Previous image');
+              prevButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+              prevButton.onclick = function() {
+                window.navigateCarousel(this, 'prev');
+              };
+              
+              // Create next button
+              const nextButton = document.createElement('button');
+              nextButton.className = 'absolute right-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-secondary text-secondary-foreground opacity-90 hover:opacity-100 shadow-md flex items-center justify-center';
+              nextButton.setAttribute('aria-label', 'Next image');
+              nextButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+              nextButton.onclick = function() {
+                window.navigateCarousel(this, 'next');
+              };
+              
+              // Add counter
+              const counter = document.createElement('div');
+              counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium';
+              counter.textContent = `1 / ${images.length}`;
+              
+              carouselContainer.appendChild(prevButton);
+              carouselContainer.appendChild(nextButton);
+              carouselContainer.appendChild(counter);
+            }
+            
+            // Replace the placeholder with our carousel
+            carousel.parentNode?.replaceChild(carouselContainer, carousel);
+          }
+        } catch (error) {
+          console.error('Error initializing carousel:', error);
+        }
+      });
+    };
+    
+    // Run initialization
+    cleanupDebugInfo();
     updateCarouselTags();
     
     // Initialize carousels and videos
@@ -149,15 +230,9 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       initializeVideos();
     }, 300);
     
-    // Cleanup function to remove any mounted components on unmount
+    // Cleanup function
     return () => {
       clearTimeout(timer);
-      
-      // Find and cleanup any carousel containers
-      const carouselContainers = document.querySelectorAll('[id^="carousel-container-"]');
-      carouselContainers.forEach(container => {
-        ReactDOM.unmountComponentAtNode(container);
-      });
     };
   }, [formattedHtml]);
   
@@ -174,5 +249,12 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     />
   );
 };
+
+// Add the navigateCarousel function to the window object
+declare global {
+  interface Window {
+    navigateCarousel: (button: HTMLButtonElement, direction: 'prev' | 'next') => void;
+  }
+}
 
 export default UpdateContent;

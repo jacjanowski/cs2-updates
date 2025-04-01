@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for formatting specific content tags
  */
@@ -144,10 +145,10 @@ export const formatDescription = (description: string): string => {
       return `<img src="${images[0]}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" />`;
     }
     
-    // Generate a placeholder that will be replaced with React
+    // Generate a placeholder that will be replaced with the carousel
     const imageDataAttr = encodeURIComponent(JSON.stringify(images));
     
-    // Create a simple non-React placeholder first that will later be replaced
+    // Create a simple placeholder that will be replaced by JavaScript
     return `
       <div class="cs2-carousel" data-carousel-id="${carouselId}" data-images="${imageDataAttr}">
         <div class="cs2-carousel-loading text-center p-4 bg-muted/30 rounded-md">

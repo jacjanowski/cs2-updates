@@ -88,11 +88,35 @@
   transition: transform 0.2s ease;
 }
 
-/* Updated carousel styling */
-.update-content .carousel-container {
-  margin: 1.5rem 0;
-  width: 100%;
+/* Carousel styling */
+.update-content .embla {
   position: relative;
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+
+.update-content .embla__container {
+  display: flex;
+  will-change: transform;
+}
+
+.update-content .embla__slide {
+  position: relative;
+  flex-shrink: 0;
+  width: 100%;
+  height: auto;
+  min-height: 200px;
+  aspect-ratio: 16/9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.update-content .embla__slide img {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
 }
 
 .update-content .cs2-carousel-loading {
@@ -102,25 +126,6 @@
   border-radius: 0.375rem;
   color: hsl(var(--muted-foreground));
   font-style: italic;
-}
-
-/* Fade animation for carousel images */
-.update-content .carousel-fade-enter {
-  opacity: 0;
-}
-
-.update-content .carousel-fade-enter-active {
-  opacity: 1;
-  transition: opacity 300ms;
-}
-
-.update-content .carousel-fade-exit {
-  opacity: 1;
-}
-
-.update-content .carousel-fade-exit-active {
-  opacity: 0;
-  transition: opacity 300ms;
 }
 
 /* Italic text */

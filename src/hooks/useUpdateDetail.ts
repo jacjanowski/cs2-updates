@@ -4,7 +4,7 @@ import { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
 import { extractImagesFromContent } from "@/utils/updateFormatter";
-import { compareUpdateSlugs } from "@/utils/urlHelpers";
+import { compareUpdateSlugs, getUpdateSlug } from "@/utils/urlHelpers";
 
 interface UseUpdateDetailResult {
   update: UpdateData | null;

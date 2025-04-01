@@ -23,8 +23,10 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       if (!contentRef.current) return;
       
       // Dynamic import Swiper with the modules we need
-      const { Swiper, Navigation, Pagination } = await import('swiper');
-      import('swiper/modules');
+      const Swiper = await import('swiper');
+      // Import modules separately
+      const Navigation = await import('swiper/modules/navigation');
+      const Pagination = await import('swiper/modules/pagination');
       
       // Find all carousel containers
       const carousels = contentRef.current.querySelectorAll('.swiper-carousel-container .swiper');
@@ -37,8 +39,8 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
         const container = carousel.closest('.swiper-carousel-container') as HTMLElement;
         if (!container) return;
         
-        const swiper = new Swiper(carousel as HTMLElement, {
-          modules: [Navigation, Pagination],
+        const swiper = new Swiper.default(carousel as HTMLElement, {
+          modules: [Navigation.default, Pagination.default],
           slidesPerView: 1,
           spaceBetween: 30,
           loop: carousel.querySelectorAll('.swiper-slide').length > 1,

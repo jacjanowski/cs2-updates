@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import { NewsAPI } from "@/utils/newsAPI";
 import { extractImagesFromContent } from "@/utils/updateFormatter";
-import { compareUpdateSlugs, getUpdateSlug } from "@/utils/urlHelpers";
+import { compareUpdateSlugs, getUpdateSlug, getUpdateUniqueId } from "@/utils/urlHelpers";
 
 interface UseUpdateDetailResult {
   update: UpdateData | null;
@@ -13,12 +14,22 @@ interface UseUpdateDetailResult {
   isNewsItem: boolean;
 }
 
+interface LocationState {
+  updateData?: UpdateData;
+  isNewsItem?: boolean;
+  uniqueId?: string;
+}
+
 export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult => {
   const [update, setUpdate] = useState<UpdateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewsItem, setIsNewsItem] = useState(false);
   const [contentImages, setContentImages] = useState<string[]>([]);
+  
+  // Get location state if available (passed from the card click)
+  const location = useLocation();
+  const locationState = location.state as LocationState | undefined;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +42,21 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
       try {
         setLoading(true);
         console.log("Fetching data for update ID:", id);
+        
+        // If we have location state with the update data, use it directly
+        if (locationState?.updateData) {
+          console.log("[useUpdateDetail] Using data from navigation state:", locationState.updateData.title);
+          setUpdate(locationState.updateData);
+          setIsNewsItem(locationState.isNewsItem || false);
+          
+          if (locationState.updateData.description) {
+            const extractedImages = extractImagesFromContent(locationState.updateData.description);
+            setContentImages(extractedImages);
+          }
+          
+          setLoading(false);
+          return;
+        }
         
         // First try to find in updates
         const { updates } = await SteamAPI.getUpdates();
@@ -101,7 +127,7 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
     };
     
     fetchData();
-  }, [id]);
+  }, [id, locationState]);
 
   return { update, loading, error, isNewsItem };
 };

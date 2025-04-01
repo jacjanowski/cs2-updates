@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useNavigate } from 'react-router-dom';
-import { getUpdateSlug } from "@/utils/urlHelpers";
+import { getUpdateSlug, getUpdateUniqueId } from "@/utils/urlHelpers";
 import UpdateCardImage from "@/components/UpdateCardImage";
 import UpdateCardContent from "@/components/UpdateCardContent";
 import { extractImagesFromContent } from "@/utils/updateFormatter";
@@ -13,6 +13,7 @@ export interface UpdateData {
   date: string;
   url: string;
   imageUrl?: string;
+  id?: string; // Optional unique identifier for the update
 }
 
 interface UpdateCardProps {
@@ -25,7 +26,8 @@ const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardPro
   const navigate = useNavigate();
   
   const handleCardClick = () => {
-    // Generate a slug from the update title
+    // Generate a unique identifier from the update title and date
+    const uniqueId = getUpdateUniqueId(update.title, update.date);
     const slug = getUpdateSlug(update.title);
     
     // Log detailed information about the update being clicked
@@ -33,11 +35,18 @@ const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardPro
       title: update.title,
       type: isNewsItem ? 'news' : 'update',
       slug,
+      uniqueId,
       path: `/update/${slug}`
     });
     
     // Navigate to the detail page with the slug
-    navigate(`/update/${slug}`);
+    navigate(`/update/${slug}`, { 
+      state: { 
+        updateData: update,
+        isNewsItem: isNewsItem,
+        uniqueId: uniqueId
+      } 
+    });
   };
   
   return (

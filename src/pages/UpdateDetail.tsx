@@ -1,5 +1,5 @@
 
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Header from "@/components/Header";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,17 @@ import { useUpdateDetail } from "@/hooks/useUpdateDetail";
 import { useUpdateImage } from "@/hooks/useUpdateImage";
 import "@/styles/updateContent.css";
 
+interface LocationState {
+  updateData?: any;
+  isNewsItem?: boolean;
+  uniqueId?: string;
+}
+
 const UpdateDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as LocationState | undefined;
   
   // Use custom hooks for data fetching and image handling
   const { update, loading, error, isNewsItem } = useUpdateDetail(id);

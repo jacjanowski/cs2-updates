@@ -127,7 +127,7 @@
 .update-content .carousel-button {
   transition: background-color 0.2s ease;
   z-index: 10;
-  cursor: pointer;
+  cursor: pointer; /* Make sure cursor is pointer for buttons */
 }
 
 .update-content .carousel-indicators {
@@ -136,7 +136,7 @@
 
 .update-content .carousel-indicators button {
   transition: background-color 0.2s ease;
-  cursor: pointer;
+  cursor: pointer; /* Make sure cursor is pointer for indicators */
 }
 
 .update-content .carousel-counter {

@@ -139,14 +139,14 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
         // Set up click handlers for prev/next buttons
         if (prevButton) {
           prevButton.addEventListener('click', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Prevent default button behavior
             showSlide(currentIndex - 1);
           });
         }
         
         if (nextButton) {
           nextButton.addEventListener('click', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Prevent default button behavior
             showSlide(currentIndex + 1);
           });
         }
@@ -154,7 +154,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
         // Set up indicator click handlers
         indicators.forEach((indicator, i) => {
           indicator.addEventListener('click', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Prevent default button behavior
             showSlide(i);
           });
         });

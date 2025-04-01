@@ -1,8 +1,6 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Splide } from '@splidejs/react-splide';
-import ContentCarousel from "./ContentCarousel";
 
 interface UpdateContentProps {
   description: string;
@@ -86,106 +84,127 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Initialize carousels with Splide
+    // Initialize custom carousels
     const initializeCarousels = () => {
-      // Find all carousel placeholders
-      const carousels = contentRef.current?.querySelectorAll('.cs2-carousel');
+      // Find all carousel containers
+      const carousels = contentRef.current?.querySelectorAll('.custom-carousel');
       
       carousels?.forEach(carousel => {
-        try {
-          const carouselId = carousel.getAttribute('data-carousel-id');
-          const imagesData = carousel.getAttribute('data-images');
+        const slides = carousel.querySelectorAll('.carousel-slide');
+        const prevButton = carousel.querySelector('.carousel-button.prev');
+        const nextButton = carousel.querySelector('.carousel-button.next');
+        const indicators = carousel.querySelectorAll('.carousel-indicators button');
+        const counter = carousel.querySelector('.carousel-counter');
+        
+        if (!slides.length) return;
+        
+        let currentIndex = 0;
+        
+        // Function to update the active slide
+        const showSlide = (index: number) => {
+          // Handle index bounds
+          if (index < 0) index = slides.length - 1;
+          if (index >= slides.length) index = 0;
           
-          if (carouselId && imagesData) {
-            const images = JSON.parse(decodeURIComponent(imagesData));
-            
-            if (images.length > 0) {
-              // Log information about carousel for debugging
-              console.log(`Initializing carousel ${carouselId} with ${images.length} images:`, images);
-              
-              // Create a container for the ContentCarousel component
-              const carouselContainer = document.createElement('div');
-              carouselContainer.id = `carousel-container-${carouselId}`;
-              
-              // Replace the placeholder with the container
-              carousel.parentNode?.replaceChild(carouselContainer, carousel);
-              
-              // Create and render our carousel manually
-              const carouselDiv = document.createElement('div');
-              carouselDiv.className = 'w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50';
-              carouselContainer.appendChild(carouselDiv);
-              
-              // Create the Splide container
-              const splideDiv = document.createElement('div');
-              splideDiv.className = 'splide';
-              carouselDiv.appendChild(splideDiv);
-              
-              // Create the slides container
-              const track = document.createElement('div');
-              track.className = 'splide__track';
-              splideDiv.appendChild(track);
-              
-              // Create the list
-              const list = document.createElement('ul');
-              list.className = 'splide__list';
-              track.appendChild(list);
-              
-              // Add slides
-              images.forEach((image: string, index: number) => {
-                const slide = document.createElement('li');
-                slide.className = 'splide__slide';
-                
-                const slideDiv = document.createElement('div');
-                slideDiv.className = 'relative aspect-video w-full bg-muted/50';
-                
-                const img = document.createElement('img');
-                img.src = image;
-                img.alt = `Carousel image ${index + 1}`;
-                img.className = 'w-full h-full object-contain';
-                img.loading = 'lazy';
-                
-                slideDiv.appendChild(img);
-                slide.appendChild(slideDiv);
-                list.appendChild(slide);
-              });
-              
-              // Initialize Splide
-              try {
-                new Splide(splideDiv, {
-                  type: 'slide',
-                  perPage: 1,
-                  perMove: 1,
-                  pagination: images.length > 1,
-                  arrows: images.length > 1,
-                  drag: images.length > 1,
-                  autoHeight: true,
-                }).mount();
-                
-                // Add counter if multiple images
-                if (images.length > 1) {
-                  const counter = document.createElement('div');
-                  counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium';
-                  counter.textContent = `1 / ${images.length}`;
-                  carouselDiv.appendChild(counter);
-                }
-              } catch (e) {
-                console.error('Error initializing Splide:', e);
-              }
+          currentIndex = index;
+          
+          // Update slides
+          slides.forEach((slide, i) => {
+            if (i === index) {
+              slide.classList.add('active');
+            } else {
+              slide.classList.remove('active');
             }
+          });
+          
+          // Update indicators
+          indicators.forEach((indicator, i) => {
+            if (i === index) {
+              indicator.classList.add('active', 'bg-primary');
+              indicator.classList.remove('bg-background/50');
+            } else {
+              indicator.classList.remove('active', 'bg-primary');
+              indicator.classList.add('bg-background/50');
+            }
+          });
+          
+          // Update counter
+          if (counter) {
+            counter.textContent = `${index + 1} / ${slides.length}`;
           }
-        } catch (error) {
-          console.error('Error initializing carousel:', error);
+        };
+        
+        // Set up click handlers
+        if (prevButton) {
+          prevButton.addEventListener('click', () => {
+            showSlide(currentIndex - 1);
+          });
         }
+        
+        if (nextButton) {
+          nextButton.addEventListener('click', () => {
+            showSlide(currentIndex + 1);
+          });
+        }
+        
+        // Set up indicator click handlers
+        indicators.forEach((indicator, i) => {
+          indicator.addEventListener('click', () => {
+            showSlide(i);
+          });
+        });
+        
+        // Initialize the first slide
+        showSlide(0);
+        
+        // Add keyboard navigation
+        const handleKeyDown = (e: KeyboardEvent) => {
+          if (e.key === 'ArrowLeft') {
+            showSlide(currentIndex - 1);
+          } else if (e.key === 'ArrowRight') {
+            showSlide(currentIndex + 1);
+          }
+        };
+        
+        carousel.addEventListener('keydown', handleKeyDown);
+        
+        // Enable keyboard focus on the carousel
+        carousel.setAttribute('tabindex', '0');
+        
+        // Add swipe support for touch devices
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        carousel.addEventListener('touchstart', (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        carousel.addEventListener('touchend', (e) => {
+          touchEndX = e.changedTouches[0].screenX;
+          handleSwipe();
+        }, { passive: true });
+        
+        const handleSwipe = () => {
+          const swipeThreshold = 50; // Minimum pixels to consider a swipe
+          
+          if (touchEndX - touchStartX > swipeThreshold) {
+            // Swipe right
+            showSlide(currentIndex - 1);
+          } else if (touchStartX - touchEndX > swipeThreshold) {
+            // Swipe left
+            showSlide(currentIndex + 1);
+          }
+        };
       });
     };
     
     // Run initialization
     cleanupDebugInfo();
     
-    // Initialize carousels and videos
+    // Initialize videos and custom carousels with short delay to ensure DOM is ready
     const timer = setTimeout(() => {
-      initializeCarousels();
       initializeVideos();
+      initializeCarousels();
     }, 300);
     
     // Cleanup function

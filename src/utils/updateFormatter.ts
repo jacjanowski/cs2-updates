@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for formatting specific content tags
  */
@@ -118,7 +119,7 @@ export const formatDescription = (description: string): string => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
   });
   
-  // Process carousel tag with Splide
+  // Process carousel tag with simple custom carousel
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -144,14 +145,35 @@ export const formatDescription = (description: string): string => {
       return `<img src="${images[0]}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" />`;
     }
     
-    // Generate a placeholder that will be replaced with the carousel
-    const imageDataAttr = encodeURIComponent(JSON.stringify(images));
+    // Generate HTML for a simple custom carousel
+    const imagesJson = JSON.stringify(images);
     
-    // Create a simple placeholder that will be replaced by JavaScript
     return `
-      <div class="cs2-carousel" data-carousel-id="${carouselId}" data-images="${imageDataAttr}">
-        <div class="cs2-carousel-loading text-center p-4 bg-muted/30 rounded-md">
-          Loading images...
+      <div class="custom-carousel my-4 relative border border-border rounded-md overflow-hidden" data-carousel-id="${carouselId}">
+        <div class="carousel-container relative">
+          ${images.map((img, index) => 
+            `<div class="carousel-slide w-full ${index === 0 ? 'active' : ''}" data-index="${index}">
+              <img src="${img}" class="w-full h-auto max-h-[400px] object-contain" loading="lazy" alt="Carousel image ${index + 1}" />
+            </div>`
+          ).join('')}
+          
+          <button class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Previous slide">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          
+          <button class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Next slide">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+          
+          <div class="carousel-indicators absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+            ${images.map((_, index) => 
+              `<button class="w-2 h-2 rounded-full bg-background/50 ${index === 0 ? 'active bg-primary' : ''}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
+            ).join('')}
+          </div>
+          
+          <div class="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium carousel-counter">
+            1 / ${images.length}
+          </div>
         </div>
       </div>
     `;

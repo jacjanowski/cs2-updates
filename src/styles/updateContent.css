@@ -1,3 +1,4 @@
+
 .update-content .section-header {
   font-weight: 600;
   margin-top: 1.5rem;
@@ -87,39 +88,42 @@
   transition: transform 0.2s ease;
 }
 
-/* Carousel styling with Splide */
-.update-content .splide {
+/* Custom carousel styles */
+.update-content .custom-carousel {
   margin: 1.5rem 0;
-  position: relative;
-  border-radius: 0.375rem;
-  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
-.splide__slide {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.splide__slide img {
-  max-height: 500px;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-  margin: 0 auto;
-}
-
-.cs2-carousel-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.update-content .carousel-container {
   min-height: 200px;
+  max-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.update-content .carousel-slide {
+  display: none;
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 0.375rem;
-  color: hsl(var(--muted-foreground));
-  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+}
+
+.update-content .carousel-slide.active {
+  display: block;
+}
+
+.update-content .carousel-button {
+  transition: background-color 0.2s ease;
+}
+
+.update-content .carousel-indicators button {
+  transition: background-color 0.2s ease;
+}
+
+/* Dark mode specific styles */
+.dark .update-content .custom-carousel {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Italic text */
@@ -181,27 +185,10 @@
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.dark .update-content .cs2-carousel-loading {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
 .dark .update-content blockquote {
   color: hsl(var(--muted-foreground));
 }
 
 .dark .update-content pre {
   background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Splide dark mode styles */
-.dark .update-content .splide__arrow {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.dark .update-content .splide__pagination__page {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.dark .update-content .splide__pagination__page.is-active {
-  background: hsl(var(--primary));
 }

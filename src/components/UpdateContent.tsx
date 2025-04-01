@@ -1,8 +1,8 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-// Import shadcn/ui Carousel components
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Splide } from '@splidejs/react-splide';
+import ContentCarousel from "./ContentCarousel";
 
 interface UpdateContentProps {
   description: string;
@@ -86,60 +86,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Update the formatting for carousel tags in the HTML
-    const updateCarouselTags = () => {
-      if (!contentRef.current) return;
-      
-      // Find all elements with the cs2-carousel-loading class
-      const loadingElements = contentRef.current.querySelectorAll('.cs2-carousel-loading');
-      
-      loadingElements.forEach(element => {
-        // Update the text to be more descriptive
-        element.textContent = 'Loading images...';
-        
-        // Add some styling to make it look better
-        element.classList.add('animate-pulse', 'flex', 'items-center', 'justify-center', 'h-32');
-      });
-    };
-    
-    // Define carousel navigation function
-    window.navigateCarousel = (button: HTMLButtonElement, direction: 'prev' | 'next') => {
-      const carousel = button.closest('.embla');
-      if (!carousel) return;
-      
-      const container = carousel.querySelector('.embla__container');
-      const slides = carousel.querySelectorAll('.embla__slide');
-      if (!container || slides.length === 0) return;
-      
-      // Find currently visible slide
-      let currentIndex = 0;
-      slides.forEach((slide, index) => {
-        if (slide.classList.contains('is-selected')) {
-          currentIndex = index;
-        }
-      });
-      
-      // Calculate next index
-      let nextIndex = currentIndex;
-      if (direction === 'prev') {
-        nextIndex = (currentIndex - 1 + slides.length) % slides.length;
-      } else {
-        nextIndex = (currentIndex + 1) % slides.length;
-      }
-      
-      // Update slides
-      slides.forEach((slide, index) => {
-        if (index === nextIndex) {
-          slide.classList.add('is-selected');
-        } else {
-          slide.classList.remove('is-selected');
-        }
-        
-        (slide as HTMLElement).style.transform = `translateX(${100 * (index - nextIndex)}%)`;
-      });
-    };
-    
-    // Initialize carousels directly
+    // Initialize carousels with Splide
     const initializeCarousels = () => {
       // Find all carousel placeholders
       const carousels = contentRef.current?.querySelectorAll('.cs2-carousel');
@@ -152,66 +99,62 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
           if (carouselId && imagesData) {
             const images = JSON.parse(decodeURIComponent(imagesData));
             
-            // Create the carousel container
-            const carouselContainer = document.createElement('div');
-            carouselContainer.id = `carousel-container-${carouselId}`;
-            carouselContainer.className = 'embla w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50';
-            
-            // Create the container for slides
-            const slideContainer = document.createElement('div');
-            slideContainer.className = 'embla__container flex transition-transform duration-300';
-            
-            // Create slides for each image
-            images.forEach((image: string, index: number) => {
-              const slide = document.createElement('div');
-              slide.className = `embla__slide flex-shrink-0 flex-grow-0 min-w-full relative ${index === 0 ? 'is-selected' : ''}`;
-              slide.style.transform = index === 0 ? 'translateX(0%)' : `translateX(100%)`;
+            if (images.length > 0) {
+              // Create a container for the ContentCarousel component
+              const carouselContainer = document.createElement('div');
+              carouselContainer.id = `carousel-container-${carouselId}`;
               
-              const img = document.createElement('img');
-              img.src = image;
-              img.alt = `Carousel image ${index + 1}`;
-              img.className = 'w-full h-full object-contain';
-              img.loading = 'lazy';
+              // Replace the placeholder with the container
+              carousel.parentNode?.replaceChild(carouselContainer, carousel);
               
-              slide.appendChild(img);
-              slideContainer.appendChild(slide);
-            });
-            
-            // Add the slide container to the carousel
-            carouselContainer.appendChild(slideContainer);
-            
-            // Add navigation if there are multiple images
-            if (images.length > 1) {
-              // Create previous button
-              const prevButton = document.createElement('button');
-              prevButton.className = 'absolute left-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-secondary text-secondary-foreground opacity-90 hover:opacity-100 shadow-md flex items-center justify-center';
-              prevButton.setAttribute('aria-label', 'Previous image');
-              prevButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-              prevButton.onclick = function() {
-                window.navigateCarousel(this, 'prev');
-              };
+              // Create and render our carousel manually
+              const carouselDiv = document.createElement('div');
+              carouselDiv.className = 'splide-carousel';
+              carouselContainer.appendChild(carouselDiv);
               
-              // Create next button
-              const nextButton = document.createElement('button');
-              nextButton.className = 'absolute right-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-secondary text-secondary-foreground opacity-90 hover:opacity-100 shadow-md flex items-center justify-center';
-              nextButton.setAttribute('aria-label', 'Next image');
-              nextButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-              nextButton.onclick = function() {
-                window.navigateCarousel(this, 'next');
-              };
+              // Create the slides container
+              const slidesContainer = document.createElement('div');
+              slidesContainer.className = 'splide__track';
+              carouselDiv.appendChild(slidesContainer);
               
-              // Add counter
-              const counter = document.createElement('div');
-              counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium';
-              counter.textContent = `1 / ${images.length}`;
+              // Create the list
+              const slidesList = document.createElement('ul');
+              slidesList.className = 'splide__list';
+              slidesContainer.appendChild(slidesList);
               
-              carouselContainer.appendChild(prevButton);
-              carouselContainer.appendChild(nextButton);
-              carouselContainer.appendChild(counter);
+              // Add slides
+              images.forEach((image: string, index: number) => {
+                const slide = document.createElement('li');
+                slide.className = 'splide__slide';
+                
+                const img = document.createElement('img');
+                img.src = image;
+                img.alt = `Carousel image ${index + 1}`;
+                img.className = 'w-full h-full object-contain';
+                img.loading = 'lazy';
+                
+                slide.appendChild(img);
+                slidesList.appendChild(slide);
+              });
+              
+              // Initialize Splide
+              new Splide(carouselDiv, {
+                type: 'slide',
+                perPage: 1,
+                perMove: 1,
+                pagination: images.length > 1,
+                arrows: images.length > 1,
+                drag: images.length > 1,
+              }).mount();
+              
+              // Add counter if multiple images
+              if (images.length > 1) {
+                const counter = document.createElement('div');
+                counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium';
+                counter.textContent = `1 / ${images.length}`;
+                carouselDiv.appendChild(counter);
+              }
             }
-            
-            // Replace the placeholder with our carousel
-            carousel.parentNode?.replaceChild(carouselContainer, carousel);
           }
         } catch (error) {
           console.error('Error initializing carousel:', error);
@@ -221,11 +164,9 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     
     // Run initialization
     cleanupDebugInfo();
-    updateCarouselTags();
     
     // Initialize carousels and videos
     const timer = setTimeout(() => {
-      cleanupDebugInfo();
       initializeCarousels();
       initializeVideos();
     }, 300);
@@ -249,12 +190,5 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     />
   );
 };
-
-// Add the navigateCarousel function to the window object
-declare global {
-  interface Window {
-    navigateCarousel: (button: HTMLButtonElement, direction: 'prev' | 'next') => void;
-  }
-}
 
 export default UpdateContent;

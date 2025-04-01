@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting specific content tags
  */
@@ -119,7 +118,7 @@ export const formatDescription = (description: string): string => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
   });
   
-  // Handle carousel tag with a simpler approach
+  // Process carousel tag with Splide
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];

@@ -120,12 +120,10 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
           // Update indicators
           indicators.forEach((indicator, i) => {
             if (i === index) {
-              indicator.classList.add('active');
-              indicator.classList.add('bg-primary');
+              indicator.classList.add('active', 'bg-primary');
               indicator.classList.remove('bg-background/50');
             } else {
-              indicator.classList.remove('active');
-              indicator.classList.remove('bg-primary');
+              indicator.classList.remove('active', 'bg-primary');
               indicator.classList.add('bg-background/50');
             }
           });
@@ -136,25 +134,22 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
           }
         };
         
-        // Set up click handlers for prev/next buttons
+        // Set up click handlers
         if (prevButton) {
-          prevButton.addEventListener('click', (e) => {
-            e.preventDefault();
+          prevButton.addEventListener('click', () => {
             showSlide(currentIndex - 1);
           });
         }
         
         if (nextButton) {
-          nextButton.addEventListener('click', (e) => {
-            e.preventDefault();
+          nextButton.addEventListener('click', () => {
             showSlide(currentIndex + 1);
           });
         }
         
         // Set up indicator click handlers
         indicators.forEach((indicator, i) => {
-          indicator.addEventListener('click', (e) => {
-            e.preventDefault();
+          indicator.addEventListener('click', () => {
             showSlide(i);
           });
         });

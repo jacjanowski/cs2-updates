@@ -7,7 +7,7 @@
 import { fixHtmlTags } from './htmlFormatter';
 
 /**
- * Formats the description text into structured HTML
+ * Formats the description text with BBCode into structured HTML
  */
 export const formatDescription = (description: string): string => {
   if (!description) return '';
@@ -15,14 +15,14 @@ export const formatDescription = (description: string): string => {
   // First, normalize line breaks
   let formattedText = description.replace(/\r\n/g, '\n');
   
-  // Handle video tags with various attributes
-  formattedText = formattedText.replace(/\[video(?:\s+[^\]]*?)?\](.*?)\[\/video\]/gs, (match, content) => {
-    // Extract video attributes
-    const mp4Match = match.match(/mp4=([^\s\]]+)/);
-    const webmMatch = match.match(/webm=([^\s\]]+)/);
-    const posterMatch = match.match(/poster=([^\s\]]+)/);
-    const autoplayMatch = match.match(/autoplay=(true|false)/);
-    const controlsMatch = match.match(/controls=(true|false)/);
+  // Handle BBCode video tags
+  formattedText = formattedText.replace(/\[video(?:=([^\]]+))?\](.*?)\[\/video\]/gs, (match, attributes, content) => {
+    // Extract video attributes if present
+    const mp4Match = attributes ? attributes.match(/mp4=([^ ]+)/) : null;
+    const webmMatch = attributes ? attributes.match(/webm=([^ ]+)/) : null;
+    const posterMatch = attributes ? attributes.match(/poster=([^ ]+)/) : null;
+    const autoplayMatch = attributes ? attributes.match(/autoplay=(true|false)/) : null;
+    const controlsMatch = attributes ? attributes.match(/controls=(true|false)/) : null;
     
     const mp4Src = mp4Match ? mp4Match[1] : '';
     const webmSrc = webmMatch ? webmMatch[1] : '';
@@ -30,7 +30,10 @@ export const formatDescription = (description: string): string => {
     const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : false;
     const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
     
-    if (mp4Src || webmSrc) {
+    // Use content as source if no specific format provided
+    const sourceSrc = content.trim() || mp4Src || webmSrc;
+    
+    if (sourceSrc) {
       let videoHtml = `
         <div class="video-container">
           <video 
@@ -41,9 +44,9 @@ export const formatDescription = (description: string): string => {
             preload="auto"
           >`;
           
-      if (mp4Src) {
+      if (mp4Src || (sourceSrc && !webmSrc)) {
         videoHtml += `
-            <source src="${mp4Src}" type="video/mp4">`;
+            <source src="${mp4Src || sourceSrc}" type="video/mp4">`;
       }
       
       if (webmSrc) {
@@ -62,25 +65,21 @@ export const formatDescription = (description: string): string => {
     return match; // Return original if couldn't parse
   });
   
-  // Handle url= format and convert to proper hyperlinks
-  formattedText = formattedText.replace(/url=([^\s]+)\s+(.*?)\/url/gs, (match, url, linkText) => {
+  // Handle BBCode URL tags [url=http://example.com]text[/url]
+  formattedText = formattedText.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/gs, (match, url, linkText) => {
     const cleanedText = linkText.trim().replace(/\n/g, ' ');
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   
-  // Handle italics with multiple patterns to catch all cases
-  // Pattern 1: i text /i with spaces
-  formattedText = formattedText.replace(/i\s+(.*?)\s+\/i/g, '<em>$1</em>');
-  // Pattern 2: i text/i (no space before closing)
-  formattedText = formattedText.replace(/i\s+(.*?)\/i/g, '<em>$1</em>');
-  // Pattern 3: [i]text[/i] using square brackets
-  formattedText = formattedText.replace(/\[i\](.*?)\[\/i\]/g, '<em>$1</em>');
-  // Pattern 4: i text /i without spaces
-  formattedText = formattedText.replace(/i(.*?)\/i/g, '<em>$1</em>');
+  // Handle BBCode italics with [i]text[/i]
+  formattedText = formattedText.replace(/\[i\](.*?)\[\/i\]/gs, '<em>$1</em>');
   
-  // Handle carousel tag - Using shadcn/ui carousel
+  // Handle BBCode bold with [b]text[/b]
+  formattedText = formattedText.replace(/\[b\](.*?)\[\/b\]/gs, '<strong>$1</strong>');
+  
+  // Handle BBCode carousel with custom implementation using shadcn/ui carousel
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
-    // Extract all img tags from the carousel content
+    // Extract all img tags from the carousel content using BBCode syntax
     const images = [];
     const imgRegex = /\[img\](.*?)\[\/img\]/g;
     let imgMatch;
@@ -98,123 +97,135 @@ export const formatDescription = (description: string): string => {
     // Create a carousel using shadcn/ui structure
     let carouselHtml = `
       <div class="carousel-container my-6">
-        <div class="shadcn-carousel">
-          <div data-carousel>
-            <div data-carousel-wrapper class="relative w-full">
-              <div data-carousel-content class="flex">`;
+        <div class="embla">
+          <div class="embla__viewport">
+            <div class="embla__container">`;
     
     // Add each image as a slide
-    images.forEach((imgSrc, index) => {
+    images.forEach((imgSrc) => {
       carouselHtml += `
-                <div data-carousel-item class="carousel-slide min-w-full flex-shrink-0" ${index === 0 ? 'data-active="true"' : ''}>
-                  <img src="${imgSrc}" class="w-full object-contain max-h-[400px]" alt="Carousel image ${index + 1}" />
-                </div>`;
+              <div class="embla__slide">
+                <div class="embla__slide__inner">
+                  <img src="${imgSrc}" alt="Carousel image" />
+                </div>
+              </div>`;
     });
     
-    // Close the carousel structure
+    // Close the carousel structure and add buttons
     carouselHtml += `
-              </div>
-              <button data-carousel-prev class="carousel-prev absolute left-4 top-1/2 -translate-y-1/2 bg-primary text-white rounded-full p-2 hover:bg-primary/90 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                <span class="sr-only">Previous</span>
-              </button>
-              <button data-carousel-next class="carousel-next absolute right-4 top-1/2 -translate-y-1/2 bg-primary text-white rounded-full p-2 hover:bg-primary/90 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                <span class="sr-only">Next</span>
-              </button>
             </div>
           </div>
+          <button class="embla__prev embla-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <span class="sr-only">Previous</span>
+          </button>
+          <button class="embla__next embla-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            <span class="sr-only">Next</span>
+          </button>
         </div>
-      </div>`;
+      </div>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const carouselContainers = document.querySelectorAll('.embla');
+          
+          carouselContainers.forEach(container => {
+            const viewport = container.querySelector('.embla__viewport');
+            const slides = container.querySelectorAll('.embla__slide');
+            const prevBtn = container.querySelector('.embla__prev');
+            const nextBtn = container.querySelector('.embla__next');
+            
+            if (!viewport || slides.length === 0) return;
+            
+            let currentIndex = 0;
+            const slideCount = slides.length;
+            
+            const updateSlides = () => {
+              slides.forEach((slide, index) => {
+                if (index === currentIndex) {
+                  slide.classList.add('is-selected');
+                } else {
+                  slide.classList.remove('is-selected');
+                }
+                
+                slide.style.transform = \`translateX(\${100 * (index - currentIndex)}%)\`;
+              });
+            };
+            
+            // Initialize
+            updateSlides();
+            
+            // Add event listeners
+            if (prevBtn) {
+              prevBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + slideCount) % slideCount;
+                updateSlides();
+              });
+            }
+            
+            if (nextBtn) {
+              nextBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % slideCount;
+                updateSlides();
+              });
+            }
+          });
+        });
+      </script>`;
     
     return carouselHtml;
   });
   
-  // Handle heading tags [h1], [h2], [h3], etc.
+  // Handle BBCode heading tags [h1]text[/h1], [h2]text[/h2], etc.
   formattedText = formattedText.replace(/\[h([1-6])\](.*?)\[\/h\1\]/g, (match, level, content) => {
     return `<h${level} class="font-bold my-3 text-${4-Math.min(parseInt(level), 3)}xl">${content}</h${level}>`;
   });
   
-  // Handle [list] and [/list] tags
-  formattedText = formattedText.replace(/\[list\]/gi, '<ul class="my-4">');
-  formattedText = formattedText.replace(/\[\/list\]/gi, '</ul>');
-  
-  // Handle [ul] and [/ul] tags
-  formattedText = formattedText.replace(/\[ul\]/gi, '<ul class="my-4">');
-  formattedText = formattedText.replace(/\[\/ul\]/gi, '</ul>');
-  
-  // Handle nested lists with [*] and bullet points
-  formattedText = formattedText.replace(/\[\*\](.*?)(?=\[list\])/g, '<li>$1');
-  formattedText = formattedText.replace(/\[\*\](.*?)(?=\[\*\]|$|\[\/list\])/gs, '<li>$1</li>');
-  
-  // Process section headers
-  formattedText = formattedText.replace(/\[(.*?)\]/g, (match, content) => {
-    // Skip if it's a list tag that we've already processed
-    if (/list|ul|\/list|\/ul|\*/.test(content)) {
-      return match;
-    }
+  // Handle BBCode list tags [list][*]item1[*]item2[/list]
+  formattedText = formattedText.replace(/\[list\]([\s\S]*?)\[\/list\]/gi, (match, content) => {
+    const listItems = content.split(/\[\*\]/).filter(item => item.trim());
+    if (listItems.length === 0) return match;
     
-    // Skip if it's an image, video, or carousel tag
-    if (/img|\/img|video|\/video|carousel|\/carousel/.test(content)) {
-      return match;
-    }
+    let listHtml = '<ul class="my-4">';
+    listItems.forEach(item => {
+      listHtml += `<li>${item.trim()}</li>`;
+    });
+    listHtml += '</ul>';
     
-    return `<div class="section-header">${content}</div>`;
+    return listHtml;
   });
   
-  // Replace [img]...[/img] with actual image tags
+  // Handle BBCode ordered list [ol][*]item1[*]item2[/ol]
+  formattedText = formattedText.replace(/\[ol\]([\s\S]*?)\[\/ol\]/gi, (match, content) => {
+    const listItems = content.split(/\[\*\]/).filter(item => item.trim());
+    if (listItems.length === 0) return match;
+    
+    let listHtml = '<ol class="my-4 list-decimal pl-5">';
+    listItems.forEach(item => {
+      listHtml += `<li>${item.trim()}</li>`;
+    });
+    listHtml += '</ol>';
+    
+    return listHtml;
+  });
+  
+  // Handle BBCode img tags [img]url[/img]
   formattedText = formattedText.replace(/\[img\](.*?)\[\/img\]/g, (match, imageUrl) => {
-    return `<img src="${imageUrl}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" />`;
+    return `<img src="${imageUrl.trim()}" class="w-full max-h-[400px] object-contain my-4" alt="Update image" />`;
   });
   
-  // Process any orphaned or remaining [*] bullet points
-  formattedText = formattedText.replace(/\[\*\](.*?)(?=$|\n)/g, '<li>$1</li>');
+  // Handle BBCode quote [quote]text[/quote]
+  formattedText = formattedText.replace(/\[quote\](.*?)\[\/quote\]/gs, (match, content) => {
+    return `<blockquote class="border-l-4 border-primary/30 pl-4 italic my-4">${content.trim()}</blockquote>`;
+  });
+  
+  // Handle BBCode code [code]text[/code]
+  formattedText = formattedText.replace(/\[code\](.*?)\[\/code\]/gs, (match, content) => {
+    return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${content.trim()}</code></pre>`;
+  });
   
   // Clean up any broken HTML tags
   formattedText = fixHtmlTags(formattedText);
-  
-  // Add the carousel initialization script
-  formattedText += `
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const carousels = document.querySelectorAll('[data-carousel]');
-      carousels.forEach(carousel => {
-        const items = carousel.querySelectorAll('[data-carousel-item]');
-        const prevBtn = carousel.querySelector('[data-carousel-prev]');
-        const nextBtn = carousel.querySelector('[data-carousel-next]');
-        
-        if (items.length === 0 || !prevBtn || !nextBtn) return;
-        
-        let currentIndex = 0;
-        
-        const showSlide = (index) => {
-          items.forEach((item, i) => {
-            if (i === index) {
-              item.setAttribute('data-active', 'true');
-              item.style.display = 'flex';
-            } else {
-              item.removeAttribute('data-active');
-              item.style.display = 'none';
-            }
-          });
-        };
-        
-        // Initialize
-        showSlide(currentIndex);
-        
-        // Event listeners
-        prevBtn.addEventListener('click', () => {
-          currentIndex = (currentIndex - 1 + items.length) % items.length;
-          showSlide(currentIndex);
-        });
-        
-        nextBtn.addEventListener('click', () => {
-          currentIndex = (currentIndex + 1) % items.length;
-          showSlide(currentIndex);
-        });
-      });
-    });
-  </script>`;
   
   return formattedText;
 };

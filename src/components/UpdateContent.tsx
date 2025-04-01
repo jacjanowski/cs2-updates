@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-// Import Swiper
+// Import Swiper types
 import { Swiper } from 'swiper/types';
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -23,8 +23,8 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       if (!contentRef.current) return;
       
       // Dynamic import Swiper with the modules we need
-      const { Swiper, Navigation, Pagination } = await import('swiper');
-      import('swiper/modules');
+      const SwiperCore = await import('swiper');
+      const { Navigation, Pagination } = await import('swiper/modules');
       
       // Find all carousel containers
       const carousels = contentRef.current.querySelectorAll('.swiper-carousel-container .swiper');
@@ -37,7 +37,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
         const container = carousel.closest('.swiper-carousel-container') as HTMLElement;
         if (!container) return;
         
-        const swiper = new Swiper(carousel as HTMLElement, {
+        const swiper = new SwiperCore.Swiper(carousel as HTMLElement, {
           modules: [Navigation, Pagination],
           slidesPerView: 1,
           spaceBetween: 30,

@@ -10,6 +10,7 @@ interface ContentCarouselProps {
 
 const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(1);
   
   const handleLoad = () => {
     setIsLoading(false);
@@ -38,6 +39,9 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
           autoHeight: true,
         }}
         aria-label="Image Carousel"
+        onMove={(splide) => {
+          setCurrentSlide(splide.index + 1);
+        }}
       >
         {images.map((image, index) => (
           <SplideSlide key={`${carouselId}-slide-${index}`}>
@@ -62,7 +66,7 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
       
       {images.length > 1 && (
         <div className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
-          1 / {images.length}
+          {currentSlide} / {images.length}
         </div>
       )}
     </div>

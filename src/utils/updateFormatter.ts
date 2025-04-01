@@ -1,3 +1,4 @@
+
 import { formatHtmlContent } from './formatting/htmlFormatter';
 
 interface CarouselData {
@@ -238,3 +239,6 @@ const processStandaloneImages = (content: string): string => {
     return `<img src="${imageUrl.trim()}" class="w-full max-h-[500px] object-contain my-4" alt="Update image" loading="lazy" />`;
   });
 };
+
+// Export the extractImagesFromContent function from mediaExtractor
+export { extractImagesFromContent } from './formatting/mediaExtractor';

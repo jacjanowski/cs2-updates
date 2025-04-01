@@ -20,30 +20,32 @@ const UpdateCardImage = ({ description, imageUrl, title, isNew = false, isNewsIt
   useEffect(() => {
     // Determine if there's any image to display
     const findBestImage = () => {
-      // For updates, always use the default image
-      if (!isNewsItem) {
-        console.log("Using default CS2 image for update");
-        setBestImage(DEFAULT_NEWS_IMAGE);
-        return;
-      }
-      
       // For news articles, first check for embedded images in content - these are more reliable
-      const contentImages = extractImagesFromContent(description);
-      if (contentImages.length > 0) {
-        console.log("Using content image for news:", contentImages[0]);
-        setBestImage(contentImages[0]);
-        return;
-      }
-      
-      // Then try imageUrl from the API if content images aren't available
-      if (imageUrl) {
-        console.log("Using API image for news:", imageUrl);
-        setBestImage(imageUrl); 
-        return;
+      if (isNewsItem) {
+        const contentImages = extractImagesFromContent(description);
+        if (contentImages.length > 0) {
+          console.log("Using content image for news:", contentImages[0]);
+          setBestImage(contentImages[0]);
+          return;
+        }
+        
+        // Then try imageUrl from the API if content images aren't available
+        if (imageUrl) {
+          console.log("Using API image for news:", imageUrl);
+          setBestImage(imageUrl); 
+          return;
+        }
+      } else {
+        // For updates, if there's a specific image, use it
+        if (imageUrl) {
+          console.log("Using specific image for update:", imageUrl);
+          setBestImage(imageUrl);
+          return;
+        }
       }
       
       // If no image available, use default
-      console.log("Using default CS2 image for news (no other images found)");
+      console.log(`Using default CS2 image for ${isNewsItem ? "news" : "update"} (no other images found)`);
       setBestImage(DEFAULT_NEWS_IMAGE);
     };
     

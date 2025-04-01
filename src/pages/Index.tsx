@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import UpdateCard, { UpdateData } from "@/components/UpdateCard";
@@ -29,8 +30,9 @@ const Index = () => {
       
       let updatesToUse = newUpdates;
       if (newUpdates.length === 0) {
+        // Generate sample updates only if API returns empty array
         updatesToUse = Array(10).fill(null).map((_, i) => ({
-          title: `Update ${i + 1}`,
+          title: `Sample Update ${i + 1}`,
           description: `This is a sample CS2 update ${i + 1} with some description text.`,
           date: new Date(Date.now() - i * 86400000).toISOString(),
           url: `https://example.com/update-${i + 1}`,
@@ -146,7 +148,7 @@ const Index = () => {
             <>
               {visibleUpdates.map((update, index) => (
                 <UpdateCard 
-                  key={update.url || index} 
+                  key={`${update.url}-${index}`} 
                   update={update} 
                   isNew={index === 0 && visibleCount === 5} 
                 />

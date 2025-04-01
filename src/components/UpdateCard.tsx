@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { getUpdateSlug } from "@/utils/urlHelpers";
 import UpdateCardImage from "@/components/UpdateCardImage";
 import UpdateCardContent from "@/components/UpdateCardContent";
-import { extractImagesFromContent } from "@/utils/updateFormatter";
 
 export interface UpdateData {
   title: string;

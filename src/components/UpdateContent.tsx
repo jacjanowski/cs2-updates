@@ -30,7 +30,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
             // Create a div to render our React component
             const container = document.createElement('div');
             container.id = `carousel-container-${carouselId}`;
-            container.className = 'swiper-carousel-container'; // Add class to help with styling
+            container.className = 'simple-carousel-container';
             
             // Replace the placeholder with our container
             carousel.replaceWith(container);

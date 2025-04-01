@@ -23,12 +23,16 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       if (!contentRef.current) return;
       
       try {
-        // Import Swiper and required modules
+        // Use correct import paths for Swiper
         const swiperModule = await import('swiper');
+        
+        // Import from the correct path - swiper/modules not swiper/modules/navigation
         const { Navigation, Pagination } = await import('swiper/modules');
         
         // Find all carousel containers
         const carousels = contentRef.current.querySelectorAll('.swiper-carousel-container .swiper');
+        
+        console.log("Found carousels:", carousels.length);
         
         // Initialize each carousel
         carousels.forEach(carousel => {
@@ -38,22 +42,27 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
           const container = carousel.closest('.swiper-carousel-container') as HTMLElement;
           if (!container) return;
           
-          const swiper = new swiperModule.default(carousel as HTMLElement, {
-            modules: [Navigation, Pagination],
-            slidesPerView: 1,
-            spaceBetween: 30,
-            loop: carousel.querySelectorAll('.swiper-slide').length > 1,
-            pagination: {
-              el: container.querySelector('.swiper-pagination') as HTMLElement,
-              clickable: true,
-            },
-            navigation: {
-              nextEl: container.querySelector('.swiper-button-next') as HTMLElement,
-              prevEl: container.querySelector('.swiper-button-prev') as HTMLElement,
-            },
-          });
-          
-          swiperInstances.push(swiper);
+          try {
+            const swiper = new swiperModule.default(carousel as HTMLElement, {
+              modules: [Navigation, Pagination],
+              slidesPerView: 1,
+              spaceBetween: 30,
+              loop: carousel.querySelectorAll('.swiper-slide').length > 1,
+              pagination: {
+                el: container.querySelector('.swiper-pagination') as HTMLElement,
+                clickable: true,
+              },
+              navigation: {
+                nextEl: container.querySelector('.swiper-button-next') as HTMLElement,
+                prevEl: container.querySelector('.swiper-button-prev') as HTMLElement,
+              },
+            });
+            
+            swiperInstances.push(swiper);
+            console.log("Swiper initialized successfully");
+          } catch (carouselError) {
+            console.error("Error initializing individual carousel:", carouselError);
+          }
         });
       } catch (error) {
         console.error('Error initializing Swiper:', error);

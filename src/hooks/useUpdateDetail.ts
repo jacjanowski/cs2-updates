@@ -35,16 +35,41 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
         // First try to find the update in CS2 updates
         const { updates } = await SteamAPI.getUpdates();
         
-        // Use our new slug comparison function
-        let foundItem = updates.find(u => compareUpdateSlugs(id, getUpdateSlug(u.title)));
+        // Debug: log all updates to see what we're comparing against
+        console.log("Available updates:", updates.map(u => ({ 
+          title: u.title, 
+          slug: getUpdateSlug(u.title),
+          date: u.date
+        })));
+        console.log("Looking for slug:", id);
+        
+        // Use our slug comparison function
+        let foundItem = updates.find(u => {
+          const updateSlug = getUpdateSlug(u.title);
+          const matches = compareUpdateSlugs(id, updateSlug);
+          console.log(`Comparing: "${id}" with "${updateSlug}" - Match: ${matches}`);
+          return matches;
+        });
         
         // If not found in updates, check the news
         if (!foundItem) {
           console.log("Item not found in updates, checking news...");
           const newsItems = await NewsAPI.getNews();
           
+          // Debug the available news items
+          console.log("Available news items:", newsItems.map(n => ({ 
+            title: n.title, 
+            slug: getUpdateSlug(n.title),
+            date: n.date
+          })));
+          
           // Use the same comparison function for news items
-          foundItem = newsItems.find(n => compareUpdateSlugs(id, getUpdateSlug(n.title)));
+          foundItem = newsItems.find(n => {
+            const newsSlug = getUpdateSlug(n.title);
+            const matches = compareUpdateSlugs(id, newsSlug);
+            console.log(`Comparing news: "${id}" with "${newsSlug}" - Match: ${matches}`);
+            return matches;
+          });
           
           if (foundItem) {
             console.log("Found item in news:", foundItem.title);
@@ -57,6 +82,7 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
         if (foundItem) {
           console.log("Item details:", {
             title: foundItem.title,
+            date: foundItem.date,
             hasImage: !!foundItem.imageUrl,
             imageUrl: foundItem.imageUrl
           });

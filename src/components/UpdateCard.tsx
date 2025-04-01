@@ -26,7 +26,15 @@ const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardPro
   
   const handleCardClick = () => {
     const slug = getUpdateSlug(update.title);
-    console.log(`Navigating to update: ${update.title} with slug: ${slug}`);
+    
+    // Add additional logging to debug the navigation
+    console.log(`Navigating to ${isNewsItem ? 'news' : 'update'} item:`, {
+      title: update.title,
+      date: update.date,
+      slug: slug,
+      rawSlug: update.title.toLowerCase().replace(/\s+/g, '-')
+    });
+    
     navigate(`/update/${slug}`);
   };
   

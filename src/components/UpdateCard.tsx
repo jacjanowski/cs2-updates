@@ -18,7 +18,7 @@ export interface UpdateData {
 interface UpdateCardProps {
   update: UpdateData;
   isNew?: boolean;
-  isNewsItem?: boolean; // Added parameter to differentiate news from updates
+  isNewsItem?: boolean;
 }
 
 const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardProps) => {

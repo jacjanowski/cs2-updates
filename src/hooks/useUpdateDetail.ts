@@ -32,44 +32,40 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
         setLoading(true);
         console.log("Fetching data for update ID:", id);
         
-        // Fetch all updates from CS2
+        // First try to find in updates
         const { updates } = await SteamAPI.getUpdates();
         
-        // Debug: List all available updates with slugs for comparison
-        console.log("All updates:", updates.map(u => ({ 
-          title: u.title, 
-          slug: getUpdateSlug(u.title),
-          date: u.date
-        })));
+        // Debug info for troubleshooting
+        console.log(`[useUpdateDetail] Looking for slug "${id}" in ${updates.length} updates`);
         
         // Find the update with a matching slug
         let foundItem = null;
         for (const update of updates) {
           const updateSlug = getUpdateSlug(update.title);
+          console.log(`[useUpdateDetail] Comparing update: "${updateSlug}" with "${id}"`);
+          
           if (compareUpdateSlugs(id, updateSlug)) {
-            console.log("Found matching update:", update.title);
+            console.log(`[useUpdateDetail] Found matching update: "${update.title}"`);
             foundItem = update;
+            setIsNewsItem(false);
             break;
           }
         }
         
         // If not found in updates, check news items
         if (!foundItem) {
-          console.log("Update not found, checking news items...");
+          console.log("[useUpdateDetail] Update not found, checking news items...");
           const newsItems = await NewsAPI.getNews();
           
-          // Debug: List all news items with slugs
-          console.log("All news items:", newsItems.map(n => ({ 
-            title: n.title, 
-            slug: getUpdateSlug(n.title),
-            date: n.date
-          })));
+          console.log(`[useUpdateDetail] Looking for slug "${id}" in ${newsItems.length} news items`);
           
           // Check each news item for a match
           for (const newsItem of newsItems) {
             const newsSlug = getUpdateSlug(newsItem.title);
+            console.log(`[useUpdateDetail] Comparing news: "${newsSlug}" with "${id}"`);
+            
             if (compareUpdateSlugs(id, newsSlug)) {
-              console.log("Found matching news item:", newsItem.title);
+              console.log(`[useUpdateDetail] Found matching news item: "${newsItem.title}"`);
               foundItem = newsItem;
               setIsNewsItem(true);
               break;
@@ -78,7 +74,7 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
         }
         
         if (foundItem) {
-          console.log("Content found:", {
+          console.log("[useUpdateDetail] Content found:", {
             title: foundItem.title,
             date: foundItem.date,
             type: isNewsItem ? 'News' : 'Update'
@@ -87,18 +83,17 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
           // Extract images from content for display
           if (foundItem.description) {
             const extractedImages = extractImagesFromContent(foundItem.description);
-            console.log("Content images:", extractedImages);
             setContentImages(extractedImages);
           }
           
           setUpdate(foundItem);
           setError(null);
         } else {
-          console.error("No matching content found for ID:", id);
+          console.error("[useUpdateDetail] No matching content found for ID:", id);
           setError('Content not found');
         }
       } catch (err) {
-        console.error('Error fetching content:', err);
+        console.error('[useUpdateDetail] Error fetching content:', err);
         setError('Failed to load content details');
       } finally {
         setLoading(false);

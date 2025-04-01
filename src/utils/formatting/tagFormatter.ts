@@ -79,7 +79,7 @@ export const formatDescription = (description: string): string => {
     return `<em>${text.trim()}</em>`;
   });
   
-  // Handle carousel tag - Wrap images between [carousel] tags in a special div
+  // Handle carousel tag - Use Shadcn UI carousel component
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -96,44 +96,96 @@ export const formatDescription = (description: string): string => {
       return match; // No images found, return original
     }
     
-    // Create a container with a unique ID for the carousel
-    const carouselId = `swiper-carousel-${Math.random().toString(36).substring(2, 10)}`;
-    
+    // Create a proper carousel using Shadcn UI carousel markup
     let carouselHtml = `
-      <div class="swiper-carousel-container my-6" id="${carouselId}">
-        <div class="swiper">
-          <div class="swiper-wrapper">`;
+      <div class="carousel-container my-6">
+        <div class="relative w-full overflow-hidden rounded-lg">
+          <div class="embla">
+            <div class="embla__container">`;
     
     // Add each image as a slide
     images.forEach(imgSrc => {
       carouselHtml += `
-            <div class="swiper-slide">
-              <img src="${imgSrc}" class="w-full object-contain" alt="Carousel image" />
-            </div>`;
+              <div class="embla__slide min-w-0 flex-[0_0_100%]">
+                <img src="${imgSrc}" class="w-full object-contain max-h-[400px]" alt="Carousel image" />
+              </div>`;
     });
     
-    // Add navigation and pagination
+    // Close container
     carouselHtml += `
+            </div>
           </div>
-          <div class="swiper-pagination"></div>
-          <div class="swiper-button-prev"></div>
-          <div class="swiper-button-next"></div>
+          
+          <button class="embla__prev absolute left-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-md hover:bg-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m15 18-6-6 6-6"/></svg>
+            <span class="sr-only">Previous slide</span>
+          </button>
+          
+          <button class="embla__next absolute right-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-md hover:bg-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m9 18 6-6-6-6"/></svg>
+            <span class="sr-only">Next slide</span>
+          </button>
         </div>
       </div>
+      
       <script>
         document.addEventListener('DOMContentLoaded', function() {
-          new Swiper('#${carouselId} .swiper', {
-            slidesPerView: 1,
-            spaceBetween: 30,
-            loop: ${images.length > 1 ? 'true' : 'false'},
-            pagination: {
-              el: '#${carouselId} .swiper-pagination',
-              clickable: true,
-            },
-            navigation: {
-              nextEl: '#${carouselId} .swiper-button-next',
-              prevEl: '#${carouselId} .swiper-button-prev',
-            },
+          const emblaNodes = document.querySelectorAll('.embla');
+          
+          emblaNodes.forEach(emblaNode => {
+            // Don't initialize twice
+            if (emblaNode.classList.contains('initialized')) return;
+            
+            const container = emblaNode.querySelector('.embla__container');
+            const prevBtn = emblaNode.parentElement.querySelector('.embla__prev');
+            const nextBtn = emblaNode.parentElement.querySelector('.embla__next');
+            
+            if (!container || !prevBtn || !nextBtn) return;
+            
+            // Add sliding functionality
+            let currentIndex = 0;
+            const slides = container.querySelectorAll('.embla__slide');
+            const slideCount = slides.length;
+            
+            if (slideCount <= 1) {
+              // Hide navigation if only one slide
+              prevBtn.style.display = 'none';
+              nextBtn.style.display = 'none';
+              return;
+            }
+            
+            const updateSlides = () => {
+              slides.forEach((slide, index) => {
+                slide.style.transform = \`translateX(\${(index - currentIndex) * 100}%)\`;
+              });
+              
+              // Update button states
+              prevBtn.style.opacity = currentIndex <= 0 ? '0.5' : '1';
+              nextBtn.style.opacity = currentIndex >= slideCount - 1 ? '0.5' : '1';
+            };
+            
+            // Initial position
+            updateSlides();
+            
+            // Add click handlers
+            prevBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (currentIndex > 0) {
+                currentIndex--;
+                updateSlides();
+              }
+            });
+            
+            nextBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (currentIndex < slideCount - 1) {
+                currentIndex++;
+                updateSlides();
+              }
+            });
+            
+            // Mark as initialized
+            emblaNode.classList.add('initialized');
           });
         });
       </script>`;

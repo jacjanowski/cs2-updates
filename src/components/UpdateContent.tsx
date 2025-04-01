@@ -23,11 +23,12 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       if (!contentRef.current) return;
       
       try {
-        // Use correct import paths for Swiper
+        // Correctly import Swiper and its modules
         const swiperModule = await import('swiper');
         
-        // Import from the correct path - swiper/modules not swiper/modules/navigation
-        const { Navigation, Pagination } = await import('swiper/modules');
+        // Import modules correctly from swiper/modules
+        const modulesModule = await import('swiper/modules');
+        const { Navigation, Pagination } = modulesModule;
         
         // Find all carousel containers
         const carousels = contentRef.current.querySelectorAll('.swiper-carousel-container .swiper');

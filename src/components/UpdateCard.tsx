@@ -27,15 +27,21 @@ const UpdateCard = ({ update, isNew = false, isNewsItem = false }: UpdateCardPro
   const handleCardClick = () => {
     const slug = getUpdateSlug(update.title);
     
-    // Add additional logging to debug the navigation
-    console.log(`Navigating to ${isNewsItem ? 'news' : 'update'} item:`, {
+    // Add detailed logging to debug navigation issues
+    console.log(`[UpdateCard] Navigating to update:`, {
       title: update.title,
+      type: isNewsItem ? 'news' : 'update',
       date: update.date,
       slug: slug,
-      rawSlug: update.title.toLowerCase().replace(/\s+/g, '-')
+      originalTitle: update.title,
+      normalizedSlug: update.title.toLowerCase().replace(/\s+/g, '-')
     });
     
-    navigate(`/update/${slug}`);
+    // In case the URL already contains "update", avoid doubling it
+    const path = `/update/${slug}`;
+    console.log(`[UpdateCard] Navigating to path: ${path}`);
+    
+    navigate(path);
   };
   
   return (

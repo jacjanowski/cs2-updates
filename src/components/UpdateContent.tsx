@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import ContentCarousel from "./ContentCarousel";
@@ -29,6 +30,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
             // Create a div to render our React component
             const container = document.createElement('div');
             container.id = `carousel-container-${carouselId}`;
+            container.className = 'swiper-carousel-container'; // Add class to help with styling
             
             // Replace the placeholder with our container
             carousel.replaceWith(container);
@@ -95,7 +97,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     const timer = setTimeout(() => {
       initializeCarousels();
       initializeVideos();
-    }, 300);
+    }, 500); // Increased delay for better initialization
     
     return () => {
       clearTimeout(timer);

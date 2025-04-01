@@ -68,12 +68,17 @@ export const formatDescription = (description: string): string => {
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   
-  // Handle italics - FIXED: Properly match the pattern "i text /i" without requiring spaces
+  // Handle italics with multiple patterns to catch all cases
+  // Pattern 1: i text /i with spaces
   formattedText = formattedText.replace(/i\s+(.*?)\s+\/i/g, '<em>$1</em>');
-  // Additional pattern for "i text/i" (no space before closing)
+  // Pattern 2: i text/i (no space before closing)
   formattedText = formattedText.replace(/i\s+(.*?)\/i/g, '<em>$1</em>');
+  // Pattern 3: [i]text[/i] using square brackets
+  formattedText = formattedText.replace(/\[i\](.*?)\[\/i\]/g, '<em>$1</em>');
+  // Pattern 4: i text /i without spaces
+  formattedText = formattedText.replace(/i(.*?)\/i/g, '<em>$1</em>');
   
-  // Handle carousel tag - Using a simpler implementation with shadcn/ui carousel
+  // Handle carousel tag - Using shadcn/ui carousel
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -94,92 +99,32 @@ export const formatDescription = (description: string): string => {
     let carouselHtml = `
       <div class="carousel-container my-6">
         <div class="shadcn-carousel">
-          <div class="overflow-hidden">
-            <div class="flex transition-transform duration-300 space-x-4">`;
+          <div data-carousel>
+            <div data-carousel-wrapper class="relative w-full">
+              <div data-carousel-content class="flex">`;
     
     // Add each image as a slide
     images.forEach((imgSrc, index) => {
       carouselHtml += `
-              <div class="carousel-slide min-w-full flex-shrink-0" data-index="${index}">
-                <img src="${imgSrc}" class="w-full object-contain max-h-[400px]" alt="Carousel image ${index + 1}" />
-              </div>`;
+                <div data-carousel-item class="carousel-slide min-w-full flex-shrink-0" ${index === 0 ? 'data-active="true"' : ''}>
+                  <img src="${imgSrc}" class="w-full object-contain max-h-[400px]" alt="Carousel image ${index + 1}" />
+                </div>`;
     });
     
     // Close the carousel structure
     carouselHtml += `
+              </div>
+              <button data-carousel-prev class="carousel-prev absolute left-4 top-1/2 -translate-y-1/2 bg-primary text-white rounded-full p-2 hover:bg-primary/90 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <span class="sr-only">Previous</span>
+              </button>
+              <button data-carousel-next class="carousel-next absolute right-4 top-1/2 -translate-y-1/2 bg-primary text-white rounded-full p-2 hover:bg-primary/90 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                <span class="sr-only">Next</span>
+              </button>
             </div>
           </div>
-          
-          <div class="flex justify-between mt-4">
-            <button class="carousel-prev bg-primary text-white rounded-full p-2 hover:bg-primary/90">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-              <span class="sr-only">Previous</span>
-            </button>
-            
-            <button class="carousel-next bg-primary text-white rounded-full p-2 hover:bg-primary/90">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-              <span class="sr-only">Next</span>
-            </button>
-          </div>
         </div>
-        
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            const carouselContainers = document.querySelectorAll('.carousel-container');
-            
-            carouselContainers.forEach(container => {
-              if (container.classList.contains('js-processed')) return;
-              
-              const slides = container.querySelectorAll('.carousel-slide');
-              const slideCount = slides.length;
-              const slideContainer = container.querySelector('.flex');
-              const prevBtn = container.querySelector('.carousel-prev');
-              const nextBtn = container.querySelector('.carousel-next');
-              
-              if (!slideContainer || !prevBtn || !nextBtn) return;
-              
-              let currentIndex = 0;
-              
-              function updateSlides() {
-                const offset = -100 * currentIndex;
-                slideContainer.style.transform = \`translateX(\${offset}%)\`;
-                
-                // Update active state
-                slides.forEach((slide, index) => {
-                  if (index === currentIndex) {
-                    slide.setAttribute('aria-current', 'true');
-                  } else {
-                    slide.removeAttribute('aria-current');
-                  }
-                });
-              }
-              
-              prevBtn.addEventListener('click', () => {
-                currentIndex = (currentIndex - 1 + slideCount) % slideCount;
-                updateSlides();
-              });
-              
-              nextBtn.addEventListener('click', () => {
-                currentIndex = (currentIndex + 1) % slideCount;
-                updateSlides();
-              });
-              
-              // Handle keyboard navigation
-              container.setAttribute('tabindex', '0');
-              container.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowLeft') {
-                  prevBtn.click();
-                } else if (e.key === 'ArrowRight') {
-                  nextBtn.click();
-                }
-              });
-              
-              // Initial setup
-              updateSlides();
-              container.classList.add('js-processed');
-            });
-          });
-        </script>
       </div>`;
     
     return carouselHtml;
@@ -227,6 +172,49 @@ export const formatDescription = (description: string): string => {
   
   // Clean up any broken HTML tags
   formattedText = fixHtmlTags(formattedText);
+  
+  // Add the carousel initialization script
+  formattedText += `
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const carousels = document.querySelectorAll('[data-carousel]');
+      carousels.forEach(carousel => {
+        const items = carousel.querySelectorAll('[data-carousel-item]');
+        const prevBtn = carousel.querySelector('[data-carousel-prev]');
+        const nextBtn = carousel.querySelector('[data-carousel-next]');
+        
+        if (items.length === 0 || !prevBtn || !nextBtn) return;
+        
+        let currentIndex = 0;
+        
+        const showSlide = (index) => {
+          items.forEach((item, i) => {
+            if (i === index) {
+              item.setAttribute('data-active', 'true');
+              item.style.display = 'flex';
+            } else {
+              item.removeAttribute('data-active');
+              item.style.display = 'none';
+            }
+          });
+        };
+        
+        // Initialize
+        showSlide(currentIndex);
+        
+        // Event listeners
+        prevBtn.addEventListener('click', () => {
+          currentIndex = (currentIndex - 1 + items.length) % items.length;
+          showSlide(currentIndex);
+        });
+        
+        nextBtn.addEventListener('click', () => {
+          currentIndex = (currentIndex + 1) % items.length;
+          showSlide(currentIndex);
+        });
+      });
+    });
+  </script>`;
   
   return formattedText;
 };

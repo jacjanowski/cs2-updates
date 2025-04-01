@@ -67,7 +67,7 @@
   display: none !important;
 }
 
-/* New Carousel Styling */
+/* Carousel Styling */
 .update-content .carousel-container {
   position: relative;
   width: 100%;
@@ -75,23 +75,31 @@
   border-radius: 0.375rem;
   margin: 1.5rem 0;
   background-color: rgba(0, 0, 0, 0.02);
-}
-
-.update-content .shadcn-carousel {
-  width: 100%;
-  position: relative;
   padding: 1rem;
 }
 
-.update-content .carousel-slide {
+.update-content [data-carousel-wrapper] {
+  overflow: hidden;
+}
+
+.update-content [data-carousel-content] {
+  display: flex;
+  transition: transform 0.3s ease-in-out;
+}
+
+.update-content [data-carousel-item] {
+  flex: 0 0 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  transition: transform 0.3s ease-in-out;
 }
 
-.update-content .carousel-slide img {
+.update-content [data-carousel-item]:not([data-active="true"]) {
+  display: none;
+}
+
+.update-content [data-carousel-item] img {
   max-height: 400px;
   width: auto;
   max-width: 100%;
@@ -108,12 +116,7 @@
   border-radius: 50%;
   cursor: pointer;
   transition: background-color 0.2s;
-}
-
-.update-content .carousel-prev svg,
-.update-content .carousel-next svg {
-  width: 20px;
-  height: 20px;
+  z-index: 10;
 }
 
 /* Italic text */

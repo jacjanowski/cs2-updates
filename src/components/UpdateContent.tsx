@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 // Import shadcn/ui Carousel components
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import 'swiper/css';
 
 interface UpdateContentProps {
   description: string;
@@ -27,14 +26,6 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
             console.error('Auto-play was prevented:', error);
           });
         }
-      });
-      
-      // Process carousels
-      const carouselContainers = contentRef.current.querySelectorAll('.carousel-container');
-      carouselContainers.forEach(container => {
-        // Ensure we don't initialize the same carousel twice
-        if (container.classList.contains('initialized')) return;
-        container.classList.add('initialized');
       });
     }
   }, [formattedHtml]);

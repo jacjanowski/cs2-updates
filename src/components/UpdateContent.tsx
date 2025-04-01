@@ -22,40 +22,42 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     const initSwiper = async () => {
       if (!contentRef.current) return;
       
-      // Dynamic import Swiper with the modules we need
-      const Swiper = await import('swiper');
-      // Import modules separately
-      const Navigation = await import('swiper/modules/navigation');
-      const Pagination = await import('swiper/modules/pagination');
-      
-      // Find all carousel containers
-      const carousels = contentRef.current.querySelectorAll('.swiper-carousel-container .swiper');
-      
-      // Initialize each carousel
-      carousels.forEach(carousel => {
-        // Don't initialize the same carousel twice
-        if ((carousel as any).__swiper__) return;
+      try {
+        // Import Swiper and required modules
+        const swiperModule = await import('swiper');
+        const { Navigation, Pagination } = await import('swiper/modules');
         
-        const container = carousel.closest('.swiper-carousel-container') as HTMLElement;
-        if (!container) return;
+        // Find all carousel containers
+        const carousels = contentRef.current.querySelectorAll('.swiper-carousel-container .swiper');
         
-        const swiper = new Swiper.default(carousel as HTMLElement, {
-          modules: [Navigation.default, Pagination.default],
-          slidesPerView: 1,
-          spaceBetween: 30,
-          loop: carousel.querySelectorAll('.swiper-slide').length > 1,
-          pagination: {
-            el: container.querySelector('.swiper-pagination') as HTMLElement,
-            clickable: true,
-          },
-          navigation: {
-            nextEl: container.querySelector('.swiper-button-next') as HTMLElement,
-            prevEl: container.querySelector('.swiper-button-prev') as HTMLElement,
-          },
+        // Initialize each carousel
+        carousels.forEach(carousel => {
+          // Don't initialize the same carousel twice
+          if ((carousel as any).__swiper__) return;
+          
+          const container = carousel.closest('.swiper-carousel-container') as HTMLElement;
+          if (!container) return;
+          
+          const swiper = new swiperModule.default(carousel as HTMLElement, {
+            modules: [Navigation, Pagination],
+            slidesPerView: 1,
+            spaceBetween: 30,
+            loop: carousel.querySelectorAll('.swiper-slide').length > 1,
+            pagination: {
+              el: container.querySelector('.swiper-pagination') as HTMLElement,
+              clickable: true,
+            },
+            navigation: {
+              nextEl: container.querySelector('.swiper-button-next') as HTMLElement,
+              prevEl: container.querySelector('.swiper-button-prev') as HTMLElement,
+            },
+          });
+          
+          swiperInstances.push(swiper);
         });
-        
-        swiperInstances.push(swiper);
-      });
+      } catch (error) {
+        console.error('Error initializing Swiper:', error);
+      }
     };
     
     // Find all video elements that should autoplay and ensure they play

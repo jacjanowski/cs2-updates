@@ -24,6 +24,8 @@ export const useUpdateDetail = (id: string | undefined): {
       }
 
       try {
+        console.log(`Looking for update with slug: ${id}`);
+        
         // First try to find the update in regular updates
         const { updates } = await SteamAPI.getUpdates();
         
@@ -31,27 +33,35 @@ export const useUpdateDetail = (id: string | undefined): {
           const updateSlug = update.title.toLowerCase()
             .replace(/[^\w\s-]/g, '')
             .replace(/\s+/g, '-');
+          console.log(`Comparing ${updateSlug} with ${id}`);
           return updateSlug === id;
         });
 
         // If not found in updates, check news items
         if (!foundUpdate) {
+          console.log("Not found in updates, checking news items...");
           const news = await NewsAPI.getNews();
           foundUpdate = news.find(newsItem => {
             const newsSlug = newsItem.title.toLowerCase()
               .replace(/[^\w\s-]/g, '')
               .replace(/\s+/g, '-');
+            console.log(`Comparing ${newsSlug} with ${id}`);
             return newsSlug === id;
           });
           
           if (foundUpdate) {
+            console.log("Found in news items");
             setIsNewsItem(true);
           }
+        } else {
+          console.log("Found in updates");
         }
 
         if (foundUpdate) {
+          console.log("Found update:", foundUpdate.title);
           setUpdate(foundUpdate);
         } else {
+          console.log("Update not found");
           setError("Update not found");
         }
       } catch (err) {

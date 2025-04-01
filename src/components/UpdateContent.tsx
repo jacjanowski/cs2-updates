@@ -1,8 +1,6 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-// Import shadcn/ui Carousel components
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface UpdateContentProps {
   description: string;

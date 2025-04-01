@@ -35,19 +35,18 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
         // First try to find the update in CS2 updates
         const { updates } = await SteamAPI.getUpdates();
         
-        // Debug: log all updates to see what we're comparing against
+        // Debug: log all available updates with their slugs
         console.log("Available updates:", updates.map(u => ({ 
           title: u.title, 
           slug: getUpdateSlug(u.title),
           date: u.date
         })));
-        console.log("Looking for slug:", id);
         
-        // Use our slug comparison function
+        // Look for an exact match in updates
         let foundItem = updates.find(u => {
           const updateSlug = getUpdateSlug(u.title);
           const matches = compareUpdateSlugs(id, updateSlug);
-          console.log(`Comparing: "${id}" with "${updateSlug}" - Match: ${matches}`);
+          console.log(`Comparing update: "${id}" with "${updateSlug}" - Match: ${matches}`);
           return matches;
         });
         
@@ -56,14 +55,14 @@ export const useUpdateDetail = (id: string | undefined): UseUpdateDetailResult =
           console.log("Item not found in updates, checking news...");
           const newsItems = await NewsAPI.getNews();
           
-          // Debug the available news items
+          // Debug the available news items with their slugs
           console.log("Available news items:", newsItems.map(n => ({ 
             title: n.title, 
             slug: getUpdateSlug(n.title),
             date: n.date
           })));
           
-          // Use the same comparison function for news items
+          // Look for an exact match in news
           foundItem = newsItems.find(n => {
             const newsSlug = getUpdateSlug(n.title);
             const matches = compareUpdateSlugs(id, newsSlug);

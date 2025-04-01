@@ -23,29 +23,14 @@ export const compareUpdateSlugs = (slug1: string, slug2: string): boolean => {
   const normalized2 = cleaned2.replace(/[^\w-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
   
   // Debug slugs to console for troubleshooting
-  console.log("Detailed slug comparison:", { 
+  console.log("Comparing slugs:", { 
     original1: slug1, 
     original2: slug2,
-    decoded1,
-    decoded2,
-    cleaned1,
-    cleaned2,
     normalized1,
     normalized2,
-    match: normalized1 === normalized2
+    exactMatch: normalized1 === normalized2
   });
   
-  // Check if slugs are exactly the same after normalization
-  if (normalized1 === normalized2) {
-    return true;
-  }
-  
-  // Additional check: see if one is contained within the other
-  // This helps with partial matches (e.g., "counter-strike-2-update" vs "counter-strike-2-update-release-notes")
-  if (normalized1.includes(normalized2) || normalized2.includes(normalized1)) {
-    console.log("Partial match found between slugs");
-    return true;
-  }
-  
-  return false;
+  // Only use exact matching - the partial matching was causing the issues
+  return normalized1 === normalized2;
 };

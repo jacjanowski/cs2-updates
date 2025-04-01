@@ -28,7 +28,7 @@ export const formatDescription = (description: string): string => {
     const webmSrc = webmMatch ? webmMatch[1] : '';
     const poster = posterMatch ? posterMatch[1] : '';
     const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : false;
-    const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
+    const controls = controlsMatch !== null ? controlsMatch[1] === 'true' : true;
     
     // Use content as source if no specific format provided
     const sourceSrc = content.trim() || mp4Src || webmSrc;
@@ -69,9 +69,12 @@ export const formatDescription = (description: string): string => {
   // to avoid interfering with multiline BBCode blocks
   formattedText = formattedText.replace(/\n\n+/g, '</p><p>');
   
+  // Handle single line breaks as <br> tags where appropriate
+  formattedText = formattedText.replace(/\n/g, '<br>');
+  
   // Handle BBCode URL tags [url=http://example.com]text[/url]
   formattedText = formattedText.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/gs, (match, url, linkText) => {
-    const cleanedText = linkText.trim().replace(/\n/g, ' ');
+    const cleanedText = linkText.trim().replace(/<br>/g, ' ');
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   

@@ -12,7 +12,7 @@ import { fixHtmlTags } from './htmlFormatter';
 export const formatDescription = (description: string): string => {
   if (!description) return '';
   
-  // First, normalize line breaks
+  // First, normalize line breaks and handle double line breaks as paragraph breaks
   let formattedText = description.replace(/\r\n/g, '\n');
   
   // Handle BBCode video tags
@@ -64,6 +64,10 @@ export const formatDescription = (description: string): string => {
     
     return match; // Return original if couldn't parse
   });
+  
+  // Handle double line breaks as paragraph breaks - do this after parsing BBCode tags
+  // to avoid interfering with multiline BBCode blocks
+  formattedText = formattedText.replace(/\n\n+/g, '</p><p>');
   
   // Handle BBCode URL tags [url=http://example.com]text[/url]
   formattedText = formattedText.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/gs, (match, url, linkText) => {
@@ -176,6 +180,11 @@ export const formatDescription = (description: string): string => {
   formattedText = formattedText.replace(/\[code\](.*?)\[\/code\]/gs, (match, content) => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${content.trim()}</code></pre>`;
   });
+  
+  // Wrap the content in paragraph tags if not already done
+  if (!formattedText.startsWith('<p>')) {
+    formattedText = '<p>' + formattedText + '</p>';
+  }
   
   // Clean up any broken HTML tags
   formattedText = fixHtmlTags(formattedText);

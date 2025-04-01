@@ -26,8 +26,8 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
   }
 
   return (
-    <div className="w-full my-6">
-      <Carousel className="w-full">
+    <div className="w-full my-4">
+      <Carousel className="w-full relative">
         <CarouselContent>
           {images.map((image, index) => (
             <CarouselItem key={`${carouselId}-${index}`}>
@@ -36,7 +36,7 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
                   <img
                     src={image}
                     alt={`Carousel image ${index + 1}`}
-                    className="w-full object-contain max-h-[400px] rounded-md"
+                    className="w-full object-contain h-full max-h-[400px] rounded-md"
                   />
                 </AspectRatio>
               </div>
@@ -44,11 +44,11 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
           ))}
         </CarouselContent>
         <CarouselPrevious 
-          className="absolute left-2 top-1/2 -translate-y-1/2" 
+          className="left-2 top-1/2 -translate-y-1/2 z-10" 
           aria-label="Previous slide" 
         />
         <CarouselNext 
-          className="absolute right-2 top-1/2 -translate-y-1/2" 
+          className="right-2 top-1/2 -translate-y-1/2 z-10" 
           aria-label="Next slide" 
         />
       </Carousel>

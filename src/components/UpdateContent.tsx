@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import ContentCarousel from "./ContentCarousel";
+import { createRoot } from "react-dom/client";
 
 interface UpdateContentProps {
   description: string;
@@ -33,24 +34,14 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
             // Replace the placeholder with our container
             carousel.replaceWith(container);
             
-            // Create the carousel React component
-            const root = document.createElement('div');
-            root.className = 'carousel-root';
-            container.appendChild(root);
-            
-            // Render the carousel component using React
-            import('react-dom/client').then(({ createRoot }) => {
-              const reactRoot = createRoot(root);
-              
-              import('./ContentCarousel').then(({ default: ContentCarousel }) => {
-                reactRoot.render(
-                  <ContentCarousel 
-                    images={images} 
-                    carouselId={carouselId} 
-                  />
-                );
-              });
-            });
+            // Render the carousel component directly
+            const reactRoot = createRoot(container);
+            reactRoot.render(
+              <ContentCarousel 
+                images={images} 
+                carouselId={carouselId} 
+              />
+            );
           } catch (error) {
             console.error('Error initializing carousel:', error);
           }
@@ -97,11 +88,15 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Initialize both carousels and videos
+    // Initialize both carousels and videos - do this sooner and retry if needed
+    initializeCarousels();
+    initializeVideos();
+    
+    // Try again after a short delay to catch any that might have loaded later
     const timer = setTimeout(() => {
       initializeCarousels();
       initializeVideos();
-    }, 100);
+    }, 200);
     
     return () => {
       clearTimeout(timer);

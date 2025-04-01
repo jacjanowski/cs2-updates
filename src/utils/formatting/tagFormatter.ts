@@ -139,8 +139,8 @@ export const formatDescription = (description: string): string => {
     // Create a unique ID for this carousel
     const carouselId = `carousel-${Math.random().toString(36).substring(2, 10)}`;
     
-    // Generate HTML for our custom carousel component
-    let carouselHtml = `
+    // Generate HTML for our custom carousel component with full image data
+    return `
       <div class="cs2-carousel" data-carousel-id="${carouselId}" data-images="${encodeURIComponent(JSON.stringify(images))}">
         <div class="cs2-carousel-placeholder">
           <img src="${images[0]}" alt="Carousel image" class="w-full object-contain max-h-[400px]" />
@@ -150,8 +150,6 @@ export const formatDescription = (description: string): string => {
         </div>
       </div>
     `;
-    
-    return carouselHtml;
   });
   
   // Handle color with [color=X]...[/color]

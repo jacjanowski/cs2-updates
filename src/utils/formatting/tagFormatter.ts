@@ -12,7 +12,7 @@ import { fixHtmlTags } from './htmlFormatter';
 export const formatDescription = (description: string): string => {
   if (!description) return '';
   
-  // First, normalize line breaks and handle double line breaks as paragraph breaks
+  // First, normalize line breaks
   let formattedText = description.replace(/\r\n/g, '\n');
   
   // Handle BBCode video tags
@@ -28,7 +28,7 @@ export const formatDescription = (description: string): string => {
     const webmSrc = webmMatch ? webmMatch[1] : '';
     const poster = posterMatch ? posterMatch[1] : '';
     const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : false;
-    const controls = controlsMatch !== null ? controlsMatch[1] === 'true' : true;
+    const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
     
     // Use content as source if no specific format provided
     const sourceSrc = content.trim() || mp4Src || webmSrc;
@@ -65,16 +65,9 @@ export const formatDescription = (description: string): string => {
     return match; // Return original if couldn't parse
   });
   
-  // Handle double line breaks as paragraph breaks - do this after parsing BBCode tags
-  // to avoid interfering with multiline BBCode blocks
-  formattedText = formattedText.replace(/\n\n+/g, '</p><p>');
-  
-  // Handle single line breaks as <br> tags where appropriate
-  formattedText = formattedText.replace(/\n/g, '<br>');
-  
   // Handle BBCode URL tags [url=http://example.com]text[/url]
   formattedText = formattedText.replace(/\[url=([^\]]+)\](.*?)\[\/url\]/gs, (match, url, linkText) => {
-    const cleanedText = linkText.trim().replace(/<br>/g, ' ');
+    const cleanedText = linkText.trim().replace(/\n/g, ' ');
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   
@@ -183,11 +176,6 @@ export const formatDescription = (description: string): string => {
   formattedText = formattedText.replace(/\[code\](.*?)\[\/code\]/gs, (match, content) => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${content.trim()}</code></pre>`;
   });
-  
-  // Wrap the content in paragraph tags if not already done
-  if (!formattedText.startsWith('<p>')) {
-    formattedText = '<p>' + formattedText + '</p>';
-  }
   
   // Clean up any broken HTML tags
   formattedText = fixHtmlTags(formattedText);

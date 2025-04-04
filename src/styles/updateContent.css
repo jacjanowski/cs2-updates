@@ -88,64 +88,39 @@
   transition: transform 0.2s ease;
 }
 
-/* Custom carousel styles */
-.update-content .custom-carousel {
-  margin: 1.5rem 0;
-  background-color: rgba(0, 0, 0, 0.03);
-  border-radius: 0.375rem;
-  overflow: hidden;
+/* Custom carousel styles - new implementation */
+.update-content .carousel-wrapper {
   position: relative;
-}
-
-.update-content .carousel-container {
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  padding: 1rem 0;
-}
-
-.update-content .carousel-slide {
-  display: none;
   width: 100%;
-  padding: 0.5rem 3rem;
-  text-align: center;
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border-radius: 0.375rem;
 }
 
-.update-content .carousel-slide.active {
-  display: block;
-}
-
-.update-content .carousel-slide img {
-  max-height: 400px;
-  width: auto;
+.update-content .carousel-wrapper img {
+  max-width: 100%;
+  max-height: 500px;
   margin: 0 auto;
+  display: block;
   object-fit: contain;
 }
 
-.update-content .carousel-button {
-  transition: background-color 0.2s ease;
-  z-index: 20;
+/* Ensure slides take full width of carousel */
+.update-content [data-embla="true"] > div {
+  width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Make carousel navigation buttons more visible */
+.update-content .carousel-wrapper button {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
   cursor: pointer;
 }
 
-.update-content .carousel-indicators {
-  z-index: 20;
-}
-
-.update-content .carousel-indicators button {
-  transition: background-color 0.2s ease;
-  cursor: pointer;
-}
-
-.update-content .carousel-counter {
-  z-index: 20;
-}
-
-/* Dark mode specific styles */
-.dark .update-content .custom-carousel {
-  background-color: rgba(255, 255, 255, 0.05);
+.update-content .carousel-wrapper button:hover {
+  opacity: 1;
 }
 
 /* Italic text */

@@ -86,7 +86,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
               };
               
               // Add a relative positioning to the container if needed
-              if (getComputedStyle(container).position === 'static') {
+              if (container instanceof HTMLElement && getComputedStyle(container).position === 'static') {
                 container.style.position = 'relative';
               }
               

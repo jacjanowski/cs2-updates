@@ -42,16 +42,17 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     
     // Process videos to ensure autoplay works
     const initializeVideos = () => {
-      const videoElements = contentRef.current?.querySelectorAll('video');
+      if (!contentRef.current) return;
       
-      videoElements?.forEach(element => {
-        // Cast the element to HTMLVideoElement to access video-specific properties
-        const video = element as HTMLVideoElement;
+      const videoElements = contentRef.current.querySelectorAll('video');
+      
+      videoElements.forEach(video => {
+        // Ensure proper attributes are set
+        video.setAttribute('playsinline', '');
+        video.setAttribute('muted', 'true');
+        video.muted = true; // Explicitly set the muted property
         
-        // Ensure video is muted to support autoplay
-        video.muted = true;
-        
-        // Force play the video
+        // Force autoplay with muted
         try {
           const playPromise = video.play();
           
@@ -60,9 +61,10 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
               console.error('Auto-play was prevented:', error);
               
               // Create a play button overlay for videos that couldn't autoplay
-              const container = video.closest('.video-container');
+              const container = video.closest('.video-container') || video.parentElement;
               if (container && !container.querySelector('.video-play-button')) {
                 const playButton = document.createElement('button');
+                playButton.type = 'button';
                 playButton.className = 'video-play-button absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors';
                 playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
                 playButton.onclick = () => {
@@ -71,10 +73,13 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
                   video.controls = true; // Show controls after starting playback
                   playButton.remove();
                 };
-                container.appendChild(playButton);
                 
-                // Add a relative positioning to the container for the absolute overlay
-                container.classList.add('relative');
+                // Add a relative positioning to the container if needed
+                if (!container.classList.contains('relative')) {
+                  container.classList.add('relative');
+                }
+                
+                container.appendChild(playButton);
               }
             });
           }
@@ -86,10 +91,12 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     
     // Initialize custom carousels
     const initializeCarousels = () => {
-      // Find all carousel containers
-      const carousels = contentRef.current?.querySelectorAll('.custom-carousel');
+      if (!contentRef.current) return;
       
-      carousels?.forEach(carousel => {
+      // Find all carousel containers
+      const carousels = contentRef.current.querySelectorAll('.custom-carousel');
+      
+      carousels.forEach(carousel => {
         const slides = carousel.querySelectorAll('.carousel-slide');
         const prevButton = carousel.querySelector('.carousel-button.prev');
         const nextButton = carousel.querySelector('.carousel-button.next');
@@ -134,41 +141,24 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
           }
         };
         
-        // Clear any existing event listeners (important fix)
-        const newPrevButton = prevButton?.cloneNode(true);
-        const newNextButton = nextButton?.cloneNode(true);
-        
-        if (prevButton && newPrevButton) {
-          prevButton.parentNode?.replaceChild(newPrevButton, prevButton);
-          newPrevButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        // Set up direct click handlers on buttons
+        if (prevButton) {
+          prevButton.addEventListener('click', () => {
             showSlide(currentIndex - 1);
           });
         }
         
-        if (nextButton && newNextButton) {
-          nextButton.parentNode?.replaceChild(newNextButton, nextButton);
-          newNextButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        if (nextButton) {
+          nextButton.addEventListener('click', () => {
             showSlide(currentIndex + 1);
           });
         }
         
-        // Set up indicator click handlers with proper event handling
+        // Set up indicator click handlers
         indicators.forEach((indicator, i) => {
-          // Clear existing listeners by cloning
-          const newIndicator = indicator.cloneNode(true);
-          if (indicator.parentNode) {
-            indicator.parentNode.replaceChild(newIndicator, indicator);
-            
-            newIndicator.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              showSlide(i);
-            });
-          }
+          indicator.addEventListener('click', () => {
+            showSlide(i);
+          });
         });
         
         // Add keyboard navigation

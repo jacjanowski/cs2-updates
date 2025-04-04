@@ -65,25 +65,19 @@ export const formatDescription = (description: string): string => {
   
   // Also handle direct HTML video tags that might be in the content
   formattedText = formattedText.replace(/<video([^>]*)>([\s\S]*?)<\/video>/gi, (match, attributes, innerContent) => {
-    // Ensure autoplay, muted, and playsinline attributes are present
+    // Create a new wrapper for the video
     let enhancedAttributes = attributes;
     
-    // Add autoplay attribute if not present
+    // Ensure required attributes for autoplay
     if (!enhancedAttributes.includes('autoplay')) {
       enhancedAttributes += ' autoplay';
     }
-    
-    // Add muted attribute if not present (required for autoplay to work)
     if (!enhancedAttributes.includes('muted')) {
       enhancedAttributes += ' muted';
     }
-    
-    // Add playsinline attribute if not present (for iOS)
     if (!enhancedAttributes.includes('playsinline')) {
       enhancedAttributes += ' playsinline';
     }
-    
-    // Add loop attribute if not present
     if (!enhancedAttributes.includes('loop')) {
       enhancedAttributes += ' loop';
     }
@@ -92,11 +86,7 @@ export const formatDescription = (description: string): string => {
     const enhancedVideo = `<video${enhancedAttributes}>${innerContent}</video>`;
     
     // Wrap the video tag in our container for consistent styling
-    if (!match.includes('class="video-container"') && !match.includes('video-container')) {
-      return `<div class="video-container relative">${enhancedVideo}</div>`;
-    }
-    
-    return enhancedVideo;
+    return `<div class="video-container relative">${enhancedVideo}</div>`;
   });
   
   // Handle [url] format (BBCode style)

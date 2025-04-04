@@ -58,6 +58,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   margin: 1.5rem 0;
   background-color: rgba(0, 0, 0, 0.05);
+  max-height: 500px; /* Limit maximum height */
 }
 
 .update-content video {
@@ -126,19 +127,21 @@
 
 .update-content .carousel-button {
   transition: background-color 0.2s ease;
-  z-index: 10;
+  z-index: 20;
+  cursor: pointer;
 }
 
 .update-content .carousel-indicators {
-  z-index: 5;
+  z-index: 15;
 }
 
 .update-content .carousel-indicators button {
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .update-content .carousel-counter {
-  z-index: 5;
+  z-index: 15;
 }
 
 /* Dark mode specific styles */

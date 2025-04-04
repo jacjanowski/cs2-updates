@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting specific content tags
  */
@@ -35,7 +34,7 @@ export const formatDescription = (description: string): string => {
         <div class="video-container relative">
           <video 
             ${controls ? 'controls' : ''}
-            ${autoplay ? 'autoplay muted loop playsinline' : ''}
+            autoplay muted loop playsinline
             ${poster ? `poster="${poster}"` : ''}
             class="w-full"
             preload="auto"
@@ -65,28 +64,22 @@ export const formatDescription = (description: string): string => {
   
   // Also handle direct HTML video tags that might be in the content
   formattedText = formattedText.replace(/<video([^>]*)>([\s\S]*?)<\/video>/gi, (match, attributes, innerContent) => {
-    // Create a new wrapper for the video
-    let enhancedAttributes = attributes;
-    
-    // Ensure required attributes for autoplay
-    if (!enhancedAttributes.includes('autoplay')) {
-      enhancedAttributes += ' autoplay';
+    // Make sure required attributes are set for proper video playback
+    if (!attributes.includes('muted')) {
+      attributes += ' muted';
     }
-    if (!enhancedAttributes.includes('muted')) {
-      enhancedAttributes += ' muted';
+    if (!attributes.includes('autoplay')) {
+      attributes += ' autoplay';
     }
-    if (!enhancedAttributes.includes('playsinline')) {
-      enhancedAttributes += ' playsinline';
+    if (!attributes.includes('playsinline')) {
+      attributes += ' playsinline';
     }
-    if (!enhancedAttributes.includes('loop')) {
-      enhancedAttributes += ' loop';
+    if (!attributes.includes('loop')) {
+      attributes += ' loop';
     }
     
-    // Create enhanced video tag
-    const enhancedVideo = `<video${enhancedAttributes}>${innerContent}</video>`;
-    
-    // Wrap the video tag in our container for consistent styling
-    return `<div class="video-container relative">${enhancedVideo}</div>`;
+    // Create wrapper and enhanced video tag
+    return `<div class="video-container relative"><video${attributes}>${innerContent}</video></div>`;
   });
   
   // Handle [url] format (BBCode style)
@@ -145,7 +138,7 @@ export const formatDescription = (description: string): string => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
   });
   
-  // Process carousel tag with simple custom carousel
+  // Process carousel tag with a simpler approach that will work with our JavaScript
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -183,11 +176,11 @@ export const formatDescription = (description: string): string => {
             </div>`
           ).join('')}
           
-          <button type="button" class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Previous slide">
+          <button type="button" class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background cursor-pointer z-10" aria-label="Previous slide">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           
-          <button type="button" class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Next slide">
+          <button type="button" class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background cursor-pointer z-10" aria-label="Next slide">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
           

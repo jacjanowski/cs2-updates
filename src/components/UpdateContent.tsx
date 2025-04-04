@@ -1,6 +1,13 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { 
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
+} from "@/components/ui/carousel";
 
 interface UpdateContentProps {
   description: string;
@@ -47,161 +54,143 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       const videoElements = contentRef.current.querySelectorAll('video');
       
       videoElements.forEach(video => {
-        // Ensure proper attributes are set
+        // Ensure proper attributes are set for autoplay
         video.setAttribute('playsinline', '');
         video.setAttribute('muted', 'true');
+        video.setAttribute('autoplay', '');
+        video.setAttribute('loop', '');
         video.muted = true; // Explicitly set the muted property
+
+        // Set controls to false by default (unless explicitly set)
+        if (!video.hasAttribute('controls')) {
+          video.controls = false;
+        }
         
-        // Force autoplay with muted
-        try {
-          const playPromise = video.play();
-          
-          if (playPromise !== undefined) {
-            playPromise.catch(error => {
-              console.error('Auto-play was prevented:', error);
+        // Force autoplay
+        const playVideo = () => {
+          video.play().catch(error => {
+            console.error('Auto-play was prevented:', error);
+            
+            // Create a play button overlay for videos that couldn't autoplay
+            const container = video.closest('.video-container') || video.parentElement;
+            if (container && !container.querySelector('.video-play-button')) {
+              const playButton = document.createElement('button');
+              playButton.type = 'button';
+              playButton.className = 'video-play-button absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors z-10';
+              playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+              playButton.onclick = () => {
+                video.muted = false; // Unmute when user clicks
+                video.play().catch(e => console.error('Play failed after click:', e));
+                video.controls = true; // Show controls after starting playback
+                playButton.remove();
+              };
               
-              // Create a play button overlay for videos that couldn't autoplay
-              const container = video.closest('.video-container') || video.parentElement;
-              if (container && !container.querySelector('.video-play-button')) {
-                const playButton = document.createElement('button');
-                playButton.type = 'button';
-                playButton.className = 'video-play-button absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors';
-                playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
-                playButton.onclick = () => {
-                  video.muted = false; // Unmute when user clicks
-                  video.play().catch(e => console.error('Play failed after click:', e));
-                  video.controls = true; // Show controls after starting playback
-                  playButton.remove();
-                };
-                
-                // Add a relative positioning to the container if needed
-                if (!container.classList.contains('relative')) {
-                  container.classList.add('relative');
-                }
-                
-                container.appendChild(playButton);
+              // Add a relative positioning to the container if needed
+              if (getComputedStyle(container).position === 'static') {
+                container.style.position = 'relative';
               }
-            });
-          }
-        } catch (e) {
-          console.error('Error playing video:', e);
+              
+              container.appendChild(playButton);
+            }
+          });
+        };
+
+        // Try to play the video
+        if (video.readyState >= 2) {
+          playVideo();
+        } else {
+          video.addEventListener('loadeddata', playVideo, { once: true });
         }
       });
     };
     
-    // Initialize custom carousels
+    // Initialize carousels using shadcn/ui carousel
     const initializeCarousels = () => {
       if (!contentRef.current) return;
       
-      // Find all carousel containers
-      const carousels = contentRef.current.querySelectorAll('.custom-carousel');
+      // Find all custom carousel containers
+      const customCarousels = contentRef.current.querySelectorAll('.custom-carousel');
       
-      carousels.forEach(carousel => {
-        const slides = carousel.querySelectorAll('.carousel-slide');
-        const prevButton = carousel.querySelector('.carousel-button.prev');
-        const nextButton = carousel.querySelector('.carousel-button.next');
-        const indicators = carousel.querySelectorAll('.carousel-indicators button');
-        const counter = carousel.querySelector('.carousel-counter');
+      customCarousels.forEach((carousel) => {
+        const slideElements = carousel.querySelectorAll('.carousel-slide');
         
-        if (!slides.length) return;
+        // Skip if no slides
+        if (!slideElements.length) return;
         
-        let currentIndex = 0;
+        // Create a new shadcn carousel
+        const newCarousel = document.createElement('div');
+        newCarousel.className = 'w-full my-4';
         
-        // Function to update the active slide
-        const showSlide = (index: number) => {
-          // Handle index bounds
-          if (index < 0) index = slides.length - 1;
-          if (index >= slides.length) index = 0;
+        // Create the carousel root
+        const carouselRoot = document.createElement('div');
+        carouselRoot.className = 'relative';
+        newCarousel.appendChild(carouselRoot);
+        
+        // Create the carousel content
+        const carouselContent = document.createElement('div');
+        carouselContent.className = 'overflow-hidden';
+        carouselRoot.appendChild(carouselContent);
+        
+        // Create the flex container
+        const flexContainer = document.createElement('div');
+        flexContainer.className = 'flex -ml-4';
+        carouselContent.appendChild(flexContainer);
+        
+        // Add slides
+        slideElements.forEach((slide) => {
+          const carouselItem = document.createElement('div');
+          carouselItem.className = 'pl-4 min-w-0 shrink-0 grow-0 basis-full';
+          carouselItem.setAttribute('role', 'group');
+          carouselItem.setAttribute('aria-roledescription', 'slide');
           
-          currentIndex = index;
-          
-          // Update slides
-          slides.forEach((slide, i) => {
-            if (i === index) {
-              slide.classList.add('active');
-            } else {
-              slide.classList.remove('active');
-            }
-          });
-          
-          // Update indicators
-          indicators.forEach((indicator, i) => {
-            if (i === index) {
-              indicator.classList.add('active', 'bg-primary');
-              indicator.classList.remove('bg-background/50');
-            } else {
-              indicator.classList.remove('active', 'bg-primary');
-              indicator.classList.add('bg-background/50');
-            }
-          });
-          
-          // Update counter
-          if (counter) {
-            counter.textContent = `${index + 1} / ${slides.length}`;
-          }
-        };
-        
-        // Set up direct click handlers on buttons
-        if (prevButton) {
-          prevButton.addEventListener('click', () => {
-            showSlide(currentIndex - 1);
-          });
-        }
-        
-        if (nextButton) {
-          nextButton.addEventListener('click', () => {
-            showSlide(currentIndex + 1);
-          });
-        }
-        
-        // Set up indicator click handlers
-        indicators.forEach((indicator, i) => {
-          indicator.addEventListener('click', () => {
-            showSlide(i);
-          });
+          // Move the slide content
+          carouselItem.innerHTML = slide.innerHTML;
+          flexContainer.appendChild(carouselItem);
         });
         
-        // Add keyboard navigation
-        const handleKeyDown = (e: KeyboardEvent) => {
-          if (e.key === 'ArrowLeft') {
-            showSlide(currentIndex - 1);
-          } else if (e.key === 'ArrowRight') {
-            showSlide(currentIndex + 1);
-          }
-        };
+        // Add navigation buttons
+        const prevButton = document.createElement('button');
+        prevButton.type = 'button';
+        prevButton.className = 'absolute -left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 text-foreground hover:bg-background z-10';
+        prevButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+        prevButton.setAttribute('aria-label', 'Previous slide');
+        carouselRoot.appendChild(prevButton);
         
-        carousel.addEventListener('keydown', handleKeyDown);
+        const nextButton = document.createElement('button');
+        nextButton.type = 'button';
+        nextButton.className = 'absolute -right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 text-foreground hover:bg-background z-10';
+        nextButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+        nextButton.setAttribute('aria-label', 'Next slide');
+        carouselRoot.appendChild(nextButton);
         
-        // Enable keyboard focus on the carousel
-        carousel.setAttribute('tabindex', '0');
+        // Replace the original carousel with our new one
+        carousel.parentNode?.replaceChild(newCarousel, carousel);
         
-        // Add swipe support for touch devices
-        let touchStartX = 0;
-        let touchEndX = 0;
+        // Create embla carousel instance
+        let currentIndex = 0;
+        const totalSlides = slideElements.length;
         
-        carousel.addEventListener('touchstart', (e: TouchEvent) => {
-          touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
+        // Add counter
+        const counter = document.createElement('div');
+        counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium z-10';
+        counter.textContent = `1 / ${totalSlides}`;
+        carouselRoot.appendChild(counter);
         
-        carousel.addEventListener('touchend', (e: TouchEvent) => {
-          touchEndX = e.changedTouches[0].screenX;
-          handleSwipe();
-        }, { passive: true });
+        // Setup click handlers
+        prevButton.addEventListener('click', () => {
+          currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+          flexContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+          counter.textContent = `${currentIndex + 1} / ${totalSlides}`;
+        });
         
-        const handleSwipe = () => {
-          const swipeThreshold = 50; // Minimum pixels to consider a swipe
-          
-          if (touchEndX - touchStartX > swipeThreshold) {
-            // Swipe right
-            showSlide(currentIndex - 1);
-          } else if (touchStartX - touchEndX > swipeThreshold) {
-            // Swipe left
-            showSlide(currentIndex + 1);
-          }
-        };
+        nextButton.addEventListener('click', () => {
+          currentIndex = (currentIndex + 1) % totalSlides;
+          flexContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+          counter.textContent = `${currentIndex + 1} / ${totalSlides}`;
+        });
         
-        // Initialize the first slide
-        showSlide(0);
+        // Add transition
+        flexContainer.style.transition = 'transform 0.3s ease';
       });
     };
     

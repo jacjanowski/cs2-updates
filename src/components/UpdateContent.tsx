@@ -42,7 +42,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     
     // Process videos to ensure autoplay works
     const initializeVideos = () => {
-      const videoElements = contentRef.current?.querySelectorAll('video[autoplay]');
+      const videoElements = contentRef.current?.querySelectorAll('video');
       
       videoElements?.forEach(element => {
         // Cast the element to HTMLVideoElement to access video-specific properties

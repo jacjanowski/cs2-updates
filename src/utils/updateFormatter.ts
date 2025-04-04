@@ -28,11 +28,11 @@ export const formatDescription = (description: string): string => {
     const webmSrc = webmMatch ? webmMatch[1] : '';
     const poster = posterMatch ? posterMatch[1] : '';
     const autoplay = autoplayMatch ? autoplayMatch[1] === 'true' : true; // Default to true
-    const controls = controlsMatch ? controlsMatch[1] === 'true' : true;
+    const controls = controlsMatch ? controlsMatch[1] === 'true' : false; // Default to false for cleaner look
     
     if (mp4Src || webmSrc) {
       let videoHtml = `
-        <div class="video-container">
+        <div class="video-container relative">
           <video 
             ${controls ? 'controls' : ''}
             ${autoplay ? 'autoplay muted loop playsinline' : ''}
@@ -61,6 +61,15 @@ export const formatDescription = (description: string): string => {
     }
     
     return match; // Return original if couldn't parse
+  });
+  
+  // Also handle direct HTML video tags that might be in the content
+  formattedText = formattedText.replace(/<video[^>]*>([\s\S]*?)<\/video>/gi, (match) => {
+    // Wrap the video tag in our container for consistent styling
+    if (!match.includes('class="video-container"') && !match.includes('video-container')) {
+      return `<div class="video-container relative">${match}</div>`;
+    }
+    return match;
   });
   
   // Handle [url] format (BBCode style)

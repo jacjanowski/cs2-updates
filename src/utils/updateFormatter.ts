@@ -64,12 +64,39 @@ export const formatDescription = (description: string): string => {
   });
   
   // Also handle direct HTML video tags that might be in the content
-  formattedText = formattedText.replace(/<video[^>]*>([\s\S]*?)<\/video>/gi, (match) => {
+  formattedText = formattedText.replace(/<video([^>]*)>([\s\S]*?)<\/video>/gi, (match, attributes, innerContent) => {
+    // Ensure autoplay, muted, and playsinline attributes are present
+    let enhancedAttributes = attributes;
+    
+    // Add autoplay attribute if not present
+    if (!enhancedAttributes.includes('autoplay')) {
+      enhancedAttributes += ' autoplay';
+    }
+    
+    // Add muted attribute if not present (required for autoplay to work)
+    if (!enhancedAttributes.includes('muted')) {
+      enhancedAttributes += ' muted';
+    }
+    
+    // Add playsinline attribute if not present (for iOS)
+    if (!enhancedAttributes.includes('playsinline')) {
+      enhancedAttributes += ' playsinline';
+    }
+    
+    // Add loop attribute if not present
+    if (!enhancedAttributes.includes('loop')) {
+      enhancedAttributes += ' loop';
+    }
+    
+    // Create enhanced video tag
+    const enhancedVideo = `<video${enhancedAttributes}>${innerContent}</video>`;
+    
     // Wrap the video tag in our container for consistent styling
     if (!match.includes('class="video-container"') && !match.includes('video-container')) {
-      return `<div class="video-container relative">${match}</div>`;
+      return `<div class="video-container relative">${enhancedVideo}</div>`;
     }
-    return match;
+    
+    return enhancedVideo;
   });
   
   // Handle [url] format (BBCode style)
@@ -166,17 +193,17 @@ export const formatDescription = (description: string): string => {
             </div>`
           ).join('')}
           
-          <button class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Previous slide">
+          <button type="button" class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Previous slide">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           
-          <button class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Next slide">
+          <button type="button" class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background" aria-label="Next slide">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
           
           <div class="carousel-indicators absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
             ${images.map((_, index) => 
-              `<button class="w-2 h-2 rounded-full ${index === 0 ? 'active bg-primary' : 'bg-background/50'}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
+              `<button type="button" class="w-2 h-2 rounded-full ${index === 0 ? 'active bg-primary' : 'bg-background/50'}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
             ).join('')}
           </div>
           

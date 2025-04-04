@@ -134,28 +134,42 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
           }
         };
         
-        // Set up click handlers
-        if (prevButton) {
-          prevButton.addEventListener('click', () => {
+        // Clear any existing event listeners (important fix)
+        const newPrevButton = prevButton?.cloneNode(true);
+        const newNextButton = nextButton?.cloneNode(true);
+        
+        if (prevButton && newPrevButton) {
+          prevButton.parentNode?.replaceChild(newPrevButton, prevButton);
+          newPrevButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             showSlide(currentIndex - 1);
           });
         }
         
-        if (nextButton) {
-          nextButton.addEventListener('click', () => {
+        if (nextButton && newNextButton) {
+          nextButton.parentNode?.replaceChild(newNextButton, nextButton);
+          newNextButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             showSlide(currentIndex + 1);
           });
         }
         
-        // Set up indicator click handlers
+        // Set up indicator click handlers with proper event handling
         indicators.forEach((indicator, i) => {
-          indicator.addEventListener('click', () => {
-            showSlide(i);
-          });
+          // Clear existing listeners by cloning
+          const newIndicator = indicator.cloneNode(true);
+          if (indicator.parentNode) {
+            indicator.parentNode.replaceChild(newIndicator, indicator);
+            
+            newIndicator.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              showSlide(i);
+            });
+          }
         });
-        
-        // Initialize the first slide
-        showSlide(0);
         
         // Add keyboard navigation
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -195,6 +209,9 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
             showSlide(currentIndex + 1);
           }
         };
+        
+        // Initialize the first slide
+        showSlide(0);
       });
     };
     

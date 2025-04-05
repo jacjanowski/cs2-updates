@@ -74,7 +74,10 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
       
       <Carousel
         className="w-full"
-        onSelect={(index) => setCurrentSlide(index + 1)}
+        onSelect={(index) => {
+          // Fix: Correctly handle the index parameter which is a number
+          setCurrentSlide(index + 1);
+        }}
       >
         <CarouselContent>
           {images.map((image, index) => (

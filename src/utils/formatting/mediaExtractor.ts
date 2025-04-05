@@ -23,16 +23,8 @@ export const extractImagesFromContent = (content: string): string[] => {
   
   // Also look for other image formats like:
   // [img=URL]
-  const altImgRegex = /\[img=(.*?)(\]|\s)/g;
+  const altImgRegex = /\[img=(.*?)\]/g;
   while ((match = altImgRegex.exec(content)) !== null) {
-    if (match[1] && match[1].trim()) {
-      images.push(match[1].trim());
-    }
-  }
-  
-  // Also look for HTML img tags
-  const htmlImgRegex = /<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>/g;
-  while ((match = htmlImgRegex.exec(content)) !== null) {
     if (match[1] && match[1].trim()) {
       images.push(match[1].trim());
     }

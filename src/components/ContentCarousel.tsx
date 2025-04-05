@@ -53,12 +53,6 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
     setImagesLoaded(prev => {
       const newCount = prev + 1;
       console.log(`Image ${newCount}/${images.length} loaded in carousel ${carouselId}`);
-      
-      // If this is the last image, ensure loading state is cleared
-      if (newCount >= images.length) {
-        setIsLoading(false);
-      }
-      
       return newCount;
     });
   };
@@ -67,12 +61,6 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
     setImagesLoaded(prev => {
       const newCount = prev + 1;
       console.error(`Failed to load image ${newCount}/${images.length} in carousel ${carouselId}`);
-      
-      // If this is the last image, ensure loading state is cleared even if there was an error
-      if (newCount >= images.length) {
-        setIsLoading(false);
-      }
-      
       return newCount;
     });
   };

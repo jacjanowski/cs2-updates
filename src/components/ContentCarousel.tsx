@@ -28,7 +28,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
         if (element) {
           console.log(`Found mount element for carousel ${carouselId}:`, element);
           
-          // Apply styling to the placeholder element
+          // Apply styling to the placeholder element - important for visibility
           element.className = "my-4 w-full carousel-placeholder bg-muted/20 min-h-[300px] rounded-md border border-border";
           
           // Clear any text content
@@ -40,7 +40,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
           setPortalError(null);
         } else {
           console.warn(`Mount element not found for carousel ${carouselId} with selector ${containerSelector}`);
-          if (retryCount < 5) {
+          if (retryCount < 10) { // Increase max retries
             setRetryCount(prev => prev + 1);
           } else {
             const errorMsg = `Failed to find mount element for carousel ${carouselId} after ${retryCount} attempts`;
@@ -50,12 +50,12 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
         }
       };
 
-      // Initial check with a delay to ensure DOM is updated
-      const timeoutId = setTimeout(checkForElement, 250);
+      // Initial check with a shorter delay to ensure DOM is updated quickly
+      const timeoutId = setTimeout(checkForElement, 150);
       
-      // Retry logic
-      if (retryCount > 0 && retryCount < 5 && !mountElement) {
-        const retryTimeoutId = setTimeout(checkForElement, 500 * retryCount);
+      // Retry logic with increased frequency
+      if (retryCount > 0 && retryCount < 10 && !mountElement) {
+        const retryTimeoutId = setTimeout(checkForElement, 300 * Math.min(retryCount, 3));
         return () => clearTimeout(retryTimeoutId);
       }
       
@@ -95,7 +95,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   
   useEffect(() => {
     // Display toast for portal errors after multiple retries
-    if (portalError && retryCount >= 5) {
+    if (portalError && retryCount >= 10) {
       toast({
         title: "Carousel error",
         description: "Unable to place carousel at the correct position. Try refreshing the page.",
@@ -190,7 +190,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   }
 
   // If portal mount failed after retries but we have a selector, show an error indicator
-  if (containerSelector && portalError && retryCount >= 5) {
+  if (containerSelector && portalError && retryCount >= 10) {
     console.error(`Portal creation failed for carousel ${carouselId}:`, portalError);
     // Return a fallback if portal doesn't work (render directly in component tree)
     return (
@@ -206,7 +206,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   }
 
   // While still trying, show an empty state
-  if (containerSelector && retryCount < 5 && !mountElement) {
+  if (containerSelector && retryCount < 10 && !mountElement) {
     return null;
   }
 

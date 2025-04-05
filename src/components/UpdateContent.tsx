@@ -21,7 +21,7 @@ const UpdateContent: React.FC<UpdateContentProps> = ({
     if (!contentRef.current || carouselData.length === 0) return;
     
     // Get all carousel placeholders
-    const carouselPlaceholders = contentRef.current.querySelectorAll('.carousel-placeholder');
+    const carouselPlaceholders = contentRef.current.querySelectorAll('[data-carousel-id]');
     
     if (carouselPlaceholders.length === 0 && carouselData.length > 0) {
       console.log("No carousel placeholders found in content, but we have carousel data");
@@ -30,10 +30,9 @@ const UpdateContent: React.FC<UpdateContentProps> = ({
         description: "Carousels not properly placed. Please try refreshing.",
         variant: "destructive"
       });
+    } else {
+      console.log(`Found ${carouselPlaceholders.length} carousel placeholders in content`);
     }
-    
-    console.log(`Found ${carouselPlaceholders.length} carousel placeholders in content`);
-    
   }, [carouselData, formattedHtml]);
   
   return (
@@ -50,7 +49,7 @@ const UpdateContent: React.FC<UpdateContentProps> = ({
           key={carousel.id}
           images={carousel.images}
           carouselId={carousel.id}
-          containerSelector={`[data-carousel-id="${carousel.id}"]`}
+          containerSelector={`#${carousel.id}`}
         />
       ))}
     </div>

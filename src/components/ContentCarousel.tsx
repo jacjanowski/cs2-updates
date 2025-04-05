@@ -18,35 +18,41 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   const [api, setApi] = useState<CarouselApi>();
   const [mountElement, setMountElement] = useState<Element | null>(null);
   const [portalError, setPortalError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   useEffect(() => {
     if (containerSelector) {
-      // Add a small delay to ensure the DOM has been updated with our placeholders
-      const timeoutId = setTimeout(() => {
+      const checkForElement = () => {
+        console.log(`Looking for mount element for carousel ${carouselId} using selector ${containerSelector}`);
         const element = document.querySelector(containerSelector);
         if (element) {
+          console.log(`Found mount element for carousel ${carouselId}:`, element);
           setMountElement(element);
           setPortalError(null);
-          console.log(`Found mount element for carousel ${carouselId} using selector ${containerSelector}`);
         } else {
-          const errorMsg = `Mount element not found for carousel ${carouselId} with selector ${containerSelector}`;
-          console.warn(errorMsg);
-          setPortalError(errorMsg);
-          // Try again in case we need to wait for more DOM updates
-          setTimeout(() => {
-            const retryElement = document.querySelector(containerSelector);
-            if (retryElement) {
-              setMountElement(retryElement);
-              setPortalError(null);
-              console.log(`Found mount element on retry for carousel ${carouselId}`);
-            }
-          }, 1000);
+          console.warn(`Mount element not found for carousel ${carouselId} with selector ${containerSelector}`);
+          if (retryCount < 5) {
+            setRetryCount(prev => prev + 1);
+          } else {
+            const errorMsg = `Failed to find mount element for carousel ${carouselId} after ${retryCount} attempts`;
+            console.error(errorMsg);
+            setPortalError(errorMsg);
+          }
         }
-      }, 100);
+      };
+
+      // Initial check with a delay to ensure DOM is updated
+      const timeoutId = setTimeout(checkForElement, 250);
+      
+      // Retry logic
+      if (retryCount > 0 && retryCount < 5 && !mountElement) {
+        const retryTimeoutId = setTimeout(checkForElement, 500 * retryCount);
+        return () => clearTimeout(retryTimeoutId);
+      }
       
       return () => clearTimeout(timeoutId);
     }
-  }, [containerSelector, carouselId]);
+  }, [containerSelector, carouselId, retryCount, mountElement]);
   
   useEffect(() => {
     setIsLoading(true);
@@ -79,15 +85,15 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   }, [api]);
   
   useEffect(() => {
-    // Display toast for portal errors
-    if (portalError) {
+    // Display toast for portal errors after multiple retries
+    if (portalError && retryCount >= 5) {
       toast({
         title: "Carousel error",
         description: "Unable to place carousel at the correct position. Try refreshing the page.",
         variant: "destructive"
       });
     }
-  }, [portalError]);
+  }, [portalError, retryCount]);
   
   const handleLoad = () => {
     setImagesLoaded(prev => {
@@ -110,7 +116,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   }
 
   const carouselContent = (
-    <>
+    <div className="relative w-full">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
           <p className="text-sm text-muted-foreground animate-pulse">Loading images...</p>
@@ -162,18 +168,34 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
           {currentSlide} / {images.length}
         </div>
       </Carousel>
-    </>
+    </div>
   );
   
+  // If we have a mount element, render as a portal
   if (containerSelector && mountElement) {
     console.log(`Rendering carousel ${carouselId} as portal into`, mountElement);
     return createPortal(carouselContent, mountElement);
   }
 
-  // If portal mount failed but we have a selector, show an error indicator
-  if (containerSelector && portalError) {
+  // If portal mount failed after retries but we have a selector, show an error indicator
+  if (containerSelector && portalError && retryCount >= 5) {
     console.error(`Portal creation failed for carousel ${carouselId}:`, portalError);
-    return null; // Return null as we don't want to show misplaced carousels
+    // Return a fallback if portal doesn't work (render directly in component tree)
+    return (
+      <div 
+        className="w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50"
+      >
+        <div className="p-4 text-center">
+          <p className="text-red-500">Carousel failed to mount at proper position</p>
+          {carouselContent}
+        </div>
+      </div>
+    );
+  }
+
+  // While still trying, show an empty state
+  if (containerSelector && retryCount < 5 && !mountElement) {
+    return null;
   }
 
   // Default case: render carousel directly without portal

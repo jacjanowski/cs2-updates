@@ -40,7 +40,7 @@ export const useUpdateImage = (
       setContentImages(extractedImages);
       setHasAnyImage(extractedImages.length > 0);
       
-      // Extract carousel data including positions
+      // Extract carousel data including positions - make sure IDs are consistent
       const carousels = extractCarouselsFromContent(description);
       setHasCarousels(carousels.length > 0);
       setCarouselData(carousels);

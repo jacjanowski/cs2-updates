@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for extracting media from content
  */
@@ -74,7 +75,10 @@ export const extractCarouselsFromContent = (content: string): Array<{id: string,
   let carouselIndex = 0;
   
   while ((carouselMatch = carouselRegex.exec(content)) !== null) {
-    const carouselId = `carousel-${carouselIndex++}`;
+    // Create a deterministic ID based on the index
+    const carouselId = `carousel-${carouselIndex}`;
+    carouselIndex++;
+    
     const carouselContent = carouselMatch[1];
     const images: string[] = [];
     const position = carouselMatch.index; // Store the position in original content

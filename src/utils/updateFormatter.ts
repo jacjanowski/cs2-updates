@@ -119,6 +119,7 @@ export const formatDescription = (description: string): string => {
   });
   
   // Process carousel tag by replacing it with a placeholder that will be processed by React
+  let carouselIndex = 0;
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content, offset) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -137,7 +138,8 @@ export const formatDescription = (description: string): string => {
     }
     
     // Create a unique ID for this carousel
-    const carouselId = `carousel-${Math.random().toString(36).substring(2, 10)}`;
+    const carouselId = `carousel-${carouselIndex}`;
+    carouselIndex++;
     
     // If only one image, just display it without carousel
     if (images.length === 1) {
@@ -147,14 +149,11 @@ export const formatDescription = (description: string): string => {
     }
     
     // Create a placeholder div that will be replaced with the actual carousel
-    return `<div 
+    // Important: Use an ID and class that ContentCarousel can easily find
+    return `<div id="${carouselId}" 
       data-carousel-id="${carouselId}" 
-      data-images='${JSON.stringify(images)}'
-      data-slide-count="${images.length}"
-      class="my-4 w-full carousel-placeholder inline-carousel bg-muted/20 min-h-[300px] flex items-center justify-center rounded-md"
-    >
-      <div class="animate-pulse">Loading carousel...</div>
-    </div>`;
+      class="my-4 w-full carousel-placeholder bg-muted/20 min-h-[300px] rounded-md border border-border"
+    ></div>`;
   });
   
   // Handle remaining formatting tags

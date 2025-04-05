@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for extracting media from content
  */
@@ -97,6 +96,8 @@ export const extractCarouselsFromContent = (content: string): Array<{id: string,
         originalContent: carouselMatch[0], // Store original content
         position // Store position for proper insertion
       });
+      
+      console.log(`Extracted carousel ${carouselId} with ${images.length} images at position ${position}`);
     }
   }
   

@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface ContentCarouselProps {
   images: string[];
@@ -15,16 +17,34 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
   const [mountElement, setMountElement] = useState<Element | null>(null);
+  const [portalError, setPortalError] = useState<string | null>(null);
   
   useEffect(() => {
     if (containerSelector) {
-      const element = document.querySelector(containerSelector);
-      if (element) {
-        setMountElement(element);
-        console.log(`Found mount element for carousel ${carouselId} using selector ${containerSelector}`);
-      } else {
-        console.warn(`Mount element not found for carousel ${carouselId} with selector ${containerSelector}`);
-      }
+      // Add a small delay to ensure the DOM has been updated with our placeholders
+      const timeoutId = setTimeout(() => {
+        const element = document.querySelector(containerSelector);
+        if (element) {
+          setMountElement(element);
+          setPortalError(null);
+          console.log(`Found mount element for carousel ${carouselId} using selector ${containerSelector}`);
+        } else {
+          const errorMsg = `Mount element not found for carousel ${carouselId} with selector ${containerSelector}`;
+          console.warn(errorMsg);
+          setPortalError(errorMsg);
+          // Try again in case we need to wait for more DOM updates
+          setTimeout(() => {
+            const retryElement = document.querySelector(containerSelector);
+            if (retryElement) {
+              setMountElement(retryElement);
+              setPortalError(null);
+              console.log(`Found mount element on retry for carousel ${carouselId}`);
+            }
+          }, 1000);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [containerSelector, carouselId]);
   
@@ -57,6 +77,17 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
       api.off("select", handleSelect);
     };
   }, [api]);
+  
+  useEffect(() => {
+    // Display toast for portal errors
+    if (portalError) {
+      toast({
+        title: "Carousel error",
+        description: "Unable to place carousel at the correct position. Try refreshing the page.",
+        variant: "destructive"
+      });
+    }
+  }, [portalError]);
   
   const handleLoad = () => {
     setImagesLoaded(prev => {
@@ -139,6 +170,13 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
     return createPortal(carouselContent, mountElement);
   }
 
+  // If portal mount failed but we have a selector, show an error indicator
+  if (containerSelector && portalError) {
+    console.error(`Portal creation failed for carousel ${carouselId}:`, portalError);
+    return null; // Return null as we don't want to show misplaced carousels
+  }
+
+  // Default case: render carousel directly without portal
   return (
     <div 
       id={`carousel-${carouselId}`} 

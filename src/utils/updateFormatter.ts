@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for formatting specific content tags
  */
@@ -118,7 +119,7 @@ export const formatDescription = (description: string): string => {
   });
   
   // Process carousel tag by replacing it with a placeholder that will be processed by React
-  formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
+  formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content, offset) => {
     // Extract all img tags from the carousel content
     const images = [];
     const imgRegex = /\[img\](.*?)\[\/img\]/g;
@@ -150,8 +151,10 @@ export const formatDescription = (description: string): string => {
       data-carousel-id="${carouselId}" 
       data-images='${JSON.stringify(images)}'
       data-slide-count="${images.length}"
-      class="my-4 w-full carousel-placeholder inline-carousel"
-    ></div>`;
+      class="my-4 w-full carousel-placeholder inline-carousel bg-muted/20 min-h-[300px] flex items-center justify-center rounded-md"
+    >
+      <div class="animate-pulse">Loading carousel...</div>
+    </div>`;
   });
   
   // Handle remaining formatting tags

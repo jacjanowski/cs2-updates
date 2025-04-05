@@ -12,6 +12,7 @@ import UpdateImage from "@/components/UpdateImage";
 import UpdateFooter from "@/components/UpdateFooter";
 import { useUpdateDetail } from "@/hooks/useUpdateDetail";
 import { useUpdateImage } from "@/hooks/useUpdateImage";
+import { Toaster } from "@/components/ui/toaster";
 import "@/styles/updateContent.css";
 
 interface LocationState {
@@ -96,6 +97,7 @@ const UpdateDetail = () => {
           </article>
         )}
       </main>
+      <Toaster />
     </div>
   );
 };

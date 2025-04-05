@@ -46,7 +46,9 @@ export const useUpdateImage = (
       setCarouselData(carousels);
       
       console.log("Found content images:", extractedImages);
-      console.log("Found carousels:", carousels);
+      if (carousels.length > 0) {
+        console.log(`Found ${carousels.length} carousels:`, carousels);
+      }
     }
     
     // Priority for display image selection

@@ -74,8 +74,9 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
       
       <Carousel
         className="w-full"
-        onSelect={(index) => {
-          // Fix: Correctly handle the index parameter which is a number
+        onSelect={(api) => {
+          // Fix: Use the API's selectedScrollSnap method to get the current index
+          const index = api.selectedScrollSnap();
           setCurrentSlide(index + 1);
         }}
       >

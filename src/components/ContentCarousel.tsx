@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 
 interface ContentCarouselProps {
@@ -12,6 +12,7 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(1);
   const [imagesLoaded, setImagesLoaded] = useState(0);
+  const [api, setApi] = useState<CarouselApi>();
   
   useEffect(() => {
     // Reset loading state when images prop changes
@@ -28,6 +29,24 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
       setIsLoading(false);
     }
   }, [imagesLoaded, images]);
+  
+  // Update current slide when the api changes slide
+  useEffect(() => {
+    if (!api) return;
+    
+    const handleSelect = () => {
+      setCurrentSlide(api.selectedScrollSnap() + 1);
+    };
+    
+    api.on("select", handleSelect);
+    
+    // Set initial slide
+    handleSelect();
+    
+    return () => {
+      api.off("select", handleSelect);
+    };
+  }, [api]);
   
   const handleLoad = () => {
     setImagesLoaded(prev => prev + 1);
@@ -74,11 +93,7 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
       
       <Carousel
         className="w-full"
-        onSelect={(api) => {
-          // Fix: Use the API's selectedScrollSnap method to get the current index
-          const index = api.selectedScrollSnap();
-          setCurrentSlide(index + 1);
-        }}
+        setApi={setApi}
       >
         <CarouselContent>
           {images.map((image, index) => (

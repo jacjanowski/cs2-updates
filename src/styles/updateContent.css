@@ -98,15 +98,22 @@
   border: 1px solid hsl(var(--border));
 }
 
-/* Carousel content positioning */
-.update-content [data-embla="true"] > div > div {
+/* Carousel content styles */
+.update-content [data-carousel="true"] {
+  width: 100%;
+}
+
+/* Carousel slides container styles */
+.update-content [data-carousel="true"] > div > div {
+  display: flex;
   transition: transform 0.3s ease-in-out;
 }
 
-/* Ensure slides take full width of carousel */
-.update-content [data-embla="true"] > div > div {
+/* Individual slide styles */
+.update-content [data-carousel="true"] > div > div > div {
   flex: 0 0 100%;
   min-width: 0;
+  scroll-snap-align: start;
 }
 
 /* Make carousel navigation buttons more visible */

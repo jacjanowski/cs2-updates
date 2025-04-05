@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting specific content tags
  */
@@ -139,7 +138,7 @@ export const formatDescription = (description: string): string => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
   });
   
-  // Process carousel tag with updated approach using data attributes for the React component
+  // Process carousel tag with data-attribute approach for proper component hydration
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -167,10 +166,11 @@ export const formatDescription = (description: string): string => {
       </div>`;
     }
     
-    // Generate HTML with data attributes for React to parse
+    // Generate a carousel container with data attributes
+    const imagesJson = JSON.stringify(images);
     return `
-      <div class="carousel-wrapper" data-carousel-id="${carouselId}" data-carousel-images="${images.join('||')}">
-        <!-- Carousel placeholder for React hydration -->
+      <div class="embedded-carousel" data-carousel-id="${carouselId}" data-carousel-images='${imagesJson.replace(/'/g, "&apos;")}'>
+        <!-- Carousel will be rendered here by React -->
       </div>
     `;
   });
@@ -209,27 +209,20 @@ export const formatDescription = (description: string): string => {
   });
   
   // Handle lists
-  // [list] and [/list] tags
   formattedText = formattedText.replace(/\[list\]/gi, '<ul class="my-4">');
   formattedText = formattedText.replace(/\[\/list\]/gi, '</ul>');
   
-  // [ul] and [/ul] tags (alternative list format)
   formattedText = formattedText.replace(/\[ul\]/gi, '<ul class="my-4">');
   formattedText = formattedText.replace(/\[\/ul\]/gi, '</ul>');
   
-  // [ol] and [/ol] tags (ordered lists)
   formattedText = formattedText.replace(/\[ol\]/gi, '<ol class="my-4 list-decimal pl-5">');
   formattedText = formattedText.replace(/\[\/ol\]/gi, '</ol>');
   
-  // Handle list items with [*]
   formattedText = formattedText.replace(/\[\*\](.*?)(?=\[\*\]|\[\/list\]|\[\/ul\]|\[\/ol\]|$)/gs, '<li>$1</li>');
   
-  // Handle list items with [li]...[/li]
   formattedText = formattedText.replace(/\[li\](.*?)\[\/li\]/gs, '<li>$1</li>');
   
-  // Process section headers
   formattedText = formattedText.replace(/\[(.*?)\]/g, (match, content) => {
-    // Skip if it's a tag we've already processed
     if (/list|ul|ol|\/list|\/ul|\/ol|\*|li|\/li|b|\/b|i|\/i|u|\/u|s|\/s|url|\/url|img|\/img|video|\/video|carousel|\/carousel|quote|\/quote|code|\/code|color|\/color|size|\/size/i.test(content)) {
       return match;
     }
@@ -237,7 +230,6 @@ export const formatDescription = (description: string): string => {
     return `<div class="section-header">${content}</div>`;
   });
   
-  // Replace [img]...[/img] with actual image tags
   formattedText = formattedText.replace(/\[img\](.*?)\[\/img\]/g, (match, imageUrl) => {
     if (!imageUrl || !imageUrl.trim()) {
       return ''; // Skip empty image tags
@@ -245,10 +237,8 @@ export const formatDescription = (description: string): string => {
     return `<img src="${imageUrl.trim()}" class="w-full max-h-[500px] object-contain my-4" alt="Update image" loading="lazy" />`;
   });
   
-  // Process any orphaned or remaining [*] bullet points
   formattedText = formattedText.replace(/\[\*\](.*?)(?=$|\n)/g, '<li>$1</li>');
   
-  // Clean up any broken HTML tags
   formattedText = fixHtmlTags(formattedText);
   
   return formattedText;

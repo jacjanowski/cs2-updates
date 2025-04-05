@@ -1,8 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
 interface ContentCarouselProps {
@@ -19,7 +17,10 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
     // Reset loading state when images prop changes
     setIsLoading(true);
     setImagesLoaded(0);
-  }, [images]);
+    
+    // Log for debugging
+    console.log(`Rendering carousel ${carouselId} with ${images.length} images:`, images);
+  }, [images, carouselId]);
 
   useEffect(() => {
     // Check if all images are loaded
@@ -34,7 +35,7 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
 
   const handleError = () => {
     setImagesLoaded(prev => prev + 1);
-    console.error("Failed to load carousel image");
+    console.error(`Failed to load carousel image in carousel ${carouselId}`);
   };
 
   // Don't render if there are no images
@@ -71,7 +72,10 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
         </div>
       )}
       
-      <Carousel className="w-full">
+      <Carousel
+        className="w-full"
+        onSelect={(index) => setCurrentSlide(index + 1)}
+      >
         <CarouselContent>
           {images.map((image, index) => (
             <CarouselItem key={`${carouselId}-slide-${index}`}>

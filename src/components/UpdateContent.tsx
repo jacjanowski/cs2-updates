@@ -1,5 +1,4 @@
-
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import ContentCarousel from "@/components/ContentCarousel";
 import { extractImagesFromContent } from "@/utils/formatting/mediaExtractor";
@@ -11,6 +10,7 @@ interface UpdateContentProps {
 
 const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [carousels, setCarousels] = useState<Array<{ id: string, images: string[] }>>([]);
   
   useEffect(() => {
     if (!contentRef.current) return;
@@ -107,12 +107,13 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
       });
     };
     
-    // Parse carousel data attributes and replace with ContentCarousel
+    // Process carousel placeholders
     const processCustomCarousels = () => {
-      if (!contentRef.current || !description) return;
+      if (!contentRef.current || !formattedHtml) return;
       
-      // Find elements with data-carousel-id attribute
+      // Find all carousel placeholders in the DOM
       const carouselPlaceholders = contentRef.current.querySelectorAll('[data-carousel-id]');
+      const extractedCarousels: Array<{ id: string, images: string[] }> = [];
       
       carouselPlaceholders.forEach(placeholder => {
         const carouselId = placeholder.getAttribute('data-carousel-id');
@@ -122,10 +123,12 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
           try {
             const images = JSON.parse(imagesAttr);
             if (Array.isArray(images) && images.length > 0) {
-              // Create a wrapper div for the carousel
+              extractedCarousels.push({ id: carouselId, images });
+              
+              // Create a wrapper div with the id that ContentCarousel will connect to
               const carouselWrapper = document.createElement('div');
               carouselWrapper.id = `carousel-wrapper-${carouselId}`;
-              carouselWrapper.className = 'my-4 carousel-wrapper';
+              carouselWrapper.className = 'my-4 w-full carousel-wrapper';
               
               // Replace the placeholder with the wrapper
               if (placeholder.parentNode) {
@@ -137,6 +140,11 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
           }
         }
       });
+      
+      // Update carousels state to trigger render of ContentCarousel components
+      if (extractedCarousels.length > 0) {
+        setCarousels(extractedCarousels);
+      }
     };
     
     // Run initialization with a small delay to ensure DOM is ready
@@ -154,10 +162,7 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
     return () => {
       clearTimeout(timer);
     };
-  }, [formattedHtml, description]);
-  
-  // Extract carousel images for proper rendering
-  const carouselData = parseCarousels(formattedHtml);
+  }, [formattedHtml]);
   
   return (
     <>
@@ -172,8 +177,8 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
         }}
       />
       
-      {/* Render ContentCarousels as React components after the content */}
-      {carouselData.map((carousel) => (
+      {/* Render ContentCarousels */}
+      {carousels.map((carousel) => (
         <ContentCarousel
           key={carousel.id}
           images={carousel.images}
@@ -183,34 +188,5 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
     </>
   );
 };
-
-// Helper function to parse carousel data from HTML
-function parseCarousels(html: string): Array<{id: string, images: string[]}> {
-  const carousels: Array<{id: string, images: string[]}> = [];
-  
-  // Extract carousel data using regex
-  const carouselRegex = /<div\s+class="carousel-container.*?"\s+data-carousel-id="([^"]+)"[^>]*>/g;
-  let match;
-  
-  // Find all carousel containers
-  while ((match = carouselRegex.exec(html)) !== null) {
-    const carouselId = match[1];
-    
-    // Extract image URLs from this carousel
-    const imgRegex = new RegExp(`data-carousel-id="${carouselId}"[\\s\\S]*?<img[^>]*src="([^"]+)"`, 'g');
-    let imgMatch;
-    const images: string[] = [];
-    
-    while ((imgMatch = imgRegex.exec(html)) !== null) {
-      images.push(imgMatch[1]);
-    }
-    
-    if (images.length > 0) {
-      carousels.push({ id: carouselId, images });
-    }
-  }
-  
-  return carousels;
-}
 
 export default UpdateContent;

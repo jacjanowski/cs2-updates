@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import ContentCarousel from "@/components/ContentCarousel";
 import { extractImagesFromContent } from "@/utils/formatting/mediaExtractor";
+import ReactDOM from "react-dom/client";
 
 interface UpdateContentProps {
   description: string;
@@ -107,13 +108,13 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
       });
     };
     
-    // Process carousel placeholders
+    // Process carousel placeholders - instead of creating wrappers that get populated later,
+    // we'll directly replace the placeholders with the actual carousels
     const processCustomCarousels = () => {
       if (!contentRef.current || !formattedHtml) return;
       
       // Find all carousel placeholders in the DOM
       const carouselPlaceholders = contentRef.current.querySelectorAll('[data-carousel-id]');
-      const extractedCarousels: Array<{ id: string, images: string[] }> = [];
       
       carouselPlaceholders.forEach(placeholder => {
         const carouselId = placeholder.getAttribute('data-carousel-id');
@@ -123,16 +124,40 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
           try {
             const images = JSON.parse(imagesAttr);
             if (Array.isArray(images) && images.length > 0) {
-              extractedCarousels.push({ id: carouselId, images });
+              // Create a new div that will be our carousel container
+              const carouselContainer = document.createElement('div');
+              carouselContainer.id = `carousel-container-${carouselId}`;
+              carouselContainer.className = 'carousel-container'; 
               
-              // Create a wrapper div with the id that ContentCarousel will connect to
-              const carouselWrapper = document.createElement('div');
-              carouselWrapper.id = `carousel-wrapper-${carouselId}`;
-              carouselWrapper.className = 'my-4 w-full carousel-wrapper';
-              
-              // Replace the placeholder with the wrapper
+              // Replace the placeholder with our container
               if (placeholder.parentNode) {
-                placeholder.parentNode.replaceChild(carouselWrapper, placeholder);
+                placeholder.parentNode.replaceChild(carouselContainer, placeholder);
+                
+                // Create and render a carousel directly into this container
+                const carousel = document.createElement('div');
+                carousel.id = `carousel-wrapper-${carouselId}`;
+                carousel.setAttribute('data-carousel-id', carouselId);
+                carousel.setAttribute('data-images', imagesAttr);
+                carouselContainer.appendChild(carousel);
+                
+                // Create the React component in this container
+                if (carousel) {
+                  // Use ReactDOM to render the carousel where it belongs in the document
+                  const carouselElement = <ContentCarousel 
+                    key={carouselId} 
+                    images={images}
+                    carouselId={carouselId}
+                  />;
+                  
+                  // We'll track this carousel to render it via React
+                  setCarousels(current => {
+                    // Check if we already have this carousel
+                    if (!current.some(c => c.id === carouselId)) {
+                      return [...current, { id: carouselId, images }];
+                    }
+                    return current;
+                  });
+                }
               }
             }
           } catch (e) {
@@ -140,11 +165,6 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
           }
         }
       });
-      
-      // Update carousels state to trigger render of ContentCarousel components
-      if (extractedCarousels.length > 0) {
-        setCarousels(extractedCarousels);
-      }
     };
     
     // Run initialization with a small delay to ensure DOM is ready
@@ -164,28 +184,56 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
     };
   }, [formattedHtml]);
   
+  // Render the carousels where they should be by finding the corresponding elements
+  useEffect(() => {
+    if (!contentRef.current) return;
+    
+    carousels.forEach(carousel => {
+      const container = document.getElementById(`carousel-wrapper-${carousel.id}`);
+      if (container && !container.hasAttribute('data-carousel-rendered')) {
+        // Mark as rendered to avoid duplicate renders
+        container.setAttribute('data-carousel-rendered', 'true');
+        
+        // Create a div that will be our portal target
+        const portalTarget = document.createElement('div');
+        portalTarget.className = 'carousel-render-target';
+        container.appendChild(portalTarget);
+        
+        // Use React DOM Portal to render the carousel into the correct DOM position
+        const root = ReactDOM.createRoot(portalTarget);
+        root.render(
+          <ContentCarousel
+            key={carousel.id}
+            images={carousel.images}
+            carouselId={carousel.id}
+          />
+        );
+      }
+    });
+    
+    // Cleanup on unmount
+    return () => {
+      carousels.forEach(carousel => {
+        const container = document.getElementById(`carousel-wrapper-${carousel.id}`);
+        if (container) {
+          // Clean up any rendered carousels
+          container.innerHTML = '';
+        }
+      });
+    };
+  }, [carousels]);
+  
   return (
-    <>
-      <div 
-        ref={contentRef}
-        className={cn(
-          "text-foreground/90 space-y-2 update-content dark:text-gray-300",
-          "prose dark:prose-invert max-w-none"
-        )}
-        dangerouslySetInnerHTML={{ 
-          __html: formattedHtml
-        }}
-      />
-      
-      {/* Render ContentCarousels */}
-      {carousels.map((carousel) => (
-        <ContentCarousel
-          key={carousel.id}
-          images={carousel.images}
-          carouselId={carousel.id}
-        />
-      ))}
-    </>
+    <div 
+      ref={contentRef}
+      className={cn(
+        "text-foreground/90 space-y-2 update-content dark:text-gray-300",
+        "prose dark:prose-invert max-w-none"
+      )}
+      dangerouslySetInnerHTML={{ 
+        __html: formattedHtml
+      }}
+    />
   );
 };
 

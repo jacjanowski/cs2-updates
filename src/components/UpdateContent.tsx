@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import ContentCarousel from "./ContentCarousel";
 import { toast } from "@/hooks/use-toast";
@@ -34,13 +33,23 @@ const UpdateContent: React.FC<UpdateContentProps> = ({
       console.log(`Found ${carouselPlaceholders.length} carousel placeholders in content`);
     }
     
-    // Clean up any visible CSS class names in placeholder divs
+    // Clean up any visible text in placeholder divs
     carouselPlaceholders.forEach(placeholder => {
-      // Remove any text content that looks like CSS classes
-      if (placeholder.textContent?.includes('rounded-md') || 
-          placeholder.textContent?.includes('border-border') ||
-          placeholder.textContent?.includes('class=')) {
+      // Remove ALL text content from placeholder divs
+      if (placeholder.textContent && placeholder.textContent.trim() !== '') {
         placeholder.textContent = '';
+      }
+      
+      // Also clear any inner HTML that might be causing visible content
+      if (placeholder.innerHTML.includes('class=') || 
+          placeholder.innerHTML.includes('rounded-md') ||
+          placeholder.innerHTML.includes('min-h-')) {
+        // Keep only the essential attributes for portal mounting
+        const id = placeholder.id;
+        const dataId = placeholder.getAttribute('data-carousel-id');
+        placeholder.innerHTML = '';
+        placeholder.id = id;
+        placeholder.setAttribute('data-carousel-id', dataId || '');
       }
     });
   }, [carouselData, formattedHtml]);

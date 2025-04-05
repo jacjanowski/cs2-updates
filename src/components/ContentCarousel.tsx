@@ -27,6 +27,15 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
         const element = document.querySelector(containerSelector);
         if (element) {
           console.log(`Found mount element for carousel ${carouselId}:`, element);
+          
+          // Apply styling to the placeholder element
+          element.className = "my-4 w-full carousel-placeholder bg-muted/20 min-h-[300px] rounded-md border border-border";
+          
+          // Clear any text content
+          if (element.textContent && element.textContent.trim() !== '') {
+            element.textContent = '';
+          }
+          
           setMountElement(element);
           setPortalError(null);
         } else {
@@ -119,7 +128,10 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
     <div className="relative w-full">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
-          <p className="text-sm text-muted-foreground animate-pulse">Loading images...</p>
+          <div className="flex flex-col items-center">
+            <p className="text-sm text-muted-foreground animate-pulse mb-1">Loading images...</p>
+            <p className="text-xs text-muted-foreground">{imagesLoaded} of {images.length}</p>
+          </div>
         </div>
       )}
       

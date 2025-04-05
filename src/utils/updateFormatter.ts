@@ -147,12 +147,8 @@ export const formatDescription = (description: string): string => {
       </div>`;
     }
     
-    // Create a placeholder div that will be replaced with the actual carousel
-    // IMPORTANT: Don't add any text content to the div to avoid showing class names
-    return `<div id="${carouselId}" 
-      data-carousel-id="${carouselId}" 
-      class="my-4 w-full carousel-placeholder bg-muted/20 min-h-[300px] rounded-md border border-border"
-      aria-label="Image carousel loading..."></div>`;
+    // Create a minimal placeholder div - NO TEXT CONTENT
+    return `<div id="${carouselId}" data-carousel-id="${carouselId}"></div>`;
   });
   
   // Handle remaining formatting tags

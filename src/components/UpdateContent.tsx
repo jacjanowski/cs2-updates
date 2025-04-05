@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import ContentCarousel from "./ContentCarousel";
 import { toast } from "@/hooks/use-toast";
 
@@ -14,44 +15,53 @@ const UpdateContent: React.FC<UpdateContentProps> = ({
   carouselData 
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [carouselsMounted, setCarouselsMounted] = useState(false);
   
   // Handle carousel placement
   useEffect(() => {
     if (!contentRef.current || carouselData.length === 0) return;
     
-    // Get all carousel placeholders
-    const carouselPlaceholders = contentRef.current.querySelectorAll('[data-carousel-id]');
+    // Reset mounted state when content changes
+    setCarouselsMounted(false);
     
-    if (carouselPlaceholders.length === 0 && carouselData.length > 0) {
-      console.log("No carousel placeholders found in content, but we have carousel data");
-      toast({
-        title: "Carousel placement issue",
-        description: "Carousels not properly placed. Please try refreshing.",
-        variant: "destructive"
-      });
-    } else {
-      console.log(`Found ${carouselPlaceholders.length} carousel placeholders in content`);
-    }
-    
-    // Clean up any visible text in placeholder divs
-    carouselPlaceholders.forEach(placeholder => {
-      // Remove ALL text content from placeholder divs
-      if (placeholder.textContent && placeholder.textContent.trim() !== '') {
-        placeholder.textContent = '';
-      }
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      // Get all carousel placeholders
+      const carouselPlaceholders = contentRef.current?.querySelectorAll('[data-carousel-id]');
       
-      // Also clear any inner HTML that might be causing visible content
-      if (placeholder.innerHTML.includes('class=') || 
-          placeholder.innerHTML.includes('rounded-md') ||
-          placeholder.innerHTML.includes('min-h-')) {
-        // Keep only the essential attributes for portal mounting
-        const id = placeholder.id;
-        const dataId = placeholder.getAttribute('data-carousel-id');
-        placeholder.innerHTML = '';
-        placeholder.id = id;
-        placeholder.setAttribute('data-carousel-id', dataId || '');
+      if (carouselPlaceholders && carouselPlaceholders.length === 0 && carouselData.length > 0) {
+        console.log("No carousel placeholders found in content, but we have carousel data", {
+          carouselData,
+          contentHtml: contentRef.current?.innerHTML
+        });
+        toast({
+          title: "Carousel placement issue",
+          description: "Carousels not properly placed. Try refreshing.",
+          variant: "destructive"
+        });
+      } else if (carouselPlaceholders) {
+        console.log(`Found ${carouselPlaceholders.length} carousel placeholders in content`);
+        
+        // Clean up any visible text in placeholder divs
+        carouselPlaceholders.forEach(placeholder => {
+          // Ensure the element is absolutely empty - remove all content
+          while (placeholder.firstChild) {
+            placeholder.removeChild(placeholder.firstChild);
+          }
+          
+          // Add a minimal visual indicator while waiting for carousel
+          const loadingDiv = document.createElement('div');
+          loadingDiv.className = 'p-2 text-xs text-center text-muted-foreground animate-pulse';
+          loadingDiv.textContent = 'Loading carousel...';
+          placeholder.appendChild(loadingDiv);
+        });
+        
+        // Mark carousels as mounted to trigger re-render
+        setCarouselsMounted(true);
       }
-    });
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [carouselData, formattedHtml]);
   
   return (

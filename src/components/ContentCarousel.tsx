@@ -19,6 +19,14 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   const [mountElement, setMountElement] = useState<Element | null>(null);
   const [portalError, setPortalError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [mountAttempted, setMountAttempted] = useState(false);
+  
+  // Force re-render on mount to ensure proper initialization
+  useEffect(() => {
+    // Initial render flag
+    const timer = setTimeout(() => setMountAttempted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
   
   useEffect(() => {
     if (containerSelector) {
@@ -31,16 +39,16 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
           // Apply styling to the placeholder element - important for visibility
           element.className = "my-4 w-full carousel-placeholder bg-muted/20 min-h-[300px] rounded-md border border-border";
           
-          // Clear any text content
-          if (element.textContent && element.textContent.trim() !== '') {
-            element.textContent = '';
+          // Ensure element is empty to prevent content flicker
+          while (element.firstChild) {
+            element.removeChild(element.firstChild);
           }
           
           setMountElement(element);
           setPortalError(null);
         } else {
           console.warn(`Mount element not found for carousel ${carouselId} with selector ${containerSelector}`);
-          if (retryCount < 10) { // Increase max retries
+          if (retryCount < 15) { // Increase max retries further
             setRetryCount(prev => prev + 1);
           } else {
             const errorMsg = `Failed to find mount element for carousel ${carouselId} after ${retryCount} attempts`;
@@ -51,17 +59,19 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
       };
 
       // Initial check with a shorter delay to ensure DOM is updated quickly
-      const timeoutId = setTimeout(checkForElement, 150);
+      const timeoutId = setTimeout(checkForElement, 100);
       
       // Retry logic with increased frequency
-      if (retryCount > 0 && retryCount < 10 && !mountElement) {
-        const retryTimeoutId = setTimeout(checkForElement, 300 * Math.min(retryCount, 3));
+      if (retryCount > 0 && retryCount < 15 && !mountElement) {
+        const retryInterval = 200 * Math.min(retryCount, 3); // Shorter intervals
+        console.log(`Scheduling retry ${retryCount} for carousel ${carouselId} in ${retryInterval}ms`);
+        const retryTimeoutId = setTimeout(checkForElement, retryInterval);
         return () => clearTimeout(retryTimeoutId);
       }
       
       return () => clearTimeout(timeoutId);
     }
-  }, [containerSelector, carouselId, retryCount, mountElement]);
+  }, [containerSelector, carouselId, retryCount, mountElement, mountAttempted]);
   
   useEffect(() => {
     setIsLoading(true);
@@ -95,7 +105,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   
   useEffect(() => {
     // Display toast for portal errors after multiple retries
-    if (portalError && retryCount >= 10) {
+    if (portalError && retryCount >= 15) {
       toast({
         title: "Carousel error",
         description: "Unable to place carousel at the correct position. Try refreshing the page.",
@@ -190,7 +200,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   }
 
   // If portal mount failed after retries but we have a selector, show an error indicator
-  if (containerSelector && portalError && retryCount >= 10) {
+  if (containerSelector && portalError && retryCount >= 15) {
     console.error(`Portal creation failed for carousel ${carouselId}:`, portalError);
     // Return a fallback if portal doesn't work (render directly in component tree)
     return (
@@ -206,7 +216,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   }
 
   // While still trying, show an empty state
-  if (containerSelector && retryCount < 10 && !mountElement) {
+  if (containerSelector && retryCount < 15 && !mountElement) {
     return null;
   }
 

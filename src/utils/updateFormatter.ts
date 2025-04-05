@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for formatting specific content tags
  */
@@ -138,7 +139,7 @@ export const formatDescription = (description: string): string => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
   });
   
-  // Process carousel tag with a simpler approach that will work with our JavaScript
+  // Process carousel tag with updated approach using data attributes for the React component
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -166,34 +167,10 @@ export const formatDescription = (description: string): string => {
       </div>`;
     }
     
-    // Generate HTML for a simple custom carousel
+    // Generate HTML with data attributes for React to parse
     return `
-      <div class="custom-carousel my-4 relative border border-border rounded-md overflow-hidden" data-carousel-id="${carouselId}">
-        <div class="carousel-container">
-          ${images.map((img, index) => 
-            `<div class="carousel-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
-              <img src="${img}" class="w-full h-auto object-contain mx-auto" alt="Carousel image ${index + 1}" />
-            </div>`
-          ).join('')}
-          
-          <button type="button" class="carousel-button prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background cursor-pointer z-10" aria-label="Previous slide">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
-          
-          <button type="button" class="carousel-button next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground rounded-full p-2 hover:bg-background cursor-pointer z-10" aria-label="Next slide">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
-          
-          <div class="carousel-indicators absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
-            ${images.map((_, index) => 
-              `<button type="button" class="w-2 h-2 rounded-full ${index === 0 ? 'active bg-primary' : 'bg-background/50'}" data-index="${index}" aria-label="Go to slide ${index + 1}"></button>`
-            ).join('')}
-          </div>
-          
-          <div class="carousel-counter absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
-            1 / ${images.length}
-          </div>
-        </div>
+      <div class="carousel-wrapper" data-carousel-id="${carouselId}" data-carousel-images="${images.join('||')}">
+        <!-- Carousel placeholder for React hydration -->
       </div>
     `;
   });

@@ -88,28 +88,25 @@
   transition: transform 0.2s ease;
 }
 
-/* Custom carousel styles - new implementation */
+/* Carousel wrapper styles */
 .update-content .carousel-wrapper {
   position: relative;
   width: 100%;
   margin: 1.5rem 0;
   overflow: hidden;
   border-radius: 0.375rem;
+  border: 1px solid hsl(var(--border));
 }
 
-.update-content .carousel-wrapper img {
-  max-width: 100%;
-  max-height: 500px;
-  margin: 0 auto;
-  display: block;
-  object-fit: contain;
+/* Carousel content positioning */
+.update-content [data-embla="true"] > div > div {
+  transition: transform 0.3s ease-in-out;
 }
 
 /* Ensure slides take full width of carousel */
-.update-content [data-embla="true"] > div {
-  width: 100%;
-  padding: 1rem;
-  box-sizing: border-box;
+.update-content [data-embla="true"] > div > div {
+  flex: 0 0 100%;
+  min-width: 0;
 }
 
 /* Make carousel navigation buttons more visible */
@@ -121,6 +118,15 @@
 
 .update-content .carousel-wrapper button:hover {
   opacity: 1;
+}
+
+/* Styling for carousel images */
+.update-content .carousel-wrapper img {
+  max-width: 100%;
+  max-height: 500px;
+  margin: 0 auto;
+  display: block;
+  object-fit: contain;
 }
 
 /* Italic text */

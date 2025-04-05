@@ -104,120 +104,103 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Convert custom-carousel elements to shadcn/ui Carousel components
+    // Initialize carousels using shadcn/ui Carousel component
     const initializeCarousels = () => {
       if (!contentRef.current) return;
       
-      const customCarousels = contentRef.current.querySelectorAll('.custom-carousel');
+      const carouselWrappers = contentRef.current.querySelectorAll('.carousel-wrapper[data-carousel-images]');
       
-      customCarousels.forEach((carouselElement, carouselIndex) => {
-        const slideElements = carouselElement.querySelectorAll('.carousel-slide');
-        if (slideElements.length === 0) return;
+      carouselWrappers.forEach((wrapper) => {
+        // Get carousel data
+        const dataImages = wrapper.getAttribute('data-carousel-images');
+        if (!dataImages) return;
         
-        // Create a new wrapper for our React carousel
-        const carouselContainer = document.createElement('div');
-        carouselContainer.className = 'carousel-wrapper my-6 relative';
-        carouselContainer.dataset.carouselId = `carousel-${carouselIndex}`;
+        const images = dataImages.split('||').filter(img => img.trim());
+        if (images.length <= 0) return;
         
-        // Extract slide contents for later use
-        const slideContents: string[] = [];
-        slideElements.forEach((slide) => {
-          slideContents.push(slide.innerHTML);
+        // Create the carousel structure
+        const carouselRoot = document.createElement('div');
+        carouselRoot.className = 'relative w-full';
+        
+        // Create the carousel component
+        const carouselElement = document.createElement('div');
+        carouselElement.setAttribute('data-embla', 'true');
+        carouselElement.className = 'overflow-hidden rounded-md';
+        carouselRoot.appendChild(carouselElement);
+        
+        // Create carousel content
+        const carouselContent = document.createElement('div');
+        carouselContent.className = 'flex';
+        carouselElement.appendChild(carouselContent);
+        
+        // Add slides
+        images.forEach((imageUrl) => {
+          const slide = document.createElement('div');
+          slide.className = 'min-w-0 flex-[0_0_100%] pl-4';
+          slide.setAttribute('role', 'group');
+          slide.setAttribute('aria-roledescription', 'slide');
+          
+          const img = document.createElement('img');
+          img.src = imageUrl;
+          img.alt = 'Carousel image';
+          img.className = 'aspect-video object-contain w-full h-auto max-h-[500px]';
+          
+          slide.appendChild(img);
+          carouselContent.appendChild(slide);
         });
         
-        // Replace the old carousel with our wrapper
-        carouselElement.parentNode?.replaceChild(carouselContainer, carouselElement);
+        // Add previous button
+        const prevButton = document.createElement('button');
+        prevButton.type = 'button';
+        prevButton.className = 'absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 text-foreground hover:bg-background shadow-sm z-10 flex items-center justify-center';
+        prevButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+        carouselRoot.appendChild(prevButton);
         
-        // Create a JSON representation of slides to be parsed by our React component
-        const slidesDataScript = document.createElement('script');
-        slidesDataScript.type = 'application/json';
-        slidesDataScript.className = 'carousel-data';
-        slidesDataScript.textContent = JSON.stringify(slideContents);
-        carouselContainer.appendChild(slidesDataScript);
+        // Add next button
+        const nextButton = document.createElement('button');
+        nextButton.type = 'button';
+        nextButton.className = 'absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 text-foreground hover:bg-background shadow-sm z-10 flex items-center justify-center';
+        nextButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+        carouselRoot.appendChild(nextButton);
         
-        // Create and render our React carousel
-        createReactCarousel(carouselContainer, slideContents, carouselIndex);
-      });
-    };
-    
-    // Create a React carousel using the shadcn/ui Carousel component
-    const createReactCarousel = (container: Element, slideContents: string[], carouselIndex: number) => {
-      // Clear the container first
-      while (container.firstChild) {
-        container.removeChild(container.firstChild);
-      }
-      
-      // Create carousel container
-      const carouselRoot = document.createElement('div');
-      carouselRoot.className = 'relative w-full max-w-full';
-      container.appendChild(carouselRoot);
-      
-      // Create carousel content
-      const carouselContent = document.createElement('div');
-      carouselContent.className = 'overflow-hidden relative';
-      carouselRoot.appendChild(carouselContent);
-      
-      // Create slides container
-      const slidesContainer = document.createElement('div');
-      slidesContainer.className = 'flex transition-transform duration-300 ease-in-out';
-      slidesContainer.dataset.embla = 'true';
-      carouselContent.appendChild(slidesContainer);
-      
-      // Add slides
-      slideContents.forEach((content, index) => {
-        const slide = document.createElement('div');
-        slide.className = 'min-w-0 flex-[0_0_100%] pl-4';
-        slide.setAttribute('role', 'group');
-        slide.setAttribute('aria-roledescription', 'slide');
-        slide.innerHTML = content;
-        slidesContainer.appendChild(slide);
-      });
-      
-      // Add previous button
-      const prevButton = document.createElement('button');
-      prevButton.type = 'button';
-      prevButton.className = 'absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 text-foreground hover:bg-background z-10 flex items-center justify-center cursor-pointer';
-      prevButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-      prevButton.setAttribute('aria-label', 'Previous slide');
-      carouselRoot.appendChild(prevButton);
-      
-      // Add next button
-      const nextButton = document.createElement('button');
-      nextButton.type = 'button';
-      nextButton.className = 'absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/80 text-foreground hover:bg-background z-10 flex items-center justify-center cursor-pointer';
-      nextButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-      nextButton.setAttribute('aria-label', 'Next slide');
-      carouselRoot.appendChild(nextButton);
-      
-      // Add counter
-      const counter = document.createElement('div');
-      counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium z-10';
-      counter.textContent = `1 / ${slideContents.length}`;
-      carouselRoot.appendChild(counter);
-      
-      // Set up carousel logic
-      let currentIndex = 0;
-      const totalSlides = slideContents.length;
-      
-      // Function to update the carousel display
-      const updateCarousel = () => {
-        slidesContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
-        counter.textContent = `${currentIndex + 1} / ${totalSlides}`;
-      };
-      
-      // Setup click handlers
-      prevButton.addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+        // Add counter
+        const counter = document.createElement('div');
+        counter.className = 'absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium z-10';
+        counter.textContent = `1 / ${images.length}`;
+        carouselRoot.appendChild(counter);
+        
+        // Replace the original placeholder with our carousel
+        wrapper.innerHTML = '';
+        wrapper.appendChild(carouselRoot);
+        
+        // Set up carousel logic
+        let currentIndex = 0;
+        const totalSlides = images.length;
+        
+        // Set up the slides to be properly positioned
+        const updateCarousel = () => {
+          const slides = carouselContent.children;
+          for (let i = 0; i < slides.length; i++) {
+            const slide = slides[i] as HTMLElement;
+            slide.style.transform = `translateX(-${currentIndex * 100}%)`;
+          }
+          counter.textContent = `${currentIndex + 1} / ${totalSlides}`;
+        };
+        
+        // Initial positioning
         updateCarousel();
+        
+        // Set up click handlers
+        prevButton.addEventListener('click', () => {
+          currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+          updateCarousel();
+        });
+        
+        nextButton.addEventListener('click', () => {
+          currentIndex = (currentIndex + 1) % totalSlides;
+          updateCarousel();
+        });
       });
-      
-      nextButton.addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % totalSlides;
-        updateCarousel();
-      });
-      
-      // Initialize the carousel
-      updateCarousel();
     };
     
     // Run initialization

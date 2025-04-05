@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import ContentCarousel from "@/components/ContentCarousel";
@@ -12,6 +13,7 @@ interface UpdateContentProps {
 const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [carousels, setCarousels] = useState<Array<{ id: string, images: string[] }>>([]);
+  const [renderedCarousels, setRenderedCarousels] = useState<string[]>([]);
   
   useEffect(() => {
     if (!contentRef.current) return;
@@ -114,7 +116,7 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
       if (!contentRef.current || !formattedHtml) return;
       
       // Find all carousel placeholders in the DOM
-      const carouselPlaceholders = contentRef.current.querySelectorAll('[data-carousel-id]');
+      const carouselPlaceholders = contentRef.current.querySelectorAll('.dynamic-carousel-placeholder');
       
       carouselPlaceholders.forEach(placeholder => {
         const carouselId = placeholder.getAttribute('data-carousel-id');
@@ -124,6 +126,11 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
           try {
             const images = JSON.parse(imagesAttr);
             if (Array.isArray(images) && images.length > 0) {
+              // Skip if we've already processed this carousel
+              if (renderedCarousels.includes(carouselId)) {
+                return;
+              }
+              
               // Create a new div that will be our carousel container
               const carouselContainer = document.createElement('div');
               carouselContainer.id = `carousel-container-${carouselId}`;
@@ -133,31 +140,16 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
               if (placeholder.parentNode) {
                 placeholder.parentNode.replaceChild(carouselContainer, placeholder);
                 
-                // Create and render a carousel directly into this container
-                const carousel = document.createElement('div');
-                carousel.id = `carousel-wrapper-${carouselId}`;
-                carousel.setAttribute('data-carousel-id', carouselId);
-                carousel.setAttribute('data-images', imagesAttr);
-                carouselContainer.appendChild(carousel);
+                // Add this to our list of carousels to render
+                setCarousels(current => {
+                  if (!current.some(c => c.id === carouselId)) {
+                    return [...current, { id: carouselId, images }];
+                  }
+                  return current;
+                });
                 
-                // Create the React component in this container
-                if (carousel) {
-                  // Use ReactDOM to render the carousel where it belongs in the document
-                  const carouselElement = <ContentCarousel 
-                    key={carouselId} 
-                    images={images}
-                    carouselId={carouselId}
-                  />;
-                  
-                  // We'll track this carousel to render it via React
-                  setCarousels(current => {
-                    // Check if we already have this carousel
-                    if (!current.some(c => c.id === carouselId)) {
-                      return [...current, { id: carouselId, images }];
-                    }
-                    return current;
-                  });
-                }
+                // Mark this carousel as processed
+                setRenderedCarousels(prev => [...prev, carouselId]);
               }
             }
           } catch (e) {
@@ -182,25 +174,17 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
     return () => {
       clearTimeout(timer);
     };
-  }, [formattedHtml]);
+  }, [formattedHtml, renderedCarousels]);
   
-  // Render the carousels where they should be by finding the corresponding elements
+  // Render the carousels where they should be
   useEffect(() => {
-    if (!contentRef.current) return;
-    
     carousels.forEach(carousel => {
-      const container = document.getElementById(`carousel-wrapper-${carousel.id}`);
-      if (container && !container.hasAttribute('data-carousel-rendered')) {
-        // Mark as rendered to avoid duplicate renders
-        container.setAttribute('data-carousel-rendered', 'true');
+      const container = document.getElementById(`carousel-container-${carousel.id}`);
+      if (container && !container.hasChildNodes()) {
+        // Create a root for React to render into
+        const root = ReactDOM.createRoot(container);
         
-        // Create a div that will be our portal target
-        const portalTarget = document.createElement('div');
-        portalTarget.className = 'carousel-render-target';
-        container.appendChild(portalTarget);
-        
-        // Use React DOM Portal to render the carousel into the correct DOM position
-        const root = ReactDOM.createRoot(portalTarget);
+        // Render the carousel component into the container
         root.render(
           <ContentCarousel
             key={carousel.id}
@@ -211,16 +195,7 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
       }
     });
     
-    // Cleanup on unmount
-    return () => {
-      carousels.forEach(carousel => {
-        const container = document.getElementById(`carousel-wrapper-${carousel.id}`);
-        if (container) {
-          // Clean up any rendered carousels
-          container.innerHTML = '';
-        }
-      });
-    };
+    // No cleanup needed as the containers will be removed when the parent component unmounts
   }, [carousels]);
   
   return (

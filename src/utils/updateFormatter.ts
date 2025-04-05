@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for formatting specific content tags
  */
@@ -15,6 +16,16 @@ export const formatDescription = (description: string): string => {
   // First, normalize line breaks
   let formattedText = description.replace(/\r\n/g, '\n');
   
+  // Handle standard image tags - needs to come before carousel processing
+  formattedText = formattedText.replace(/\[img\](.*?)\[\/img\]/g, (match, imgUrl) => {
+    if (imgUrl && imgUrl.trim()) {
+      return `<div class="my-4">
+        <img src="${imgUrl.trim()}" class="max-w-full h-auto object-contain rounded-md" loading="lazy" alt="Update image" />
+      </div>`;
+    }
+    return '';
+  });
+
   // Handle video tags
   formattedText = formattedText.replace(/\[video\](.*?)\[\/video\]/g, (match, videoUrl) => {
     if (videoUrl && videoUrl.trim()) {

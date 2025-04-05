@@ -30,6 +30,20 @@ export const extractImagesFromContent = (content: string): string[] => {
     }
   }
   
+  // Extract images from carousel blocks
+  const carouselRegex = /\[carousel\]([\s\S]*?)\[\/carousel\]/g;
+  while ((match = carouselRegex.exec(content)) !== null) {
+    const carouselContent = match[1];
+    const carouselImgRegex = /\[img\](.*?)\[\/img\]/g;
+    let carouselImgMatch;
+    
+    while ((carouselImgMatch = carouselImgRegex.exec(carouselContent)) !== null) {
+      if (carouselImgMatch[1] && carouselImgMatch[1].trim()) {
+        images.push(carouselImgMatch[1].trim());
+      }
+    }
+  }
+  
   // Look for video poster images
   const posterRegex = /poster=["']?(https?:\/\/[^"'\s\]]+)/g;
   while ((match = posterRegex.exec(content)) !== null) {
@@ -47,6 +61,40 @@ export const extractImagesFromContent = (content: string): string[] => {
   }
   
   return images;
+};
+
+/**
+ * Extract carousel data from content
+ */
+export const extractCarouselsFromContent = (content: string): Array<{id: string, images: string[]}> => {
+  if (!content) return [];
+  
+  const carousels: Array<{id: string, images: string[]}> = [];
+  const carouselRegex = /\[carousel\]([\s\S]*?)\[\/carousel\]/g;
+  let carouselMatch;
+  let carouselIndex = 0;
+  
+  while ((carouselMatch = carouselRegex.exec(content)) !== null) {
+    const carouselId = `carousel-${carouselIndex++}`;
+    const carouselContent = carouselMatch[1];
+    const images: string[] = [];
+    
+    // Extract images from this carousel
+    const imgRegex = /\[img\](.*?)\[\/img\]/g;
+    let imgMatch;
+    
+    while ((imgMatch = imgRegex.exec(carouselContent)) !== null) {
+      if (imgMatch[1] && imgMatch[1].trim()) {
+        images.push(imgMatch[1].trim());
+      }
+    }
+    
+    if (images.length > 0) {
+      carousels.push({ id: carouselId, images });
+    }
+  }
+  
+  return carousels;
 };
 
 /**

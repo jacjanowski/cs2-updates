@@ -35,6 +35,7 @@ export const useUpdateImage = (
       extractedImages = extractImagesFromContent(description);
       setContentImages(extractedImages);
       setHasAnyImage(extractedImages.length > 0);
+      console.log("Found content images:", extractedImages);
     }
     
     // Priority for display image selection
@@ -55,7 +56,7 @@ export const useUpdateImage = (
     }
     
     // Default to CS2 image for updates or fallback
-    setDisplayImage(DEFAULT_NEWS_IMAGE);
+    setDisplayImage(imageUrl || DEFAULT_NEWS_IMAGE);
   }, [imageUrl, description, isNewsItem]);
 
   const handleImageError = () => {

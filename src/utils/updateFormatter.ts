@@ -96,50 +96,28 @@ export const formatDescription = (description: string): string => {
     return `<a href="${url}" class="inline-link" target="_blank" rel="noopener noreferrer">${cleanedText}</a>`;
   });
   
-  // Handle italics with [i]...[/i] (standard BBCode format)
+  // Handle formatting tags
   formattedText = formattedText.replace(/\[i\](.*?)\[\/i\]/gs, (match, text) => {
     return `<em>${text.trim()}</em>`;
   });
   
-  // Handle italics - alternative format: i text /i (without brackets)
   formattedText = formattedText.replace(/(?<![a-zA-Z])i\s+(.*?)\s+\/i(?![a-zA-Z])/g, (match, text) => {
     return `<em>${text.trim()}</em>`;
   });
   
-  // Handle bold with [b]...[/b]
   formattedText = formattedText.replace(/\[b\](.*?)\[\/b\]/gs, (match, text) => {
     return `<strong>${text.trim()}</strong>`;
   });
   
-  // Handle underline with [u]...[/u]
   formattedText = formattedText.replace(/\[u\](.*?)\[\/u\]/gs, (match, text) => {
     return `<span class="underline">${text.trim()}</span>`;
   });
   
-  // Handle strikethrough with [s]...[/s]
   formattedText = formattedText.replace(/\[s\](.*?)\[\/s\]/gs, (match, text) => {
     return `<span class="line-through">${text.trim()}</span>`;
   });
   
-  // Handle quote blocks with [quote]...[/quote]
-  formattedText = formattedText.replace(/\[quote\](.*?)\[\/quote\]/gs, (match, text) => {
-    return `<blockquote class="border-l-4 border-primary/20 pl-4 py-1 my-4 italic text-muted-foreground">${text.trim()}</blockquote>`;
-  });
-  
-  // Handle named quotes with [quote="name"]...[/quote]
-  formattedText = formattedText.replace(/\[quote="([^"]+)"\](.*?)\[\/quote\]/gs, (match, name, text) => {
-    return `<blockquote class="border-l-4 border-primary/20 pl-4 py-1 my-4">
-      <div class="text-sm font-medium mb-1">${name} wrote:</div>
-      <div class="italic text-muted-foreground">${text.trim()}</div>
-    </blockquote>`;
-  });
-  
-  // Handle code blocks with [code]...[/code]
-  formattedText = formattedText.replace(/\[code\](.*?)\[\/code\]/gs, (match, text) => {
-    return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
-  });
-  
-  // Process carousel tag with dedicated HTML structure for reliable rendering
+  // Process carousel tag by replacing it with a placeholder that will be processed by React
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -163,26 +141,39 @@ export const formatDescription = (description: string): string => {
     // If only one image, just display it without carousel
     if (images.length === 1) {
       return `<div class="w-full my-4">
-        <img src="${images[0]}" class="w-full h-auto object-contain" alt="Update image" />
+        <img src="${images[0]}" class="w-full h-auto object-contain" alt="Update image" loading="lazy" />
       </div>`;
     }
     
-    // With the new ContentCarousel component, we just need to create a special marker div
-    // that our UpdateContent component will replace with an actual React component
-    return `<div class="dynamic-carousel-placeholder" 
+    // Create a placeholder div that will be replaced with the actual carousel
+    return `<div 
       data-carousel-id="${carouselId}" 
       data-images='${JSON.stringify(images)}'
-      data-slide-count="${images.length}">
-      <div class="text-sm text-center py-4">Carousel with ${images.length} images will appear here</div>
-    </div>`;
+      data-slide-count="${images.length}"
+      class="my-4 w-full carousel-placeholder"
+    ></div>`;
   });
   
-  // Handle color with [color=X]...[/color]
+  // Handle remaining formatting tags
+  formattedText = formattedText.replace(/\[quote\](.*?)\[\/quote\]/gs, (match, text) => {
+    return `<blockquote class="border-l-4 border-primary/20 pl-4 py-1 my-4 italic text-muted-foreground">${text.trim()}</blockquote>`;
+  });
+  
+  formattedText = formattedText.replace(/\[quote="([^"]+)"\](.*?)\[\/quote\]/gs, (match, name, text) => {
+    return `<blockquote class="border-l-4 border-primary/20 pl-4 py-1 my-4">
+      <div class="text-sm font-medium mb-1">${name} wrote:</div>
+      <div class="italic text-muted-foreground">${text.trim()}</div>
+    </blockquote>`;
+  });
+  
+  formattedText = formattedText.replace(/\[code\](.*?)\[\/code\]/gs, (match, text) => {
+    return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
+  });
+  
   formattedText = formattedText.replace(/\[color=([^\]]+)\](.*?)\[\/color\]/gs, (match, color, text) => {
     return `<span style="color: ${color}">${text}</span>`;
   });
   
-  // Handle size with [size=X]...[/size]
   formattedText = formattedText.replace(/\[size=([^\]]+)\](.*?)\[\/size\]/gs, (match, size, text) => {
     // Convert numeric sizes to appropriate rem values
     const sizeValue = parseInt(size);
@@ -205,12 +196,10 @@ export const formatDescription = (description: string): string => {
     return `<span style="font-size: ${fontSize}">${text}</span>`;
   });
   
-  // Handle heading tags [h1], [h2], [h3], etc.
   formattedText = formattedText.replace(/\[h([1-6])\](.*?)\[\/h\1\]/g, (match, level, content) => {
     return `<h${level} class="font-bold my-3 text-${4-Math.min(parseInt(level), 3)}xl">${content}</h${level}>`;
   });
   
-  // Handle lists
   formattedText = formattedText.replace(/\[list\]/gi, '<ul class="my-4">');
   formattedText = formattedText.replace(/\[\/list\]/gi, '</ul>');
   

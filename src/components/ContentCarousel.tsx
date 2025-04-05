@@ -1,37 +1,44 @@
-
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 
 interface ContentCarouselProps {
   images: string[];
   carouselId: string;
+  containerSelector?: string; // Optional selector to mount carousel in specific DOM element
 }
 
-const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
+const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarouselProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(1);
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
+  const [mountElement, setMountElement] = useState<Element | null>(null);
   
   useEffect(() => {
-    // Reset loading state when images prop changes
+    if (containerSelector) {
+      const element = document.querySelector(containerSelector);
+      if (element) {
+        setMountElement(element);
+      }
+    }
+  }, [containerSelector]);
+  
+  useEffect(() => {
     setIsLoading(true);
     setImagesLoaded(0);
     
-    // Log for debugging
     console.log(`Rendering carousel ${carouselId} with ${images.length} images:`, images);
   }, [images, carouselId]);
 
   useEffect(() => {
-    // Check if all images are loaded
     if (images.length > 0 && imagesLoaded >= images.length) {
       console.log(`All ${imagesLoaded} images loaded for carousel ${carouselId}, hiding loading indicator`);
       setIsLoading(false);
     }
   }, [imagesLoaded, images, carouselId]);
   
-  // Update current slide when the api changes slide
   useEffect(() => {
     if (!api) return;
     
@@ -41,7 +48,6 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
     
     api.on("select", handleSelect);
     
-    // Set initial slide
     handleSelect();
     
     return () => {
@@ -65,39 +71,12 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
     });
   };
 
-  // Don't render if there are no images
   if (images.length === 0) {
     return null;
   }
 
-  // If only one image, show it without carousel controls
-  if (images.length === 1) {
-    return (
-      <div className="w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
-            <p className="text-sm text-muted-foreground animate-pulse">Loading images...</p>
-          </div>
-        )}
-        <div className="relative aspect-auto max-h-[500px]">
-          <img
-            src={images[0]}
-            alt="Image"
-            className="w-full h-auto object-contain max-h-[500px]"
-            loading="lazy"
-            onLoad={handleLoad}
-            onError={handleError}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div 
-      id={`carousel-${carouselId}`} 
-      className="w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50"
-    >
+  const carouselContent = (
+    <>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
           <p className="text-sm text-muted-foreground animate-pulse">Loading images...</p>
@@ -149,6 +128,19 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
           {currentSlide} / {images.length}
         </div>
       </Carousel>
+    </>
+  );
+  
+  if (containerSelector && mountElement) {
+    return createPortal(carouselContent, mountElement);
+  }
+
+  return (
+    <div 
+      id={`carousel-${carouselId}`} 
+      className="w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50"
+    >
+      {carouselContent}
     </div>
   );
 };

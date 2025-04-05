@@ -1,7 +1,8 @@
+
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import ContentCarousel from "@/components/ContentCarousel";
-import { extractImagesFromContent } from "@/utils/formatting/mediaExtractor";
+import { extractImagesFromContent, extractCarouselsFromContent } from "@/utils/formatting/mediaExtractor";
 
 interface UpdateContentProps {
   description: string;
@@ -10,10 +11,10 @@ interface UpdateContentProps {
 
 const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [carousels, setCarousels] = useState<Array<{ id: string, images: string[] }>>([]);
+  const [contentLoaded, setContentLoaded] = useState(false);
   
   useEffect(() => {
-    if (!contentRef.current) return;
+    if (!contentRef.current || !formattedHtml) return;
     
     // Find and clean up any debug/dimension text nodes
     const cleanupDebugInfo = () => {
@@ -108,12 +109,11 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
     };
     
     // Process carousel placeholders
-    const processCustomCarousels = () => {
-      if (!contentRef.current || !formattedHtml) return;
+    const processCarousels = () => {
+      if (!contentRef.current) return;
       
-      // Find all carousel placeholders in the DOM
+      // Find all carousel placeholders
       const carouselPlaceholders = contentRef.current.querySelectorAll('[data-carousel-id]');
-      const extractedCarousels: Array<{ id: string, images: string[] }> = [];
       
       carouselPlaceholders.forEach(placeholder => {
         const carouselId = placeholder.getAttribute('data-carousel-id');
@@ -122,18 +122,52 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
         if (carouselId && imagesAttr) {
           try {
             const images = JSON.parse(imagesAttr);
+            
             if (Array.isArray(images) && images.length > 0) {
-              extractedCarousels.push({ id: carouselId, images });
+              // Create a carousel container
+              const carouselContainer = document.createElement('div');
+              carouselContainer.id = `carousel-container-${carouselId}`;
+              carouselContainer.className = 'carousel-container my-4';
               
-              // Create a wrapper div with the id that ContentCarousel will connect to
-              const carouselWrapper = document.createElement('div');
-              carouselWrapper.id = `carousel-wrapper-${carouselId}`;
-              carouselWrapper.className = 'my-4 w-full carousel-wrapper';
+              // Replace the placeholder with the container
+              placeholder.parentNode?.replaceChild(carouselContainer, placeholder);
               
-              // Replace the placeholder with the wrapper
-              if (placeholder.parentNode) {
-                placeholder.parentNode.replaceChild(carouselWrapper, placeholder);
+              // Create the carousel component
+              const carousel = document.createElement('div');
+              carousel.id = `carousel-${carouselId}`;
+              carousel.className = 'w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50';
+              
+              // Create image container
+              if (images.length === 1) {
+                // For single image, create a simple image element
+                const img = document.createElement('img');
+                img.src = images[0];
+                img.alt = 'Update image';
+                img.className = 'w-full h-auto object-contain max-h-[500px]';
+                img.loading = 'lazy';
+                carousel.appendChild(img);
+              } else {
+                // For multiple images, create a dynamic carousel
+                const carouselInner = document.createElement('div');
+                carouselInner.className = 'carousel-inner';
+                carouselInner.setAttribute('data-carousel-id', carouselId);
+                carouselInner.setAttribute('data-images', imagesAttr);
+                carousel.appendChild(carouselInner);
+                
+                // Create mounting point for React carousel
+                const reactRoot = document.createElement('div');
+                reactRoot.id = `carousel-mount-${carouselId}`;
+                carouselInner.appendChild(reactRoot);
+                
+                // Initialize the React carousel
+                const root = document.getElementById(`carousel-mount-${carouselId}`);
+                if (root) {
+                  // We'll handle this in a separate effect
+                  root.setAttribute('data-ready', 'true');
+                }
               }
+              
+              carouselContainer.appendChild(carousel);
             }
           } catch (e) {
             console.error('Error processing carousel data:', e);
@@ -141,10 +175,8 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
         }
       });
       
-      // Update carousels state to trigger render of ContentCarousel components
-      if (extractedCarousels.length > 0) {
-        setCarousels(extractedCarousels);
-      }
+      // Mark content as loaded to trigger carousel rendering
+      setContentLoaded(true);
     };
     
     // Run initialization with a small delay to ensure DOM is ready
@@ -152,7 +184,7 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
       try {
         cleanupDebugInfo();
         initializeVideos();
-        processCustomCarousels();
+        processCarousels();
       } catch (err) {
         console.error('Error initializing content:', err);
       }
@@ -163,6 +195,9 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
       clearTimeout(timer);
     };
   }, [formattedHtml]);
+  
+  // Extract carousel data from the content
+  const carouselData = description ? extractCarouselsFromContent(description) : [];
   
   return (
     <>
@@ -177,14 +212,21 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
         }}
       />
       
-      {/* Render ContentCarousels */}
-      {carousels.map((carousel) => (
-        <ContentCarousel
-          key={carousel.id}
-          images={carousel.images}
-          carouselId={carousel.id}
-        />
-      ))}
+      {/* Render ContentCarousels after content loads */}
+      {contentLoaded && carouselData.map((carousel, index) => {
+        const mountPoint = document.getElementById(`carousel-mount-${carousel.id}`);
+        if (mountPoint && carousel.images.length > 1) {
+          return (
+            <ContentCarousel
+              key={carousel.id}
+              images={carousel.images}
+              carouselId={carousel.id}
+              containerSelector={`#carousel-mount-${carousel.id}`}
+            />
+          );
+        }
+        return null;
+      })}
     </>
   );
 };

@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting specific content tags
  */
@@ -148,9 +147,9 @@ export const formatDescription = (description: string): string => {
       </div>`;
     }
     
-    // Create a minimal placeholder div with NO child elements or text content
-    // The div will be the mount point for the React carousel component
-    return `<div id="${carouselId}" data-carousel-id="${carouselId}" class="my-4 w-full carousel-placeholder bg-muted/20 min-h-[300px] rounded-md border border-border"></div>`;
+    // Create a clean, empty placeholder div (no text content)
+    // This is crucial - the div must have no content to avoid showing code
+    return `<div id="${carouselId}" data-carousel-id="${carouselId}"></div>`;
   });
   
   // Handle remaining formatting tags

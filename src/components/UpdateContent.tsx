@@ -15,54 +15,41 @@ const UpdateContent: React.FC<UpdateContentProps> = ({
   carouselData 
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [carouselsMounted, setCarouselsMounted] = useState(false);
+  const [isContentReady, setIsContentReady] = useState(false);
   
-  // Handle carousel placement
+  // Handle content preparation
   useEffect(() => {
-    if (!contentRef.current || carouselData.length === 0) return;
+    if (!contentRef.current) return;
     
-    // Reset mounted state when content changes
-    setCarouselsMounted(false);
+    // Reset the state when content changes
+    setIsContentReady(false);
     
-    // Small delay to ensure DOM is ready
+    // Short delay to ensure HTML has been rendered properly
     const timer = setTimeout(() => {
-      // Get all carousel placeholders
-      const carouselPlaceholders = contentRef.current?.querySelectorAll('[data-carousel-id]');
+      // Cleanup placeholder elements to prevent code display
+      const placeholders = contentRef.current?.querySelectorAll('[data-carousel-id]');
       
-      if (carouselPlaceholders && carouselPlaceholders.length === 0 && carouselData.length > 0) {
-        console.log("No carousel placeholders found in content, but we have carousel data", {
-          carouselData,
-          contentHtml: contentRef.current?.innerHTML
-        });
-        toast({
-          title: "Carousel placement issue",
-          description: "Carousels not properly placed. Try refreshing.",
-          variant: "destructive"
-        });
-      } else if (carouselPlaceholders) {
-        console.log(`Found ${carouselPlaceholders.length} carousel placeholders in content`);
+      if (placeholders && placeholders.length > 0) {
+        console.log(`Found ${placeholders.length} carousel placeholders in content`);
         
-        // Clean up any visible text in placeholder divs
-        carouselPlaceholders.forEach(placeholder => {
-          // Ensure the element is absolutely empty - remove all content
-          while (placeholder.firstChild) {
-            placeholder.removeChild(placeholder.firstChild);
-          }
+        // Clear any text content from placeholder divs
+        placeholders.forEach(placeholder => {
+          placeholder.innerHTML = ''; // Remove all content to avoid displaying any code
           
-          // Add a minimal visual indicator while waiting for carousel
+          // Add a minimal visual placeholder for carousel
           const loadingDiv = document.createElement('div');
-          loadingDiv.className = 'p-2 text-xs text-center text-muted-foreground animate-pulse';
-          loadingDiv.textContent = 'Loading carousel...';
+          loadingDiv.className = 'h-[300px] flex items-center justify-center bg-muted/10';
+          loadingDiv.innerHTML = '<p class="text-muted-foreground text-sm">Carousel loading...</p>';
           placeholder.appendChild(loadingDiv);
         });
-        
-        // Mark carousels as mounted to trigger re-render
-        setCarouselsMounted(true);
       }
-    }, 100);
+      
+      // Mark content as ready to enable carousel rendering
+      setIsContentReady(true);
+    }, 50);
     
     return () => clearTimeout(timer);
-  }, [carouselData, formattedHtml]);
+  }, [formattedHtml]);
   
   return (
     <div className="update-content prose dark:prose-invert max-w-none">
@@ -72,8 +59,8 @@ const UpdateContent: React.FC<UpdateContentProps> = ({
         className="break-words"
       />
       
-      {/* Render each carousel with its proper ID */}
-      {carouselData.map((carousel) => (
+      {/* Only render carousels when content is ready */}
+      {isContentReady && carouselData.map((carousel) => (
         <ContentCarousel
           key={carousel.id}
           images={carousel.images}

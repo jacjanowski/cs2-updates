@@ -35,7 +35,9 @@ const UpdateDetail = () => {
     handleImageError, 
     handleImageLoad,
     hasAnyImage,
-    contentImages
+    contentImages,
+    hasCarousels,
+    carouselData
   } = useUpdateImage(update?.imageUrl, update?.description, isNewsItem);
   
   // Format the description for display
@@ -85,7 +87,8 @@ const UpdateDetail = () => {
             <div className="px-6 pb-6">
               <UpdateContent 
                 description={update.description} 
-                formattedHtml={formattedHtml} 
+                formattedHtml={formattedHtml}
+                carouselData={carouselData} 
               />
               
               <UpdateFooter url={update.url} />

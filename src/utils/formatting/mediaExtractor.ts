@@ -66,10 +66,10 @@ export const extractImagesFromContent = (content: string): string[] => {
 /**
  * Extract carousel data from content
  */
-export const extractCarouselsFromContent = (content: string): Array<{id: string, images: string[]}> => {
+export const extractCarouselsFromContent = (content: string): Array<{id: string, images: string[], originalContent: string, position: number}> => {
   if (!content) return [];
   
-  const carousels: Array<{id: string, images: string[]}> = [];
+  const carousels: Array<{id: string, images: string[], originalContent: string, position: number}> = [];
   const carouselRegex = /\[carousel\]([\s\S]*?)\[\/carousel\]/g;
   let carouselMatch;
   let carouselIndex = 0;
@@ -78,6 +78,7 @@ export const extractCarouselsFromContent = (content: string): Array<{id: string,
     const carouselId = `carousel-${carouselIndex++}`;
     const carouselContent = carouselMatch[1];
     const images: string[] = [];
+    const position = carouselMatch.index; // Store the position in original content
     
     // Extract images from this carousel
     const imgRegex = /\[img\](.*?)\[\/img\]/g;
@@ -90,7 +91,12 @@ export const extractCarouselsFromContent = (content: string): Array<{id: string,
     }
     
     if (images.length > 0) {
-      carousels.push({ id: carouselId, images });
+      carousels.push({ 
+        id: carouselId, 
+        images,
+        originalContent: carouselMatch[0], // Store original content
+        position // Store position for proper insertion
+      });
     }
   }
   

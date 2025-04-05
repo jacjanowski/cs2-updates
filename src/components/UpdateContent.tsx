@@ -1,15 +1,15 @@
-
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import ContentCarousel from "@/components/ContentCarousel";
-import { extractImagesFromContent, extractCarouselsFromContent } from "@/utils/formatting/mediaExtractor";
+import { extractCarouselsFromContent } from "@/utils/formatting/mediaExtractor";
 
 interface UpdateContentProps {
   description: string;
   formattedHtml: string;
+  carouselData?: Array<{id: string, images: string[], originalContent: string, position: number}>;
 }
 
-const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
+const UpdateContent = ({ formattedHtml, description, carouselData = [] }: UpdateContentProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
   
@@ -196,9 +196,6 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
     };
   }, [formattedHtml]);
   
-  // Extract carousel data from the content
-  const carouselData = description ? extractCarouselsFromContent(description) : [];
-  
   return (
     <>
       <div 
@@ -213,7 +210,7 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
       />
       
       {/* Render ContentCarousels after content loads */}
-      {contentLoaded && carouselData.map((carousel, index) => {
+      {contentLoaded && carouselData.map((carousel) => {
         const mountPoint = document.getElementById(`carousel-mount-${carousel.id}`);
         if (mountPoint && carousel.images.length > 1) {
           return (

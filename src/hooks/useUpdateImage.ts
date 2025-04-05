@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { extractImagesFromContent } from "@/utils/formatting/mediaExtractor";
+import { extractImagesFromContent, extractCarouselsFromContent } from "@/utils/formatting/mediaExtractor";
 
 const DEFAULT_NEWS_IMAGE = 'https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/event_header.png';
 
@@ -12,6 +12,8 @@ interface UseUpdateImageResult {
   handleImageLoad: () => void;
   hasAnyImage: boolean;
   contentImages: string[];
+  hasCarousels: boolean;
+  carouselData: Array<{id: string, images: string[], originalContent: string, position: number}>;
 }
 
 export const useUpdateImage = (
@@ -24,6 +26,8 @@ export const useUpdateImage = (
   const [displayImage, setDisplayImage] = useState<string | null>(null);
   const [hasAnyImage, setHasAnyImage] = useState(false);
   const [contentImages, setContentImages] = useState<string[]>([]);
+  const [hasCarousels, setHasCarousels] = useState(false);
+  const [carouselData, setCarouselData] = useState<Array<{id: string, images: string[], originalContent: string, position: number}>>([]);
   
   useEffect(() => {
     setImageError(false);
@@ -35,7 +39,14 @@ export const useUpdateImage = (
       extractedImages = extractImagesFromContent(description);
       setContentImages(extractedImages);
       setHasAnyImage(extractedImages.length > 0);
+      
+      // Extract carousel data including positions
+      const carousels = extractCarouselsFromContent(description);
+      setHasCarousels(carousels.length > 0);
+      setCarouselData(carousels);
+      
       console.log("Found content images:", extractedImages);
+      console.log("Found carousels:", carousels);
     }
     
     // Priority for display image selection
@@ -77,6 +88,8 @@ export const useUpdateImage = (
     handleImageError,
     handleImageLoad,
     hasAnyImage,
-    contentImages
+    contentImages,
+    hasCarousels,
+    carouselData
   };
 };

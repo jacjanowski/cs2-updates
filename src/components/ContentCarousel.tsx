@@ -21,9 +21,12 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
       const element = document.querySelector(containerSelector);
       if (element) {
         setMountElement(element);
+        console.log(`Found mount element for carousel ${carouselId} using selector ${containerSelector}`);
+      } else {
+        console.warn(`Mount element not found for carousel ${carouselId} with selector ${containerSelector}`);
       }
     }
-  }, [containerSelector]);
+  }, [containerSelector, carouselId]);
   
   useEffect(() => {
     setIsLoading(true);
@@ -132,6 +135,7 @@ const ContentCarousel = ({ images, carouselId, containerSelector }: ContentCarou
   );
   
   if (containerSelector && mountElement) {
+    console.log(`Rendering carousel ${carouselId} as portal into`, mountElement);
     return createPortal(carouselContent, mountElement);
   }
 

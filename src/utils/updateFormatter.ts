@@ -4,7 +4,7 @@
 
 // Import the fixHtmlTags function
 import { fixHtmlTags } from './formatting/htmlFormatter';
-import { extractImagesFromContent as extractMediaImages } from './formatting/mediaExtractor';
+import { extractImagesFromContent as extractMediaImages, extractCarouselsFromContent } from './formatting/mediaExtractor';
 
 /**
  * Formats the description text into structured HTML
@@ -150,7 +150,7 @@ export const formatDescription = (description: string): string => {
       data-carousel-id="${carouselId}" 
       data-images='${JSON.stringify(images)}'
       data-slide-count="${images.length}"
-      class="my-4 w-full carousel-placeholder"
+      class="my-4 w-full carousel-placeholder inline-carousel"
     ></div>`;
   });
   

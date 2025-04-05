@@ -107,105 +107,35 @@ const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
       });
     };
     
-    // Convert legacy carousel elements to ContentCarousel components
-    const convertCarousels = () => {
-      if (!contentRef.current) return;
-      
-      // Find all carousel-container elements
-      const carouselContainers = contentRef.current.querySelectorAll('.carousel-container');
-      
-      carouselContainers.forEach((container, index) => {
-        const carouselId = container.getAttribute('data-carousel-id') || `legacy-carousel-${index}`;
-        const slides = container.querySelectorAll('.carousel-slide img');
-        
-        if (slides.length === 0) return;
-        
-        // Extract image URLs
-        const imageUrls: string[] = Array.from(slides).map(img => (img as HTMLImageElement).src);
-        
-        if (imageUrls.length > 0) {
-          // Create a new ContentCarousel component
-          const carouselWrapperDiv = document.createElement('div');
-          carouselWrapperDiv.id = `dynamic-carousel-${carouselId}`;
-          carouselWrapperDiv.dataset.images = JSON.stringify(imageUrls);
-          carouselWrapperDiv.className = 'dynamic-carousel';
-          
-          // Replace the old carousel with our placeholder
-          container.parentNode?.replaceChild(carouselWrapperDiv, container);
-          
-          // Render the actual ContentCarousel for each placeholder
-          const carouselElement = document.createElement('div');
-          carouselWrapperDiv.appendChild(carouselElement);
-          
-          // We'll use this element as a target for our ContentCarousel component
-          const carousel = new ContentCarousel({ 
-            images: imageUrls,
-            carouselId: carouselId
-          });
-          
-          // Append carousel to the wrapper
-          carouselWrapperDiv.innerHTML = '';
-          carouselWrapperDiv.appendChild(carousel as unknown as Node);
-        }
-      });
-    };
-    
     // Parse carousel data attributes and replace with ContentCarousel
     const processCustomCarousels = () => {
-      if (!description) return;
+      if (!contentRef.current || !description) return;
       
-      // Extract all images from a carousel tag
-      const extractCarouselImages = (content: string): string[] => {
-        const images: string[] = [];
-        const imgRegex = /\[img\](.*?)\[\/img\]/g;
-        let imgMatch;
+      // Find elements with data-carousel-id attribute
+      const carouselPlaceholders = contentRef.current.querySelectorAll('[data-carousel-id]');
+      
+      carouselPlaceholders.forEach(placeholder => {
+        const carouselId = placeholder.getAttribute('data-carousel-id');
+        const imagesAttr = placeholder.getAttribute('data-images');
         
-        while ((imgMatch = imgRegex.exec(content)) !== null) {
-          if (imgMatch[1] && imgMatch[1].trim()) {
-            images.push(imgMatch[1].trim());
+        if (carouselId && imagesAttr) {
+          try {
+            const images = JSON.parse(imagesAttr);
+            if (Array.isArray(images) && images.length > 0) {
+              // Create a wrapper div for the carousel
+              const carouselWrapper = document.createElement('div');
+              carouselWrapper.id = `carousel-wrapper-${carouselId}`;
+              carouselWrapper.className = 'my-4 carousel-wrapper';
+              
+              // Replace the placeholder with the wrapper
+              if (placeholder.parentNode) {
+                placeholder.parentNode.replaceChild(carouselWrapper, placeholder);
+              }
+            }
+          } catch (e) {
+            console.error('Error processing carousel data:', e);
           }
         }
-        
-        return images;
-      };
-      
-      // Find all carousel tags
-      const carouselRegex = /\[carousel\]([\s\S]*?)\[\/carousel\]/g;
-      let carouselMatch;
-      const carousels: Array<{id: string, images: string[]}> = [];
-      
-      while ((carouselMatch = carouselRegex.exec(description)) !== null) {
-        const carouselId = `carousel-${Math.random().toString(36).substring(2, 10)}`;
-        const carouselContent = carouselMatch[1];
-        const images = extractCarouselImages(carouselContent);
-        
-        if (images.length > 0) {
-          carousels.push({ id: carouselId, images });
-        }
-      }
-      
-      // For each carousel found, replace the corresponding element
-      carousels.forEach(carousel => {
-        if (!contentRef.current) return;
-        
-        // Find the corresponding div in the document
-        const carouselPlaceholder = contentRef.current.querySelector(`[data-carousel-id="${carousel.id}"]`);
-        if (!carouselPlaceholder) return;
-
-        // Render the ContentCarousel in place of the placeholder
-        const carouselComponent = document.createElement('div');
-        carouselPlaceholder.parentNode?.replaceChild(carouselComponent, carouselPlaceholder);
-        
-        // Create an instance of ContentCarousel
-        const carouselElement = <ContentCarousel 
-          images={carousel.images} 
-          carouselId={carousel.id} 
-        />;
-        
-        // Replace the old carousel with our new one
-        // Note: In a real React app, we'd use ReactDOM.render here,
-        // but for simplicity we'll just update the DOM directly
-        carouselComponent.innerHTML = '<div class="my-4">Carousel will display here.</div>';
       });
     };
     

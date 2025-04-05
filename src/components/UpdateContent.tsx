@@ -33,6 +33,16 @@ const UpdateContent: React.FC<UpdateContentProps> = ({
     } else {
       console.log(`Found ${carouselPlaceholders.length} carousel placeholders in content`);
     }
+    
+    // Clean up any visible CSS class names in placeholder divs
+    carouselPlaceholders.forEach(placeholder => {
+      // Remove any text content that looks like CSS classes
+      if (placeholder.textContent?.includes('rounded-md') || 
+          placeholder.textContent?.includes('border-border') ||
+          placeholder.textContent?.includes('class=')) {
+        placeholder.textContent = '';
+      }
+    });
   }, [carouselData, formattedHtml]);
   
   return (

@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting specific content tags
  */
@@ -149,11 +148,11 @@ export const formatDescription = (description: string): string => {
     }
     
     // Create a placeholder div that will be replaced with the actual carousel
-    // Important: Use an ID and class that ContentCarousel can easily find
+    // IMPORTANT: Don't add any text content to the div to avoid showing class names
     return `<div id="${carouselId}" 
       data-carousel-id="${carouselId}" 
       class="my-4 w-full carousel-placeholder bg-muted/20 min-h-[300px] rounded-md border border-border"
-    ></div>`;
+      aria-label="Image carousel loading..."></div>`;
   });
   
   // Handle remaining formatting tags

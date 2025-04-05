@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { extractImagesFromContent } from "@/utils/updateFormatter";
+import { extractImagesFromContent } from "@/utils/formatting/mediaExtractor";
 
 const DEFAULT_NEWS_IMAGE = 'https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/event_header.png';
 
@@ -20,55 +20,46 @@ export const useUpdateImage = (
 ): UseUpdateImageResult => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [displayImage, setDisplayImage] = useState<string | null>(DEFAULT_NEWS_IMAGE);
-  const [contentImages, setContentImages] = useState<string[]>([]);
-  const [hasAnyImage, setHasAnyImage] = useState(true);
+  const [displayImage, setDisplayImage] = useState<string | null>(null);
+  const [hasAnyImage, setHasAnyImage] = useState(false);
 
   useEffect(() => {
     setImageError(false);
     setImageLoaded(false);
     
-    // Extract all possible images
+    // Extract all possible images but only once
+    let extractedImages: string[] = [];
     if (description) {
-      const extractedImages = extractImagesFromContent(description);
-      setContentImages(extractedImages);
-    } else {
-      setContentImages([]);
-    }
-    
-    // For updates, always default to the CS2 image
-    if (!isNewsItem) {
-      console.log("Is an update, using default CS2 image");
-      setDisplayImage(DEFAULT_NEWS_IMAGE);
-      return;
+      extractedImages = extractImagesFromContent(description);
+      setHasAnyImage(extractedImages.length > 0);
     }
     
     // For news, try to find the best image
-    // First try content images
-    if (contentImages.length > 0) {
-      console.log("Using image from content:", contentImages[0]);
-      setDisplayImage(contentImages[0]);
-      return;
+    if (isNewsItem) {
+      // First try content images
+      if (extractedImages.length > 0) {
+        console.log("Using image from content:", extractedImages[0]);
+        setDisplayImage(extractedImages[0]);
+        return;
+      }
+      
+      // Then try API image
+      if (imageUrl) {
+        console.log("Using API image:", imageUrl);
+        setDisplayImage(imageUrl);
+        return;
+      }
     }
     
-    // Then try API image
-    if (imageUrl) {
-      console.log("Using API image:", imageUrl);
-      setDisplayImage(imageUrl);
-      return;
-    }
-    
-    // Default to CS2 image if nothing else works
-    console.log("No suitable image found, using default CS2 image");
+    // Default to CS2 image for updates or fallback
     setDisplayImage(DEFAULT_NEWS_IMAGE);
-    
-  }, [imageUrl, description, isNewsItem, contentImages]);
+  }, [imageUrl, description, isNewsItem]);
 
   const handleImageError = () => {
     console.log(`Failed to load image: ${displayImage}, falling back to default image`);
     setImageError(true);
     setDisplayImage(DEFAULT_NEWS_IMAGE);
-    setImageLoaded(true); // Mark as loaded so UI updates
+    setImageLoaded(true);
   };
 
   const handleImageLoad = () => {
@@ -81,6 +72,6 @@ export const useUpdateImage = (
     imageLoaded,
     handleImageError,
     handleImageLoad,
-    hasAnyImage: true // Always true since we now always have a fallback image
+    hasAnyImage
   };
 };

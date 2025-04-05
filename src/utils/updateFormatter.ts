@@ -1,9 +1,11 @@
+
 /**
  * Utility functions for formatting specific content tags
  */
 
 // Import the fixHtmlTags function
 import { fixHtmlTags } from './formatting/htmlFormatter';
+import { extractImagesFromContent as extractMediaImages } from './formatting/mediaExtractor';
 
 /**
  * Formats the description text into structured HTML
@@ -138,7 +140,7 @@ export const formatDescription = (description: string): string => {
     return `<pre class="bg-muted p-4 rounded-md overflow-x-auto my-4"><code>${text.trim()}</code></pre>`;
   });
   
-  // Process carousel tag with data-attribute approach for proper component hydration
+  // Process carousel tag with dedicated HTML structure for reliable rendering
   formattedText = formattedText.replace(/\[carousel\]([\s\S]*?)\[\/carousel\]/g, (match, content) => {
     // Extract all img tags from the carousel content
     const images = [];
@@ -166,13 +168,43 @@ export const formatDescription = (description: string): string => {
       </div>`;
     }
     
-    // Generate a carousel container with data attributes
-    const imagesJson = JSON.stringify(images);
-    return `
-      <div class="embedded-carousel" data-carousel-id="${carouselId}" data-carousel-images='${imagesJson.replace(/'/g, "&apos;")}'>
-        <!-- Carousel will be rendered here by React -->
+    // Build standalone carousel HTML structure that doesn't require JavaScript to render initially
+    let carouselHtml = `
+    <div class="carousel-container my-6 relative border border-border rounded-md overflow-hidden">
+      <div class="carousel-track flex transition-transform duration-300" data-carousel-id="${carouselId}" data-images="${images.length}">`;
+    
+    // Add all carousel slides
+    images.forEach((image, index) => {
+      carouselHtml += `
+        <div class="carousel-slide w-full flex-shrink-0 flex-grow-0" data-slide="${index}">
+          <div class="p-2 flex justify-center">
+            <img 
+              src="${image}" 
+              alt="Slide ${index + 1}" 
+              class="max-h-[400px] object-contain"
+              loading="lazy"
+            />
+          </div>
+        </div>`;
+    });
+    
+    // Add navigation controls
+    carouselHtml += `
       </div>
-    `;
+      <button type="button" class="carousel-prev absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground p-2 rounded-full shadow-sm z-10">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span class="sr-only">Previous</span>
+      </button>
+      <button type="button" class="carousel-next absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 text-foreground p-2 rounded-full shadow-sm z-10">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <span class="sr-only">Next</span>
+      </button>
+      <div class="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium carousel-counter">
+        1 / ${images.length}
+      </div>
+    </div>`;
+    
+    return carouselHtml;
   });
   
   // Handle color with [color=X]...[/color]
@@ -248,34 +280,5 @@ export const formatDescription = (description: string): string => {
 export const extractImagesFromContent = (content: string): string[] => {
   if (!content) return [];
   
-  const images: string[] = [];
-  
-  // Extract all <img> tags
-  const imgRegex = /<img[^>]*src="([^"]*)"[^>]*>/gi;
-  let imgMatch;
-  while ((imgMatch = imgRegex.exec(content)) !== null) {
-    if (imgMatch[1] && !images.includes(imgMatch[1])) {
-      images.push(imgMatch[1]);
-    }
-  }
-  
-  // Extract video thumbnails/posters
-  const posterRegex = /<video[^>]*poster="([^"]*)"[^>]*>/gi;
-  let posterMatch;
-  while ((posterMatch = posterRegex.exec(content)) !== null) {
-    if (posterMatch[1] && !images.includes(posterMatch[1])) {
-      images.push(posterMatch[1]);
-    }
-  }
-  
-  // Look for [img] tags as well (BBCode style)
-  const bbcodeRegex = /\[img\](.*?)\[\/img\]/gi;
-  let bbcodeMatch;
-  while ((bbcodeMatch = bbcodeRegex.exec(content)) !== null) {
-    if (bbcodeMatch[1] && !images.includes(bbcodeMatch[1])) {
-      images.push(bbcodeMatch[1]);
-    }
-  }
-  
-  return images;
+  return extractMediaImages(content);
 };

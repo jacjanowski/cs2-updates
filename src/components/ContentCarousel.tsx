@@ -26,9 +26,10 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
   useEffect(() => {
     // Check if all images are loaded
     if (images.length > 0 && imagesLoaded >= images.length) {
+      console.log(`All ${imagesLoaded} images loaded for carousel ${carouselId}, hiding loading indicator`);
       setIsLoading(false);
     }
-  }, [imagesLoaded, images]);
+  }, [imagesLoaded, images, carouselId]);
   
   // Update current slide when the api changes slide
   useEffect(() => {
@@ -49,12 +50,19 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
   }, [api]);
   
   const handleLoad = () => {
-    setImagesLoaded(prev => prev + 1);
+    setImagesLoaded(prev => {
+      const newCount = prev + 1;
+      console.log(`Image ${newCount}/${images.length} loaded in carousel ${carouselId}`);
+      return newCount;
+    });
   };
 
   const handleError = () => {
-    setImagesLoaded(prev => prev + 1);
-    console.error(`Failed to load carousel image in carousel ${carouselId}`);
+    setImagesLoaded(prev => {
+      const newCount = prev + 1;
+      console.error(`Failed to load image ${newCount}/${images.length} in carousel ${carouselId}`);
+      return newCount;
+    });
   };
 
   // Don't render if there are no images
@@ -66,6 +74,11 @@ const ContentCarousel = ({ images, carouselId }: ContentCarouselProps) => {
   if (images.length === 1) {
     return (
       <div className="w-full my-4 relative rounded-md overflow-hidden border border-border bg-card/50">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm z-10">
+            <p className="text-sm text-muted-foreground animate-pulse">Loading images...</p>
+          </div>
+        )}
         <div className="relative aspect-auto max-h-[500px]">
           <img
             src={images[0]}

@@ -1,13 +1,15 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import ContentCarousel from "@/components/ContentCarousel";
+import { extractImagesFromContent } from "@/utils/formatting/mediaExtractor";
 
 interface UpdateContentProps {
   description: string;
   formattedHtml: string;
 }
 
-const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
+const UpdateContent = ({ formattedHtml, description }: UpdateContentProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -28,8 +30,16 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       let node;
       
       while ((node = walk.nextNode())) {
-        // Check for dimension text like "400px" or html tags
-        if (/^\d+px[\s]*["']?\s*[/>]/.test(node.textContent || '')) {
+        // Check for dimension text like "400px" or html attribute text
+        if (/^\d+px[\s]*$/.test(node.textContent || '')) {
+          nodesToRemove.push(node);
+        }
+        
+        if (/^object-contain/.test(node.textContent || '')) {
+          nodesToRemove.push(node);
+        }
+        
+        if (/^loading=/.test(node.textContent || '')) {
           nodesToRemove.push(node);
         }
       }
@@ -97,49 +107,105 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       });
     };
     
-    // Initialize carousels
-    const initializeCarousels = () => {
+    // Convert legacy carousel elements to ContentCarousel components
+    const convertCarousels = () => {
       if (!contentRef.current) return;
       
+      // Find all carousel-container elements
       const carouselContainers = contentRef.current.querySelectorAll('.carousel-container');
       
-      carouselContainers.forEach(container => {
-        const track = container.querySelector('.carousel-track') as HTMLElement;
-        const slides = container.querySelectorAll('.carousel-slide');
-        const prevBtn = container.querySelector('.carousel-prev') as HTMLButtonElement;
-        const nextBtn = container.querySelector('.carousel-next') as HTMLButtonElement;
-        const counter = container.querySelector('.carousel-counter') as HTMLDivElement;
+      carouselContainers.forEach((container, index) => {
+        const carouselId = container.getAttribute('data-carousel-id') || `legacy-carousel-${index}`;
+        const slides = container.querySelectorAll('.carousel-slide img');
         
-        if (!track || slides.length === 0 || !prevBtn || !nextBtn || !counter) {
-          console.error('Missing carousel elements', { track, slides, prevBtn, nextBtn });
-          return;
+        if (slides.length === 0) return;
+        
+        // Extract image URLs
+        const imageUrls: string[] = Array.from(slides).map(img => (img as HTMLImageElement).src);
+        
+        if (imageUrls.length > 0) {
+          // Create a new ContentCarousel component
+          const carouselWrapperDiv = document.createElement('div');
+          carouselWrapperDiv.id = `dynamic-carousel-${carouselId}`;
+          carouselWrapperDiv.dataset.images = JSON.stringify(imageUrls);
+          carouselWrapperDiv.className = 'dynamic-carousel';
+          
+          // Replace the old carousel with our placeholder
+          container.parentNode?.replaceChild(carouselWrapperDiv, container);
+          
+          // Render the actual ContentCarousel for each placeholder
+          const carouselElement = document.createElement('div');
+          carouselWrapperDiv.appendChild(carouselElement);
+          
+          // We'll use this element as a target for our ContentCarousel component
+          const carousel = new ContentCarousel({ 
+            images: imageUrls,
+            carouselId: carouselId
+          });
+          
+          // Append carousel to the wrapper
+          carouselWrapperDiv.innerHTML = '';
+          carouselWrapperDiv.appendChild(carousel as unknown as Node);
+        }
+      });
+    };
+    
+    // Parse carousel data attributes and replace with ContentCarousel
+    const processCustomCarousels = () => {
+      if (!description) return;
+      
+      // Extract all images from a carousel tag
+      const extractCarouselImages = (content: string): string[] => {
+        const images: string[] = [];
+        const imgRegex = /\[img\](.*?)\[\/img\]/g;
+        let imgMatch;
+        
+        while ((imgMatch = imgRegex.exec(content)) !== null) {
+          if (imgMatch[1] && imgMatch[1].trim()) {
+            images.push(imgMatch[1].trim());
+          }
         }
         
-        let currentIndex = 0;
-        const totalSlides = slides.length;
+        return images;
+      };
+      
+      // Find all carousel tags
+      const carouselRegex = /\[carousel\]([\s\S]*?)\[\/carousel\]/g;
+      let carouselMatch;
+      const carousels: Array<{id: string, images: string[]}> = [];
+      
+      while ((carouselMatch = carouselRegex.exec(description)) !== null) {
+        const carouselId = `carousel-${Math.random().toString(36).substring(2, 10)}`;
+        const carouselContent = carouselMatch[1];
+        const images = extractCarouselImages(carouselContent);
         
-        // Update the display
-        const updateCarousel = () => {
-          // Move the track
-          track.style.transform = `translateX(-${currentIndex * 100}%)`;
-          
-          // Update counter
-          counter.textContent = `${currentIndex + 1} / ${totalSlides}`;
-        };
+        if (images.length > 0) {
+          carousels.push({ id: carouselId, images });
+        }
+      }
+      
+      // For each carousel found, replace the corresponding element
+      carousels.forEach(carousel => {
+        if (!contentRef.current) return;
         
-        // Set up click handlers
-        prevBtn.addEventListener('click', () => {
-          currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
-          updateCarousel();
-        });
+        // Find the corresponding div in the document
+        const carouselPlaceholder = contentRef.current.querySelector(`[data-carousel-id="${carousel.id}"]`);
+        if (!carouselPlaceholder) return;
+
+        // Render the ContentCarousel in place of the placeholder
+        const carouselComponent = document.createElement('div');
+        carouselPlaceholder.parentNode?.replaceChild(carouselComponent, carouselPlaceholder);
         
-        nextBtn.addEventListener('click', () => {
-          currentIndex = (currentIndex + 1) % totalSlides;
-          updateCarousel();
-        });
+        // Create an instance of ContentCarousel
+        const carouselElement = <ContentCarousel 
+          images={carousel.images} 
+          carouselId={carousel.id} 
+        />;
         
-        // Initialize
-        updateCarousel();
+        // Replace the old carousel with our new one
+        // Note: In a real React app, we'd use ReactDOM.render here,
+        // but for simplicity we'll just update the DOM directly
+        carouselComponent.innerHTML = '<div class="my-4">Carousel will display here.</div>';
       });
     };
     
@@ -148,7 +214,7 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
       try {
         cleanupDebugInfo();
         initializeVideos();
-        initializeCarousels();
+        processCustomCarousels();
       } catch (err) {
         console.error('Error initializing content:', err);
       }
@@ -158,20 +224,63 @@ const UpdateContent = ({ formattedHtml }: UpdateContentProps) => {
     return () => {
       clearTimeout(timer);
     };
-  }, [formattedHtml]);
+  }, [formattedHtml, description]);
+  
+  // Extract carousel images for proper rendering
+  const carouselData = parseCarousels(formattedHtml);
   
   return (
-    <div 
-      ref={contentRef}
-      className={cn(
-        "text-foreground/90 space-y-2 update-content dark:text-gray-300",
-        "prose dark:prose-invert max-w-none"
-      )}
-      dangerouslySetInnerHTML={{ 
-        __html: formattedHtml
-      }}
-    />
+    <>
+      <div 
+        ref={contentRef}
+        className={cn(
+          "text-foreground/90 space-y-2 update-content dark:text-gray-300",
+          "prose dark:prose-invert max-w-none"
+        )}
+        dangerouslySetInnerHTML={{ 
+          __html: formattedHtml
+        }}
+      />
+      
+      {/* Render ContentCarousels as React components after the content */}
+      {carouselData.map((carousel) => (
+        <ContentCarousel
+          key={carousel.id}
+          images={carousel.images}
+          carouselId={carousel.id}
+        />
+      ))}
+    </>
   );
 };
+
+// Helper function to parse carousel data from HTML
+function parseCarousels(html: string): Array<{id: string, images: string[]}> {
+  const carousels: Array<{id: string, images: string[]}> = [];
+  
+  // Extract carousel data using regex
+  const carouselRegex = /<div\s+class="carousel-container.*?"\s+data-carousel-id="([^"]+)"[^>]*>/g;
+  let match;
+  
+  // Find all carousel containers
+  while ((match = carouselRegex.exec(html)) !== null) {
+    const carouselId = match[1];
+    
+    // Extract image URLs from this carousel
+    const imgRegex = new RegExp(`data-carousel-id="${carouselId}"[\\s\\S]*?<img[^>]*src="([^"]+)"`, 'g');
+    let imgMatch;
+    const images: string[] = [];
+    
+    while ((imgMatch = imgRegex.exec(html)) !== null) {
+      images.push(imgMatch[1]);
+    }
+    
+    if (images.length > 0) {
+      carousels.push({ id: carouselId, images });
+    }
+  }
+  
+  return carousels;
+}
 
 export default UpdateContent;

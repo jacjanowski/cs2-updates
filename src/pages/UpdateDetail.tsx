@@ -34,7 +34,8 @@ const UpdateDetail = () => {
     imageLoaded, 
     handleImageError, 
     handleImageLoad,
-    hasAnyImage
+    hasAnyImage,
+    contentImages
   } = useUpdateImage(update?.imageUrl, update?.description, isNewsItem);
   
   // Format the description for display

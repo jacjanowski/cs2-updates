@@ -11,6 +11,7 @@ interface UseUpdateImageResult {
   handleImageError: () => void;
   handleImageLoad: () => void;
   hasAnyImage: boolean;
+  contentImages: string[];
 }
 
 export const useUpdateImage = (
@@ -22,7 +23,8 @@ export const useUpdateImage = (
   const [imageLoaded, setImageLoaded] = useState(false);
   const [displayImage, setDisplayImage] = useState<string | null>(null);
   const [hasAnyImage, setHasAnyImage] = useState(false);
-
+  const [contentImages, setContentImages] = useState<string[]>([]);
+  
   useEffect(() => {
     setImageError(false);
     setImageLoaded(false);
@@ -31,22 +33,23 @@ export const useUpdateImage = (
     let extractedImages: string[] = [];
     if (description) {
       extractedImages = extractImagesFromContent(description);
+      setContentImages(extractedImages);
       setHasAnyImage(extractedImages.length > 0);
     }
     
-    // For news, try to find the best image
+    // Priority for display image selection
     if (isNewsItem) {
-      // First try content images
-      if (extractedImages.length > 0) {
-        console.log("Using image from content:", extractedImages[0]);
-        setDisplayImage(extractedImages[0]);
-        return;
-      }
-      
-      // Then try API image
+      // First try API image if available (usually higher quality)
       if (imageUrl) {
         console.log("Using API image:", imageUrl);
         setDisplayImage(imageUrl);
+        return;
+      }
+      
+      // Then try content images
+      if (extractedImages.length > 0) {
+        console.log("Using image from content:", extractedImages[0]);
+        setDisplayImage(extractedImages[0]);
         return;
       }
     }
@@ -72,6 +75,7 @@ export const useUpdateImage = (
     imageLoaded,
     handleImageError,
     handleImageLoad,
-    hasAnyImage
+    hasAnyImage,
+    contentImages
   };
 };

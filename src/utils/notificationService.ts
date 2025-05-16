@@ -61,7 +61,6 @@ export class NotificationService {
         body: update.title,
         icon: '/favicon.ico',
         badge: '/favicon.ico',
-        image: update.imageUrl,
         tag: 'cs2-update',
         requireInteraction: true // Keep the notification visible until user interacts with it
       });

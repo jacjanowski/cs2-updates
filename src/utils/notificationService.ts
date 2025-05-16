@@ -3,7 +3,7 @@ import { SettingsData } from "@/components/SettingsCard";
 
 export class NotificationService {
   private static instance: NotificationService;
-  private notificationsEnabled: boolean = false;
+  private notificationsEnabled: boolean = true; // Set default to true for testing
   private checkFrequency: 'hourly' | 'daily' | 'weekly' = 'daily';
   private checkInterval: number | null = null;
   private onUpdate: ((updates: UpdateData[]) => void) | null = null;
@@ -48,16 +48,22 @@ export class NotificationService {
 
   // Show notification for new update
   public async showNotification(update: UpdateData): Promise<void> {
-    if (!this.notificationsEnabled) return;
-    
+    // For testing purposes, we'll show the notification regardless of settings
+    // This ensures the test button works even if notifications are disabled in settings
     const hasPermission = await this.requestNotificationPermission();
-    if (!hasPermission) return;
+    if (!hasPermission) {
+      console.log('No notification permission granted');
+      return;
+    }
 
     try {
-      const notification = new Notification('New CS2 Update', {
+      const notification = new Notification('CS2 Update', {
         body: update.title,
         icon: '/favicon.ico',
-        badge: '/favicon.ico'
+        badge: '/favicon.ico',
+        image: update.imageUrl,
+        tag: 'cs2-update',
+        requireInteraction: true // Keep the notification visible until user interacts with it
       });
 
       notification.onclick = () => {
@@ -67,6 +73,8 @@ export class NotificationService {
         }
         notification.close();
       };
+      
+      console.log('Notification shown:', update.title);
     } catch (error) {
       console.error('Error showing notification:', error);
     }

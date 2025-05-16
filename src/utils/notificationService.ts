@@ -1,3 +1,4 @@
+
 import { UpdateData } from "@/components/UpdateCard";
 import { SettingsData } from "@/components/SettingsCard";
 
@@ -46,10 +47,9 @@ export class NotificationService {
     return false;
   }
 
-  // Show notification for new update
+  // Show notification for new update - this triggers a Windows notification
   public async showNotification(update: UpdateData): Promise<void> {
-    // For testing purposes, we'll show the notification regardless of settings
-    // This ensures the test button works even if notifications are disabled in settings
+    // Request permission first
     const hasPermission = await this.requestNotificationPermission();
     if (!hasPermission) {
       console.log('No notification permission granted');
@@ -57,6 +57,7 @@ export class NotificationService {
     }
 
     try {
+      // This creates a native Windows notification
       const notification = new Notification('CS2 Update', {
         body: update.title,
         icon: '/favicon.ico',
@@ -73,7 +74,7 @@ export class NotificationService {
         notification.close();
       };
       
-      console.log('Notification shown:', update.title);
+      console.log('Windows notification shown:', update.title);
     } catch (error) {
       console.error('Error showing notification:', error);
     }

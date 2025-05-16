@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import UpdateCard, { UpdateData } from "@/components/UpdateCard";
@@ -94,17 +95,20 @@ const Index = () => {
 
   const handleTestNotification = () => {
     const testUpdate: UpdateData = {
-      title: "Test Notification",
-      description: "This is a test notification to show how notifications appear on your device.",
+      title: "Test Windows Notification",
+      description: "This is a test notification that appears in your Windows notification center.",
       date: new Date().toISOString(),
       url: window.location.href,
       imageUrl: DEFAULT_NEWS_IMAGE
     };
 
+    // Show a Windows notification
     notificationService.showNotification(testUpdate);
+
+    // Also show a toast for feedback that the action was performed
     toast({
-      title: "Notification Sent",
-      description: "A test notification has been triggered. Check your system tray.",
+      title: "Windows Notification Sent",
+      description: "Check your Windows notification center in the bottom right of your screen.",
     });
   };
 
@@ -133,7 +137,7 @@ const Index = () => {
               className="flex items-center gap-2"
             >
               <Bell size={16} />
-              Test Notification
+              Test Windows Notification
             </Button>
             
             <button

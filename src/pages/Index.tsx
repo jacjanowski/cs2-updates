@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import UpdateCard, { UpdateData } from "@/components/UpdateCard";
@@ -95,8 +94,8 @@ const Index = () => {
 
   const handleTestNotification = () => {
     const testUpdate: UpdateData = {
-      title: "Test Windows Notification",
-      description: "This is a test notification that appears in your Windows notification center.",
+      title: "New CS2 Patch Released",
+      description: "The latest Counter-Strike 2 update includes weapon balancing, new maps, and performance improvements. Click to see the full details.",
       date: new Date().toISOString(),
       url: window.location.href,
       imageUrl: DEFAULT_NEWS_IMAGE
@@ -105,10 +104,10 @@ const Index = () => {
     // Show a Windows notification
     notificationService.showNotification(testUpdate);
 
-    // Also show a toast for feedback that the action was performed
+    // Also show a toast for feedback
     toast({
       title: "Windows Notification Sent",
-      description: "Check your Windows notification center in the bottom right of your screen.",
+      description: "Check your Windows notification center in the bottom right of your screen. Make sure notifications are enabled in your browser and Windows settings.",
     });
   };
 
@@ -134,7 +133,7 @@ const Index = () => {
             <Button
               variant="outline"
               onClick={handleTestNotification}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-primary/10 border-primary/20 hover:bg-primary/20"
             >
               <Bell size={16} />
               Test Windows Notification

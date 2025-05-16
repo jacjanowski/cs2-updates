@@ -57,14 +57,34 @@ export class NotificationService {
     }
 
     try {
-      // This creates a native Windows notification that will appear in the Windows notification center
-      const notification = new Notification('CS2 Update', {
-        body: update.title,
+      // Format the title to make it more attractive in Windows notifications
+      const title = "CS2 Update Available";
+      
+      // Create a more detailed body that includes the update title and part of description
+      let description = update.description || "";
+      // Truncate the description if it's too long for a notification
+      if (description.length > 100) {
+        description = description.substring(0, 100) + "...";
+      }
+      
+      const body = `${update.title}\n${description}`;
+      
+      // This creates a Windows 10 Toast notification
+      const notification = new Notification(title, {
+        body: body,
         icon: '/favicon.ico', // Use app favicon to match app identity
         badge: '/favicon.ico',
         tag: 'cs2-update', // Group similar notifications
         requireInteraction: true, // Keep the notification visible until user interacts with it
-        silent: false // Play default sound to alert user
+        silent: false, // Play sound to alert user
+        // Windows 10 specific options (though these are not standard and may be ignored)
+        // These help with replicating the Windows 10 native notification style
+        actions: [
+          {
+            action: 'view',
+            title: 'View Update'
+          }
+        ]
       });
 
       notification.onclick = () => {

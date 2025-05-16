@@ -4,10 +4,9 @@ import UpdateCard, { UpdateData } from "@/components/UpdateCard";
 import { SteamAPI } from "@/utils/steamAPI";
 import notificationService from "@/utils/notificationService";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, ChevronDown, Bell } from "lucide-react";
+import { RefreshCw, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 
 const DEFAULT_NEWS_IMAGE = 'https://cdn.akamai.steamstatic.com/apps/csgo/images/csgo_react/cs2/event_header.png';
 
@@ -92,25 +91,6 @@ const Index = () => {
     }, 300);
   };
 
-  const handleTestNotification = () => {
-    const testUpdate: UpdateData = {
-      title: "New CS2 Patch Released",
-      description: "The latest Counter-Strike 2 update includes weapon balancing, new maps, and performance improvements. Click to see the full details.",
-      date: new Date().toISOString(),
-      url: window.location.href,
-      imageUrl: DEFAULT_NEWS_IMAGE
-    };
-
-    // Show a Windows notification
-    notificationService.showNotification(testUpdate);
-
-    // Also show a toast for feedback
-    toast({
-      title: "Windows Notification Sent",
-      description: "Check your Windows notification center in the bottom right of your screen. Make sure notifications are enabled in your browser and Windows settings.",
-    });
-  };
-
   const visibleUpdates = updates.slice(0, visibleCount);
   const hasMoreUpdates = updates.length > visibleCount;
 
@@ -130,15 +110,6 @@ const Index = () => {
           </div>
           
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleTestNotification}
-              className="flex items-center gap-2 bg-primary/10 border-primary/20 hover:bg-primary/20"
-            >
-              <Bell size={16} />
-              Test Windows Notification
-            </Button>
-            
             <button
               onClick={handleRefresh}
               disabled={loading || refreshing}

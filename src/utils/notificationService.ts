@@ -1,4 +1,3 @@
-
 import { UpdateData } from "@/components/UpdateCard";
 import { SettingsData } from "@/components/SettingsCard";
 
@@ -76,15 +75,7 @@ export class NotificationService {
         badge: '/favicon.ico',
         tag: 'cs2-update', // Group similar notifications
         requireInteraction: true, // Keep the notification visible until user interacts with it
-        silent: false, // Play sound to alert user
-        // Windows 10 specific options (though these are not standard and may be ignored)
-        // These help with replicating the Windows 10 native notification style
-        actions: [
-          {
-            action: 'view',
-            title: 'View Update'
-          }
-        ]
+        silent: false // Play sound to alert user
       });
 
       notification.onclick = () => {

@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/58fba717-9166-4eb7-8926-f79dac5b6e10
+**URL**: https://cs2-updates.lovable.app/
 
 ## How can I edit this code?
 
@@ -10,7 +10,7 @@ There are several ways of editing your application.
 
 **Use Lovable**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/58fba717-9166-4eb7-8926-f79dac5b6e10) and start prompting.
+Simply visit the [Lovable Project](https://cs2-updates.lovable.app/) and start prompting.
 
 Changes made via Lovable will be committed automatically to this repo.
 

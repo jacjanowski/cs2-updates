@@ -57,13 +57,14 @@ export class NotificationService {
     }
 
     try {
-      // This creates a native Windows notification
+      // This creates a native Windows notification that will appear in the Windows notification center
       const notification = new Notification('CS2 Update', {
         body: update.title,
-        icon: '/favicon.ico',
+        icon: '/favicon.ico', // Use app favicon to match app identity
         badge: '/favicon.ico',
-        tag: 'cs2-update',
-        requireInteraction: true // Keep the notification visible until user interacts with it
+        tag: 'cs2-update', // Group similar notifications
+        requireInteraction: true, // Keep the notification visible until user interacts with it
+        silent: false // Play default sound to alert user
       });
 
       notification.onclick = () => {
